@@ -16,6 +16,10 @@
 // A placeholder with nothing to fill it becomes a generic phrase ("the airline",
 // "your hotel"), so sentences still read correctly.
 //
+// Tests pin some wording (src/lib/domain/domain.test.ts): the titles of confirm_new_times,
+// rebook_onward, tell_hotel (must contain "Tell the hotel") and contact_insurer. If you change
+// one of those, update the matching test in the same pull request.
+//
 // Wording rule: stay general. Say "ask the airline what you're entitled to".
 // Never state legal rights, compensation amounts or deadlines; they vary by
 // country and airline and we cannot get them right.
@@ -25,51 +29,51 @@ export type ChecklistCopyEntry = { title: string; detail?: string };
 export const checklistCopy = {
   ask_rebooking_options: {
     title: "Ask {airline} to rebook you",
-    detail: "Use the app, the service desk and the phone line at the same time; take whichever answers first.",
+    detail: "Try the app, the service desk and the phone line at once. Use whichever answers first.",
   },
   go_to_transfer_desk: {
-    title: "Go to the {airline} transfer or service desk",
-    detail: "Tell them you missed {flight} and ask for the next available flight.",
+    title: "Go to the service desk for {airline}",
+    detail: "Say you missed {flight} and ask for the next available flight.",
   },
   confirm_new_times: {
     title: "Check the latest times for {flight}",
-    detail: "Delays often change. Look at the airline app or the departure board again before you move.",
+    detail: "Times can change again. Check the airline app or departure board before you move.",
   },
   confirm_new_booking: {
     title: "Check your new booking for {flight}",
-    detail: "Confirm the date, time, seat and that your bags are on the same flight.",
+    detail: "Check the date, time and seat. Ask whether your bags are on the same flight.",
   },
   rebook_onward: {
     title: "Rebook the onward flight {onwardFlight}",
-    detail: "Ask {onwardAirline} whether you will make the connection and what the next option is if you don't.",
+    detail: "Ask {onwardAirline} if you can still make it, and what the next flight is if you can't.",
   },
   check_bags: {
     title: "Ask where your checked bags are",
-    detail: "Find out whether they will follow you automatically or need to be collected and rechecked.",
+    detail: "Find out if they follow you automatically or if you need to collect and recheck them.",
   },
   tell_hotel: {
-    title: "Tell the hotel you'll arrive late: {hotel}",
-    detail: "Ask them to hold the room and how to get in after the front desk closes.",
+    title: "Tell the hotel you may arrive late: {hotel}",
+    detail: "Ask them to hold your room, and how to get in if you arrive after the front desk closes.",
   },
   rearrange_pickup: {
     title: "Rearrange your pickup or transfer",
-    detail: "Let your driver, transfer company or whoever is meeting you know the new arrival time.",
+    detail: "Send your driver, transfer company or host the new arrival time.",
   },
   send_update: {
-    title: "Send an update to someone you trust",
-    detail: "Use the share button below to send them what changed.",
+    title: "Send an update to someone waiting for you",
+    detail: "Use the share button to tell them what changed and what you're doing about it.",
   },
   ask_entitlements: {
     title: "Ask {airline} what you're entitled to",
-    detail: "This varies by country and airline, so ask staff directly rather than assuming.",
+    detail: "This differs by country and airline, so ask staff directly rather than assuming.",
   },
   get_it_in_writing: {
     title: "Ask for the change in writing",
-    detail: "An email or printed notice from {airline} saying what happened is useful later.",
+    detail: "Get an email, text or printed notice from {airline} saying what happened.",
   },
   keep_receipts: {
-    title: "Keep receipts for anything extra you pay for",
-    detail: "Food, transport and accommodation. Take a photo of each one.",
+    title: "Keep receipts for extra costs",
+    detail: "Meals, transport, a hotel night. Take a photo of each one.",
   },
   contact_insurer: {
     title: "Contact your travel insurer: {insurer}",

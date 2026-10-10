@@ -54,3 +54,31 @@ describe("store", () => {
     expect(useTripStore.getState().trip!.flights[0].status).toBe("cancelled");
   });
 });
+
+describe("payoutAddress", () => {
+  const ADDRESS = "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM";
+
+  beforeEach(() => {
+    useTripStore.getState().resetTrip();
+    useTripStore.getState().loadSampleTrip();
+  });
+
+  it("setPayoutAddress stores a trimmed valid address, rejects junk and clears on empty", () => {
+    const { setPayoutAddress } = useTripStore.getState();
+    const current = () => useTripStore.getState().trip!.payoutAddress;
+
+    expect(setPayoutAddress(`  ${ADDRESS}\n`)).toBe(true);
+    expect(current()).toBe(ADDRESS);
+    expect(setPayoutAddress("0x52908400098527886E0F7030069857D2E4169EE7")).toBe(false);
+    expect(current()).toBe(ADDRESS);
+    expect(setPayoutAddress("  ")).toBe(true);
+    expect(current()).toBeUndefined();
+  });
+
+  it("an invalid stored address is dropped on load instead of discarding the trip", () => {
+    const parsed = TripSchema.safeParse({ ...sampleTrip, payoutAddress: "garbage" });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.payoutAddress).toBeUndefined();
+    expect(TripSchema.parse({ ...sampleTrip, payoutAddress: ADDRESS }).payoutAddress).toBe(ADDRESS);
+  });
+});
