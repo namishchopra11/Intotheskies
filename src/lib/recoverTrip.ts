@@ -3,6 +3,7 @@ import {
   ContactSchema,
   DisruptionSchema,
   FlightSchema,
+  PersonSchema,
   StaySchema,
   TripSchema,
   type Trip,
@@ -48,6 +49,7 @@ export function recoverTrip(raw: unknown): Recovery {
   const stays = keepValid(StaySchema, r.stays);
   const contacts = keepValid(ContactSchema, r.contacts);
   const disruptions = keepValid(DisruptionSchema, r.disruptions);
+  const people = keepValid(PersonSchema, r.people);
   // A disruption for a flight that did not survive has nothing to describe.
   const flightIds = new Set(flights.kept.map((f) => f.id));
   const attached = disruptions.kept.filter((d) => flightIds.has(d.flightId));
@@ -60,6 +62,8 @@ export function recoverTrip(raw: unknown): Recovery {
     stays: stays.kept,
     contacts: contacts.kept,
     disruptions: attached,
+    // Only set when the saved trip had people, so an older trip stays without the field.
+    ...(Array.isArray(r.people) ? { people: people.kept } : {}),
   });
   if (!rebuilt.success) return lost;
 
@@ -67,6 +71,7 @@ export function recoverTrip(raw: unknown): Recovery {
     flights.dropped +
     stays.dropped +
     contacts.dropped +
+    people.dropped +
     disruptions.dropped +
     (disruptions.kept.length - attached.length);
   return { trip: rebuilt.data, notice: { kind: "recovered", dropped } };

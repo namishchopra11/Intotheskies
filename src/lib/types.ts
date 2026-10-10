@@ -81,6 +81,19 @@ export const ContactSchema = z.object({
 });
 export type Contact = z.infer<typeof ContactSchema>;
 
+export const PersonRoleSchema = z.enum(["pickup", "family", "other"]);
+export type PersonRole = z.infer<typeof PersonRoleSchema>;
+
+// Someone waiting on the traveler: a driver, a relative. Not the same as a Contact, which is
+// who the traveler calls for help. Drafts and the timeline's pickup node are built from these.
+export const PersonSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: PersonRoleSchema,
+  phone: z.string().optional(),
+});
+export type Person = z.infer<typeof PersonSchema>;
+
 export const TaskSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -116,6 +129,8 @@ export const TripSchema = z.object({
   stays: z.array(StaySchema),
   contacts: z.array(ContactSchema),
   disruptions: z.array(DisruptionSchema),
+  // Optional so a trip saved before people existed still loads.
+  people: z.array(PersonSchema).optional(),
   // Where a "request funds" link asks contacts to send USDC. Set it with the store's
   // setPayoutAddress, which rejects anything that is not a Solana public key. A stored
   // value that fails validation is dropped on load rather than discarding the trip.

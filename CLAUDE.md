@@ -57,7 +57,12 @@ without the suffix.
 - `Task`: id, title, detail?, done, contactId?, source (`generated | custom`)
 - `Disruption`: id, type (`delay | cancellation | missed_connection | rebooked`),
   flightId, createdAt, tasks
-- `Trip`: id, name, travelerName, flights, stays, contacts, disruptions, payoutAddress?
+- `Person`: id, name, role (`pickup | family | other`), phone? (someone waiting on the
+  traveler; `Trip.people` is optional so older saved trips still load; recovery keeps the
+  readable ones). Planned: `buildTimeline(trip, disruptionId)` in `src/lib/domain/timeline.ts`
+  (the home screen's ripple rail) and `buildDrafts(trip, disruptionId)` in
+  `src/lib/domain/messages.ts` (per-person messages); neither exists yet.
+- `Trip`: id, name, travelerName, flights, stays, contacts, people?, disruptions, payoutAddress?
   (a Solana public key for the optional "request funds" add-on; set it only through
   `setPayoutAddress`, see below)
 

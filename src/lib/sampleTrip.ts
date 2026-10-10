@@ -74,5 +74,12 @@ export const sampleTrip: Trip = {
       notes: "Front desk closes at 22:00. Call ahead for a late arrival.",
     },
   ],
+  // The people waiting on Alex. Marco is the driver booked for the Rome arrival. Numbers are
+  // made up and left out here on purpose: the draft screen falls back to WhatsApp's own
+  // contact picker, so a demo never texts a real number.
+  people: [
+    { id: "person-marco", name: "Marco", role: "pickup" },
+    { id: "person-mum", name: "Mum", role: "family" },
+  ],
   disruptions: [],
 };

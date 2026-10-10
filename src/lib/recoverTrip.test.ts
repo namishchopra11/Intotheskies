@@ -37,6 +37,24 @@ describe("recoverTrip", () => {
     expect(notice).toEqual({ kind: "recovered", dropped: 1 });
   });
 
+  it("keeps a trip saved before people existed, without adding the field", () => {
+    const raw = clone();
+    delete raw.people;
+    raw.stays = [{ ...raw.stays[0], checkIn: "2026-02-31T15:00" }];
+    const { trip } = recoverTrip(raw);
+    expect(trip).not.toBeNull();
+    expect(trip?.people).toBeUndefined();
+  });
+
+  it("drops one unreadable person and keeps the rest", () => {
+    const raw = clone();
+    raw.people = [{ id: "p1", name: "Marco", role: "pickup" }, { id: "p2", name: "Bad", role: "wizard" }];
+    raw.stays = [{ ...raw.stays[0], checkIn: "2026-02-31T15:00" }];
+    const { trip, notice } = recoverTrip(raw);
+    expect(trip?.people).toEqual([{ id: "p1", name: "Marco", role: "pickup" }]);
+    expect(notice).toEqual({ kind: "recovered", dropped: 2 });
+  });
+
   it("drops a disruption whose flight did not survive", () => {
     const raw = clone();
     const [bad, ...rest] = raw.flights;
