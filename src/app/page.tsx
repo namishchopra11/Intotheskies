@@ -360,7 +360,7 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         aside={
           <span className="inline-flex items-center gap-2">
             <span aria-hidden="true" className="ck-pulse h-2 w-2 rounded-full bg-current" />
-            Watching live
+            Watching · simulated feed
           </span>
         }
       >
@@ -400,7 +400,7 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
       <div className="ck-rise mt-auto px-5 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
         <p className="flex items-start gap-2.5 border-t border-line pt-4 text-[13px] leading-snug text-ink-2">
           <span aria-hidden="true" className="ck-pulse mt-1.5 h-2 w-2 shrink-0 rounded-full bg-current text-ok" />
-          Watching {count === 1 ? "your flight" : `all ${count} flights`}. If anything changes, your plan
+          Watching {count === 1 ? "your flight" : `all ${count} flights`} (simulated airline feed). If anything changes, your plan
           updates itself and you&apos;ll get a notification.
         </p>
       </div>

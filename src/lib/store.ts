@@ -91,7 +91,10 @@ export const useTripStore = create<TripState>()(
       return {
         trip: null,
 
-        loadSampleTrip: () => set({ trip: structuredClone(sampleTrip) }),
+        loadSampleTrip: () =>
+          set((state) => ({
+            trip: { ...structuredClone(sampleTrip), payoutAddress: state.trip?.payoutAddress },
+          })),
         resetTrip: () => set({ trip: null }),
 
         upsertFlight: (flight) =>
