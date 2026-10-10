@@ -25,7 +25,7 @@ export function Toggle({ checked, onChange, label, description, disabled, classN
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cx(
-        "flex min-h-14 w-full items-center gap-4 rounded-control py-2 text-left",
+        "flex min-h-14 w-full items-center gap-4 py-2 text-left",
         "disabled:opacity-45",
         className,
       )}
