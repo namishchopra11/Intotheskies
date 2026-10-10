@@ -1,7 +1,12 @@
+import { Suspense } from "react";
+import { ReportForm } from "@/components/trip/ReportForm";
+
 export default function NewDisruptionPage() {
   return (
-    <main className="p-4">
-      <h1 className="text-2xl font-semibold">Report a change</h1>
+    <main>
+      <Suspense fallback={<p role="status" className="py-24 text-center text-ink-3">Loading…</p>}>
+        <ReportForm />
+      </Suspense>
     </main>
   );
 }
