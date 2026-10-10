@@ -202,7 +202,7 @@ service, so it works offline.
 
 ## Optional: Send help (20 seconds)
 
-Only if you have tested Send help on your phone (you said you did) and you have a quiet moment.
+Only if you have a quiet moment. Tested on a real phone with Phantom: scanning works, completing the payment does not (see below).
 
 **Set it up beforehand, once.** Menu > **Solana address (optional)**, paste a wallet address,
 tap **Save address**. It is kept through **Restart the demo trip**, but **Clear this trip**
@@ -217,10 +217,17 @@ USDC** and, in a yellow box, **Demo on Solana's test network (devnet). No real m
 Point at **Send help** (it opens the person's Solana wallet app to approve the payment), the
 QR code (for a wallet on another device) and **Copy address**.
 
+**Scan it (optional, 10 seconds).** Have Phantom open on a second phone, in **Testnet Mode**
+(Solana Devnet), on the account playing the person helping. Tap the scan icon and scan the QR
+code. Phantom opens a payment screen with the amount and Alex's address filled in. **Stop
+there. Do not tap Send:** Phantom shows "Insufficient balance" for devnet USDC even when the
+account has it, which is a limit of its test mode, not of our app.
+
 **SAY**
-> "And if Alex needs help with costs, the person waiting can send it from the same link. It
-> opens their own wallet to approve. Today it runs on Solana's test network, so no real money
-> moves. We never hold keys or sign anything."
+> "And if Alex needs help with costs, the person waiting can send it from the same link. They
+> scan this, and their own wallet opens with the amount and Alex's address already filled in.
+> They just approve. Today it runs on Solana's test network, so no real money moves. We never
+> hold keys or sign anything."
 
 Do **not** tap **Send help** on stage unless a wallet app set to devnet is installed on that
 phone. Otherwise the phone may show an "open with" prompt.
