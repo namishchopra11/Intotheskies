@@ -5,6 +5,7 @@ import { ProfileButton } from "@/components/trip/ProfileButton";
 import { triggerFlightChange } from "@/components/trip/simulateChange";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useSpeech } from "@/components/trip/useSpeech";
+import { DEFAULT_SPEECH_VOICE, SPEECH_VOICES, type SpeechVoice } from "@/components/trip/speechVoices";
 import {
   AppHeader,
   Badge,
@@ -34,6 +35,7 @@ export default function TripStatusPage() {
   const trip = useTripStore((s) => s.trip);
   const [menuOpen, setMenuOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [voice, setVoice] = useState<SpeechVoice>(DEFAULT_SPEECH_VOICE);
 
   const menuButton = (
     <button
@@ -57,14 +59,22 @@ export default function TripStatusPage() {
         }
         onLogoClick={trip ? () => setLeaveOpen(true) : undefined}
       />
-      {!ready ? <Loading /> : !trip ? <NoTrip /> : trip.flights.length === 0 ? <NoFlights trip={trip} /> : <Status trip={trip} />}
-      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
+      {!ready ? (
+        <Loading />
+      ) : !trip ? (
+        <NoTrip />
+      ) : trip.flights.length === 0 ? (
+        <NoFlights trip={trip} />
+      ) : (
+        <Status trip={trip} voice={voice} />
+      )}
+      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} voice={voice} onVoiceChange={setVoice} />
       <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
     </main>
   );
 }
 
-function Status({ trip }: { trip: Trip }) {
+function Status({ trip, voice }: { trip: Trip; voice: SpeechVoice }) {
   const disruption = trip.disruptions[trip.disruptions.length - 1];
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
@@ -107,7 +117,7 @@ function Status({ trip }: { trip: Trip }) {
 
       <SortingItOut disruption={disruption} impact={impact} contacts={trip.contacts} />
 
-      <Actions trip={trip} disruption={disruption} />
+      <Actions key={buildBriefing(trip, disruption.id)} trip={trip} disruption={disruption} voice={voice} />
 
       <StaysSection stays={trip.stays} delay={520} />
       <RidesSection rides={trip.rides ?? []} delay={560} />
@@ -454,8 +464,8 @@ function TaskCircle() {
 
 /* ---------- Actions ---------- */
 
-function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | undefined }) {
-  const { supported, speaking, speak, stop } = useSpeech();
+function Actions({ trip, disruption, voice }: { trip: Trip; disruption: Disruption | undefined; voice: SpeechVoice }) {
+  const { speaking, loading, error, speak, stop } = useSpeech(voice);
   if (!disruption) return null;
 
   return (
@@ -466,7 +476,7 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
       <Button href={`/share/${disruption.id}`} variant="primary" size="lg" block chip="arrow-right">
         Share the new plan
       </Button>
-      {supported && (
+      {(
         <Button
           variant="secondary"
           block
@@ -474,9 +484,12 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
           onClick={() => (speaking ? stop() : speak(buildBriefing(trip, disruption.id)))}
           className="text-base"
         >
-          {speaking ? "Stop listening" : "Listen to summary"}
+          {loading ? "Cancel audio" : speaking ? "Stop listening" : "Listen to summary"}
         </Button>
       )}
+      {loading && <p role="status" className="px-1 text-[13px] text-ink-2">Preparing audio…</p>}
+      {error && <p role="alert" className="px-1 text-[13px] text-bad-fg">{error}</p>}
+      <p className="px-1 text-[12px] text-ink-2">Listen sends only this summary to ElevenLabs to create audio.</p>
     </div>
   );
 }
@@ -708,7 +721,7 @@ function NoTrip() {
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(340)}>
         <p className="mx-1 mb-1 flex items-start gap-2 text-[13px] leading-[1.4] text-ink-2">
           <Icon name="lock" size={16} className="mt-px" />
-          Your trip is saved only on this phone. No account needed.
+          Your trip is saved only on this phone. Listen sends the summary to ElevenLabs for audio. No account needed.
         </p>
         <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
           Add your trip
@@ -809,7 +822,13 @@ function NoFlights({ trip }: { trip: Trip }) {
   );
 }
 
-function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => void; hasTrip: boolean }) {
+function TripMenu({ open, onClose, hasTrip, voice, onVoiceChange }: {
+  open: boolean;
+  onClose: () => void;
+  hasTrip: boolean;
+  voice: SpeechVoice;
+  onVoiceChange: (voice: SpeechVoice) => void;
+}) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
   const pristine = useTripStore((s) => Boolean(s.trip && s.trip.disruptions.length === 0));
@@ -828,6 +847,19 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
           <ThemeToggle />
         </div>
         {hasTrip && <PayoutAddress />}
+        <label className="flex flex-col gap-2">
+          <span className="ck-label">Listen voice</span>
+          <select
+            value={voice}
+            onChange={(event) => onVoiceChange(event.target.value as SpeechVoice)}
+            className="min-h-11 w-full rounded-control border border-line bg-surface px-3 text-base text-ink"
+          >
+            {Object.entries(SPEECH_VOICES).map(([key, choice]) => (
+              <option key={key} value={key}>{choice.label}</option>
+            ))}
+          </select>
+          <span className="text-[13px] font-normal text-ink-2">Used when you press Listen to summary.</span>
+        </label>
         <div className="flex flex-col gap-3">
           {alerts === "default" && (
             <Button
