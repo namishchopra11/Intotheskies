@@ -14,5 +14,3 @@ Buttons and inputs are 48px tall; toggle targets are 52×48px. Badge is non-inte
 Use `.ck-shell` for the page container, `.ck-stack` for section spacing, `.ck-heading` for introductions and `.ck-button ck-button-primary` on navigation Links. Tokens are in globals.css.
 
 Existing API compatibility: Button also accepts `block`, `size`, `icon`, `href`, and exports `buttonClasses`. Card supports `as`, `padding`, `variant`. Badge also accepts `tone`, `icon`, `size` and retains FlightStatusBadge/status mappings. Field retains SelectField/TextAreaField; Sheet retains `footer`; ProgressBar retains `hideCount`/`className`. PageHeader, ThemeToggle, cx and all existing icons remain exported. Light is the default; the existing theme control can select Dark or Auto.
-
-See [the design handoff](./DESIGN_HANDOFF.md) for the phone-width review, verification results and remaining integration work.
