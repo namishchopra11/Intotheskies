@@ -1,3 +1,4 @@
+import { Card, Icon } from "@/components/ui";
 import { formatDateTime } from "@/lib/domain/time";
 import type { Flight, LocalDateTime } from "@/lib/types";
 
@@ -17,20 +18,20 @@ function TimeRow({
   const prior = before !== undefined && before !== after ? before : null;
   return (
     <div className="py-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+      <p className="text-xs font-medium uppercase tracking-wide text-ink-3">
         {label} · {place}
       </p>
       {cancelled ? (
-        <p className="mt-1 text-base text-neutral-500 line-through">{formatDateTime(before ?? after)}</p>
+        <p className="mt-1 text-base text-ink-3 line-through">{formatDateTime(before ?? after)}</p>
       ) : prior !== null ? (
         <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className="sr-only">Was</span>
-          <span className="text-base text-neutral-500 line-through">{formatDateTime(prior)}</span>
+          <span className="text-base text-ink-3 line-through">{formatDateTime(prior)}</span>
           <span className="sr-only">now</span>
-          <span className="text-lg font-semibold text-neutral-900">{formatDateTime(after)}</span>
+          <span className="text-lg font-semibold text-ink">{formatDateTime(after)}</span>
         </p>
       ) : (
-        <p className="mt-1 text-lg font-semibold text-neutral-900">{formatDateTime(after)}</p>
+        <p className="mt-1 text-lg font-semibold text-ink">{formatDateTime(after)}</p>
       )}
     </div>
   );
@@ -50,30 +51,30 @@ export function FlightChange({
     (original.airline !== flight.airline || original.flightNumber !== flight.flightNumber);
 
   return (
-    <section aria-labelledby="flight-heading" className="rounded-2xl border border-neutral-200 bg-white p-4">
-      <h2 id="flight-heading" className="text-sm font-medium text-neutral-500">
+    <Card as="section" aria-labelledby="flight-heading">
+      <h2 id="flight-heading" className="text-sm font-medium text-ink-3">
         Your flight
       </h2>
 
       {nameChanged ? (
-        <p className="mt-1 text-lg font-semibold text-neutral-900">
-          <span className="font-normal text-neutral-500 line-through">
+        <p className="mt-1 text-lg font-semibold text-ink">
+          <span className="font-normal text-ink-3 line-through">
             {original.airline} {original.flightNumber}
           </span>{" "}
-          <span aria-hidden="true">→</span>
+          <Icon name="arrow-right" size={18} className="inline-block align-middle" />
           <span className="sr-only">changed to</span> {flight.airline} {flight.flightNumber}
         </p>
       ) : (
-        <p className="mt-1 text-lg font-semibold text-neutral-900">
+        <p className="mt-1 text-lg font-semibold text-ink">
           {flight.airline} {flight.flightNumber}
         </p>
       )}
-      <p className="text-base text-neutral-700">
-        {flight.from} <span aria-hidden="true">→</span>
+      <p className="text-base text-ink-2">
+        {flight.from} <Icon name="arrow-right" size={18} className="inline-block align-middle" />
         <span className="sr-only">to</span> {flight.to}
       </p>
 
-      <div className="mt-3 divide-y divide-neutral-100 border-t border-neutral-100">
+      <div className="mt-3 divide-y divide-line border-t border-line">
         <TimeRow
           label="Departs"
           place={flight.from}
@@ -91,10 +92,10 @@ export function FlightChange({
       </div>
 
       {noNewTime && (
-        <p className="mt-1 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
+        <p className="mt-1 rounded-xl bg-bad-bg px-3 py-2 text-sm font-medium text-bad-fg">
           Cancelled, no new time yet
         </p>
       )}
-    </section>
+    </Card>
   );
 }

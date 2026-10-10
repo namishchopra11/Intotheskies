@@ -1,12 +1,13 @@
 "use client";
 
+import { Button, buttonClasses, Card, Icon, ProgressBar } from "@/components/ui";
 import { useState } from "react";
 import { useTripStore } from "@/lib/store";
 import type { Contact, Disruption } from "@/lib/types";
 
 function ContactAction({ contact }: { contact: Contact }) {
   const base =
-    "mt-1 inline-flex min-h-11 items-center rounded-xl border border-blue-700 px-4 text-sm font-semibold text-blue-800 active:bg-blue-50";
+    buttonClasses({ variant: "secondary", size: "sm", className: "mt-1 max-w-full text-left" });
   if (contact.phone) {
     return (
       <a href={`tel:${contact.phone.replace(/\s+/g, "")}`} className={base}>
@@ -32,7 +33,6 @@ export function Checklist({ disruption, contacts }: { disruption: Disruption; co
 
   const tasks = disruption.tasks;
   const doneCount = tasks.filter((t) => t.done).length;
-  const percent = tasks.length === 0 ? 0 : Math.round((doneCount / tasks.length) * 100);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,60 +43,51 @@ export function Checklist({ disruption, contacts }: { disruption: Disruption; co
   }
 
   return (
-    <section aria-labelledby="checklist-heading" className="rounded-2xl border border-neutral-200 bg-white p-4">
-      <h2 id="checklist-heading" className="text-base font-semibold text-neutral-900">
+    <Card as="section" aria-labelledby="checklist-heading">
+      <h2 id="checklist-heading" className="text-base font-semibold text-ink">
         What to do now
       </h2>
 
       <div className="mt-3">
-        <p className="text-sm text-neutral-700">
+        <p className="text-sm text-ink-2">
           {doneCount} of {tasks.length} done
         </p>
-        <div
-          role="progressbar"
-          aria-label="Checklist progress"
-          aria-valuenow={doneCount}
-          aria-valuemin={0}
-          aria-valuemax={tasks.length}
-          className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-200"
-        >
-          <div className="h-full rounded-full bg-blue-700 transition-[width]" style={{ width: `${percent}%` }} />
-        </div>
+        <ProgressBar value={doneCount} max={tasks.length} label="Checklist progress" hideCount className="mt-1" />
       </div>
 
-      <ul className="mt-2 divide-y divide-neutral-100">
+      <ul className="mt-2 divide-y divide-line">
         {tasks.map((task) => {
           const contact = task.contactId ? contacts.find((c) => c.id === task.contactId) : undefined;
           return (
             <li key={task.id} className="py-2">
               <div className="flex items-start gap-1">
-                <label className="flex min-h-11 flex-1 cursor-pointer items-start gap-3 py-2">
+                <label className="flex min-h-12 min-w-0 flex-1 cursor-pointer items-start gap-3 py-2">
                   <input
                     type="checkbox"
                     checked={task.done}
                     onChange={() => toggleTask(disruption.id, task.id)}
-                    className="mt-0.5 h-5 w-5 shrink-0 accent-blue-700"
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-accent"
                   />
-                  <span className={task.done ? "text-neutral-400" : "text-neutral-900"}>
+                  <span className={task.done ? "min-w-0 break-words text-ink-3" : "min-w-0 break-words text-ink"}>
                     <span className={`block text-base font-medium ${task.done ? "line-through" : ""}`}>
                       {task.title}
                     </span>
                     {task.detail && (
-                      <span className={`mt-0.5 block text-sm ${task.done ? "line-through" : "text-neutral-600"}`}>
+                      <span className={`mt-0.5 block text-sm ${task.done ? "line-through" : "text-ink-2"}`}>
                         {task.detail}
                       </span>
                     )}
                   </span>
                 </label>
                 {task.source === "custom" && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     aria-label="Remove task"
                     onClick={() => removeTask(disruption.id, task.id)}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl text-neutral-500 active:bg-neutral-100"
+                    className="w-12 shrink-0 px-0 text-ink-3"
                   >
-                    <span aria-hidden="true">×</span>
-                  </button>
+                    <Icon name="x" />
+                  </Button>
                 )}
               </div>
               {contact && (
@@ -109,7 +100,7 @@ export function Checklist({ disruption, contacts }: { disruption: Disruption; co
         })}
       </ul>
 
-      <form onSubmit={submit} className="mt-3 flex gap-2 border-t border-neutral-100 pt-4">
+      <form onSubmit={submit} className="mt-3 flex gap-2 border-t border-line pt-4">
         <label htmlFor="new-task" className="sr-only">
           Add your own task
         </label>
@@ -119,15 +110,16 @@ export function Checklist({ disruption, contacts }: { disruption: Disruption; co
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Add your own task"
-          className="min-h-11 min-w-0 flex-1 rounded-xl border border-neutral-300 bg-white px-3 text-base text-neutral-900 placeholder:text-neutral-400"
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 text-base text-ink placeholder:text-ink-3"
         />
-        <button
+        <Button
           type="submit"
-          className="min-h-11 shrink-0 rounded-xl bg-neutral-900 px-5 text-base font-semibold text-white active:bg-neutral-700"
+          variant="secondary"
+          className="shrink-0"
         >
           Add
-        </button>
+        </Button>
       </form>
-    </section>
+    </Card>
   );
 }
