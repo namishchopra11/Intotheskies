@@ -24,12 +24,12 @@ function subscribe(cb: () => void) {
 }
 function getPref(): ThemePreference {
   const p = document.documentElement.getAttribute("data-theme-pref");
-  return p === "light" || p === "dark" ? p : "system";
+  return p === "dark" || p === "system" ? p : "light";
 }
 
 /** Light / Dark / Auto (follows the phone). Remembered on this device. */
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
-  const pref = useSyncExternalStore(subscribe, getPref, () => "system" as ThemePreference);
+  const pref = useSyncExternalStore(subscribe, getPref, () => "light" as ThemePreference);
   return (
     <div role="radiogroup" aria-label="Appearance" className="inline-flex rounded-control bg-sunk p-1">
       {OPTIONS.map((o) => {

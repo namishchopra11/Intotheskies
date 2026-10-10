@@ -134,3 +134,9 @@ html[data-theme="dark"] {
 :root { --bg:var(--background); --ink:var(--foreground); --ink-2:var(--muted); --ink-3:var(--muted); --line:var(--border); --line-strong:#94a4a6; --font-ui:var(--font-public-sans); --font-num:var(--font-public-sans); --scrim:rgb(24 47 60 / .45); }
 @theme inline { --color-bg:var(--background); --color-focus:var(--focus); }
 html {background:var(--background); -webkit-text-size-adjust:100%}
+
+.ck-toggle-full {border-radius:0}
+.ck-card, .ck-heading {overflow-wrap:anywhere}
+.ck-badge svg {flex-shrink:0}
+.ck-empty h1 {margin:16px 0 12px}
+.ck-empty p {margin:12px 0 20px}
