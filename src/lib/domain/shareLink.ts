@@ -11,8 +11,9 @@ import {
 import { SolanaAddressSchema } from "@/lib/solana/address";
 import { SOLANA_CLUSTER, SolanaClusterSchema } from "@/lib/solana/config";
 import { normalizeUsdcAmount, UsdcAmountSchema } from "@/lib/solana/pay";
+import { recipientTasks } from "./checklist";
 import { computeImpact, ImpactSchema } from "./impact";
-import { buildSummary, type SummaryOptions } from "./summary";
+import type { SummaryOptions } from "./summary";
 
 // What the read-only page (/s) receives. Nothing else leaves the device.
 // Links look like `/s#<fragment>`; the fragment never reaches a server.
@@ -52,8 +53,10 @@ export const ShareSnapshotSchema = z.object({
     }),
   ),
   impact: ImpactSchema, // affectedStays is empty unless includeStays
-  openTasks: z.array(z.string()), // titles of unfinished tasks; empty unless includeOpenTasks
-  summary: z.string(), // the same text buildSummary returns
+  openTasks: z.array(z.string()), // what is still being sorted, worded for the reader; empty unless includeOpenTasks
+  // Links made before this was dropped carry buildSummary's text. /s never showed it, so
+  // new links leave it out (shorter link); it stays optional so old ones still decode.
+  summary: z.string().optional(),
   // Present only when the traveler asked for funds and the trip has a payoutAddress.
   // Optional, so links made without it still decode; if it is malformed it is dropped
   // and the rest of the update still shows.
@@ -109,10 +112,7 @@ export function encodeShare(trip: Trip, disruptionId: string, options: SummaryOp
         }))
       : [],
     impact: options.includeStays ? impact : { ...impact, affectedStays: [] },
-    openTasks: options.includeOpenTasks
-      ? disruption.tasks.filter((t) => !t.done).map((t) => t.title)
-      : [],
-    summary: buildSummary(trip, disruptionId, options),
+    openTasks: options.includeOpenTasks ? recipientTasks(trip, disruption, options) : [],
     ...(fundsAmount && trip.payoutAddress
       ? {
           fundsRequest: {
@@ -129,6 +129,9 @@ export function encodeShare(trip: Trip, disruptionId: string, options: SummaryOp
     .replace(/\$/g, "~");
 }
 
+// Links made before the share task was kept out of the list still carry its title.
+const SEND_UPDATE_TITLE = /^send an update to someone\b/i;
+
 /** Accepts the fragment with or without a leading "#". Returns null for anything malformed. */
 export function decodeShare(fragment: string): ShareSnapshot | null {
   try {
@@ -138,7 +141,8 @@ export function decodeShare(fragment: string): ShareSnapshot | null {
     const json = decompressFromEncodedURIComponent(raw.replace(/_/g, "+").replace(/~/g, "$"));
     if (!json) return null;
     const parsed = ShareSnapshotSchema.safeParse(JSON.parse(json));
-    return parsed.success ? parsed.data : null;
+    if (!parsed.success) return null;
+    return { ...parsed.data, openTasks: parsed.data.openTasks.filter((t) => !SEND_UPDATE_TITLE.test(t)) };
   } catch {
     return null;
   }

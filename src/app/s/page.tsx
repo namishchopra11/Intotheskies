@@ -16,6 +16,7 @@ const getHash = () => window.location.hash;
 const getServerHash = () => null;
 
 type Flight = ShareSnapshot["flights"][number];
+type Stay = ShareSnapshot["stays"][number];
 type Connection = NonNullable<ShareSnapshot["impact"]["connection"]>;
 
 export default function SharedUpdatePage() {
@@ -42,7 +43,7 @@ function Update({ s }: { s: ShareSnapshot }) {
   const stagger = (i: number) => ({ animationDelay: `${i * 110}ms` });
   const risks = s.impact.affectedStays
     .map((a) => s.stays.find((x) => x.id === a.stayId))
-    .filter((x): x is ShareSnapshot["stays"][number] => Boolean(x));
+    .filter((x): x is Stay => Boolean(x));
 
   return (
     <div className="flex flex-1 flex-col">
@@ -66,8 +67,20 @@ function Update({ s }: { s: ShareSnapshot }) {
         </ol>
       </Section>
 
+      {s.stays.length > 0 && (
+        <Section title="Hotel" className="pt-6" style={stagger(3)}>
+          <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
+            {s.stays.map((stay) => (
+              <li key={stay.id}>
+                <HotelStay stay={stay} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
       {(risks.length > 0 || s.openTasks.length > 0) && (
-        <Section title="Still being sorted" className="pt-6" gap="gap-2.5" style={stagger(3)}>
+        <Section title="Still being sorted" className="pt-6" gap="gap-2.5" style={stagger(4)}>
           <ul className="flex flex-col">
             {risks.map((stay) => (
               <li key={stay.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2 text-[15px]">
@@ -187,6 +200,28 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
       {f.bookingRef && (
         <p className="text-[13px] text-ink-2">
           Booking reference <span className="font-num font-medium text-ink">{f.bookingRef}</span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+function HotelStay({ stay }: { stay: Stay }) {
+  return (
+    <div className="flex flex-col gap-1.5 px-4 py-3.5">
+      <p className="text-[17px] leading-snug font-medium">{stay.name}</p>
+      <p className="text-[14px] text-ink-2">{stay.address}</p>
+      <p className="text-[15px]">
+        {formatDate(stay.checkIn)} → {formatDate(stay.checkOut)}
+      </p>
+      {stay.latestCheckIn && (
+        <p className="text-[14px] text-ink-2">
+          Front desk open until <span className="font-num font-medium text-ink">{stay.latestCheckIn}</span>
+        </p>
+      )}
+      {stay.confirmation && (
+        <p className="text-[13px] text-ink-2">
+          Confirmation <span className="font-num font-medium text-ink">{stay.confirmation}</span>
         </p>
       )}
     </div>

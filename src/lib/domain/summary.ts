@@ -1,5 +1,6 @@
 import type { Disruption, Flight, Trip } from "@/lib/types";
 import { cityName } from "./airports";
+import { recipientTasks } from "./checklist";
 import { computeImpact, isArrivalUnknown, type Impact } from "./impact";
 import { datePart, formatDate, formatDateTime, formatDuration, timePart } from "./time";
 
@@ -119,10 +120,10 @@ export function buildSummary(trip: Trip, disruptionId: string, options: SummaryO
   }
 
   if (options.includeOpenTasks) {
-    const open = disruption.tasks.filter((t) => !t.done);
+    const open = recipientTasks(trip, disruption, options);
     lines.push("", "Still to sort out:");
-    if (open.length === 0) lines.push("Nothing. Everything on my list is done.");
-    for (const t of open) lines.push(`- ${t.title}`);
+    if (open.length === 0) lines.push("Nothing outstanding.");
+    for (const t of open) lines.push(`- ${t}`);
   }
 
   return lines.join("\n");
