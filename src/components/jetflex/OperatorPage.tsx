@@ -1,12 +1,16 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { AIRCRAFT_TYPES, AIRPORTS, FLEET, METROS, OPERATORS, RULES } from "@/lib/jetflex/data";
-import { demandList, fleetOverview, rankOpportunities, totals, type Opportunity } from "@/lib/jetflex/operator";
+import { AIRCRAFT_TYPES, AIRPORTS, METROS, OPERATORS, RULES } from "@/lib/jetflex/data";
+import { allFleet, deriveLegs } from "@/lib/jetflex/inventory";
+import { demandList, fleetOverview, legWeek, pitchFacts, rankOpportunities, revenueProjection, totals, type Opportunity } from "@/lib/jetflex/operator";
 import { addDays, fmtDate, fmtDur, fmtHHmm, localDate, localHHmm, usd } from "@/lib/jetflex/time";
 import { useJet, useWorld } from "@/lib/jetflex/store";
 import type { LegStatus } from "@/lib/jetflex/types";
 import { Badge, Button, Card, cx, Field, Input, Notice, PageHeader, Select, SimBadge, Skeleton, Stat, Toggle } from "./ui";
+import { OperatorImport } from "./OperatorImport";
+import { OperatorPitch } from "./OperatorPitch";
+import { OperatorRevenueChart } from "./OperatorRevenueChart";
 
 const when = (l: Opportunity["leg"]) => { const tz = AIRPORTS[l.from].tz; return `${fmtDate(localDate(l.earliest, tz))} · ${fmtHHmm(localHHmm(l.earliest, tz))}–${fmtHHmm(localHHmm(l.latest, tz))}`; };
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -60,9 +64,12 @@ function Detail({ o }: { o: Opportunity }) {
 }
 
 export function OperatorPage() {
-  const { ready, today, legs, request } = useWorld();
+  const { ready, today, legs, request, imported } = useWorld();
   const patch = useJet((s) => s.patchLeg);
   const custom = useJet((s) => s.customFlights);
+  const overrides = useJet((s) => s.ops);
+  const setImported = useJet((s) => s.setImported);
+  const clearImported = useJet((s) => s.clearImported);
   const addFlight = useJet((s) => s.addFlight);
   const removeFlight = useJet((s) => s.removeFlight);
   const [open, setOpen] = useState<string | null>(null);
@@ -76,8 +83,14 @@ export function OperatorPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const demand = useMemo(() => demandList(today, request), [today, request, tick]);
   const ops = useMemo(() => (ready ? rankOpportunities(legs, demand) : []), [ready, legs, demand]);
-  const fleet = useMemo(() => (ready ? fleetOverview(today, legs, custom) : []), [ready, today, legs, custom]);
+  const fleet = useMemo(() => (ready ? fleetOverview(today, legs, custom, imported) : []), [ready, today, legs, custom, imported]);
   const t = totals(ops);
+  const projection = useMemo(() => revenueProjection(ops, { today }), [ops, today]);
+  // The same model with no operator edits, so the chart can say what your changes are worth.
+  const baseline = useMemo(() => (ready ? revenueProjection(rankOpportunities(deriveLegs(today, {}, custom, imported), demand), { today }) : projection), [ready, today, custom, imported, demand, projection]);
+  const facts = useMemo(() => pitchFacts(ops, projection, imported), [ops, projection, imported]);
+  const fleetList = useMemo(() => allFleet(imported), [imported]);
+  const inNextWeek = (o: Opportunity) => legWeek(o.leg.id, o.leg.earliest, today) === 1;
   const refresh = () => { setBusy(true); setTimeout(() => { setTick((x) => x + 1); setBusy(false); }, 700); };
   const date = form.date || (ready ? addDays(today, 3) : "");
   const gaPorts = Object.values(AIRPORTS).filter((a) => a.ga);
@@ -95,6 +108,8 @@ export function OperatorPage() {
         JetFlex reads an operator’s schedule, finds aircraft that must fly empty, matches them to traveler searches and models the upside. Changes here feed straight into the traveler search.
       </PageHeader>
 
+      <OperatorPitch facts={facts} />
+
       <Card className="mb-8 grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Detected legs" value={t.legs} note="Gaps between consecutive booked flights." />
         <Stat label="Published" value={t.published} note="Visible to travelers right now." />
@@ -103,17 +118,19 @@ export function OperatorPage() {
         <Stat label="Legs with demand" value={`${t.matched}/${t.published}`} note={`${t.seats} seats of otherwise empty capacity.`} />
       </Card>
 
+      <OperatorRevenueChart projection={projection} baseline={baseline} nextWeek={nextWeek} onNextWeek={setNextWeek} />
+
       <section className="mb-10">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="display text-2xl">Detected empty legs</h2><Button onClick={refresh} disabled={busy}><RefreshCw size={15} className={busy ? "animate-spin" : ""} />{busy ? "Refreshing…" : "Refresh matching"}</Button></div>
         {busy ? <div className="space-y-2"><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div> : (
           <div className="overflow-hidden rounded-2xl border border-line">
-            {ops.filter((o) => nextWeek || !/w1$/.test(o.leg.id)).map((o) => {
+            {ops.filter((o) => nextWeek || !inNextWeek(o)).map((o) => {
               const l = o.leg;
               const isOpen = open === l.id;
               return (
                 <div key={l.id} className="border-b border-line/70 last:border-0">
                   <div className="grid grid-cols-1 items-center gap-3 p-4 lg:grid-cols-[1.4fr_1fr_0.8fr_0.7fr_auto]">
-                    <div><p className="text-sm">{l.from} → {l.to} <span className="text-steel">· {METROS[AIRPORTS[l.from].metro].short} to {METROS[AIRPORTS[l.to].metro].short}</span></p><p className="num text-xs text-steel">{when(l)} · {l.aircraftId} {AIRCRAFT_TYPES[l.typeId].short} · {l.cap} seats · {OPERATORS[l.operator].name}</p></div>
+                    <div><p className="text-sm">{l.from} → {l.to} <span className="text-steel">· {METROS[AIRPORTS[l.from].metro].short} to {METROS[AIRPORTS[l.to].metro].short}</span></p><p className="num text-xs text-steel">{when(l)} · {l.aircraftId} {AIRCRAFT_TYPES[l.typeId].short} · {l.cap} seats · {OPERATORS[l.operator]?.name ?? l.operator}</p></div>
                     <div className="num text-sm"><span className="text-warm">{usd(l.price)}</span> <span className="text-steel">offer</span><p className="text-xs text-steel">charter est. {usd(l.charterEst)} · suggested {usd(l.suggested)}</p></div>
                     <div className="flex flex-wrap items-center gap-1.5"><Badge tone={l.published ? "ok" : "steel"}>{l.published ? "Published" : "Detected only"}</Badge>{l.status !== "available" && <Badge tone={l.status === "limited" ? "warn" : "bad"}>{l.status === "limited" ? "Limited" : "Unavailable"}</Badge>}</div>
                     <div className="num text-sm"><p>{o.matches.length} match{o.matches.length === 1 ? "" : "es"}</p><p className="text-xs text-steel">{pct(o.confidence)} conf. · {usd(o.expected)} exp.</p></div>
@@ -132,9 +149,11 @@ export function OperatorPage() {
             })}
           </div>
         )}
-        <label className="mt-3 flex items-center gap-2 text-sm text-steel"><Toggle label="Include the following week" checked={nextWeek} onChange={setNextWeek} />Include the following week ({ops.filter((o) => /w1$/.test(o.leg.id)).length} more legs)</label>
+        <label className="mt-3 flex items-center gap-2 text-sm text-steel"><Toggle label="Include the following week" checked={nextWeek} onChange={setNextWeek} />Include the following week ({ops.filter(inNextWeek).length} more legs)</label>
         <p className="mt-2 text-xs text-steel">Published, available legs appear in traveler search immediately. Set one unavailable and it moves to the traveler’s “excluded” list.</p>
       </section>
+
+      <OperatorImport today={today} overrides={overrides} custom={custom} imported={imported} onApply={setImported} onClear={clearImported} />
 
       <div className="mb-10 grid gap-8 xl:grid-cols-2">
         <section>
@@ -142,7 +161,7 @@ export function OperatorPage() {
           <Card className="space-y-4 p-5">
             <p className="text-sm text-steel">Add an upcoming booked flight. If the aircraft’s next departure is somewhere other than where this one ends, JetFlex flags the gap as a repositioning opportunity.</p>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Aircraft">{(id) => <Select id={id} value={form.aircraft} onChange={(e) => setForm({ ...form, aircraft: e.target.value })}>{FLEET.map((a) => <option key={a.id} value={a.id}>{a.id} · {AIRCRAFT_TYPES[a.type].short}</option>)}</Select>}</Field>
+              <Field label="Aircraft">{(id) => <Select id={id} value={form.aircraft} onChange={(e) => setForm({ ...form, aircraft: e.target.value })}>{fleetList.filter((a) => AIRCRAFT_TYPES[a.type]).map((a) => <option key={a.id} value={a.id}>{a.id} · {AIRCRAFT_TYPES[a.type].short}</option>)}</Select>}</Field>
               <Field label="Date">{(id) => <Input id={id} type="date" min={today} value={date} onChange={(e) => setForm({ ...form, date: e.target.value })} />}</Field>
               <Field label="From">{(id) => <Select id={id} value={form.from} onChange={(e) => setForm({ ...form, from: e.target.value })}>{gaPorts.map((a) => <option key={a.code} value={a.code}>{a.code} · {a.city}</option>)}</Select>}</Field>
               <Field label="To">{(id) => <Select id={id} value={form.to} onChange={(e) => setForm({ ...form, to: e.target.value })}>{gaPorts.map((a) => <option key={a.code} value={a.code}>{a.code} · {a.city}</option>)}</Select>}</Field>
@@ -170,7 +189,7 @@ export function OperatorPage() {
         <h2 className="display mb-3 text-2xl">Fleet overview</h2>
         <div className="overflow-x-auto rounded-2xl border border-line">
           <table className="w-full min-w-[760px] text-sm"><thead className="bg-panel/60 text-left text-xs text-steel"><tr>{["Aircraft", "Type", "Seats", "Operator", "At planning time", "Status", "Next booked flights"].map((h) => <th key={h} scope="col" className="p-3 font-normal">{h}</th>)}</tr></thead>
-            <tbody>{fleet.map((f) => <tr key={f.aircraft.id} className="border-t border-line/70"><td className="num p-3">{f.aircraft.id}</td><td className="p-3">{f.type.name}</td><td className="num p-3">{f.type.cap}</td><td className="p-3 text-steel">{OPERATORS[f.aircraft.operator].name}</td><td className="num p-3">{f.location}</td><td className="p-3"><Badge tone={f.status === "On schedule" ? "ok" : f.status.startsWith("Positioning leg withdrawn") ? "bad" : "warn"}>{f.status}</Badge></td><td className="num p-3 text-xs text-steel">{f.upcoming.join(" · ") || "None in window"}</td></tr>)}</tbody>
+            <tbody>{fleet.map((f) => <tr key={f.aircraft.id} className="border-t border-line/70"><td className="num p-3">{f.aircraft.id}</td><td className="p-3">{f.type.name}</td><td className="num p-3">{f.type.cap}</td><td className="p-3 text-steel">{OPERATORS[f.aircraft.operator]?.name ?? f.aircraft.operator}</td><td className="num p-3">{f.location}</td><td className="p-3"><Badge tone={f.status === "On schedule" ? "ok" : f.status.startsWith("Positioning leg withdrawn") ? "bad" : "warn"}>{f.status}</Badge></td><td className="num p-3 text-xs text-steel">{f.upcoming.join(" · ") || "None in window"}</td></tr>)}</tbody>
           </table>
         </div>
         <p className="mt-2 text-xs text-steel">Sample fleet and schedule, all fictional. “Planning time” is midnight on the anchor Friday.</p>

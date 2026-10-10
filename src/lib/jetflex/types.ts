@@ -22,10 +22,11 @@ export type AircraftType = {
   id: string;
   name: string;
   short: string;
-  cls: "Light jet" | "Super-midsize" | "Midsize" | "Heavy jet";
+  cls: "Light jet" | "Super-midsize" | "Midsize" | "Heavy jet" | "Ultra-long-range";
   cap: number;
   speed: number; // km/h block speed
   rate: number; // illustrative USD per block hour
+  range?: number; // km, nonstop with the typical charter cabin load (illustrative)
   wifi: "none" | "basic" | "high-speed";
   lav: boolean; // enclosed lavatory
   galley: "cold" | "hot";
@@ -35,8 +36,15 @@ export type AircraftType = {
   bed: boolean;
 };
 
-export type Aircraft = { id: string; type: string; operator: string; baseAirport: string; autoList: boolean };
-export type Operator = { id: string; name: string };
+export type Aircraft = {
+  id: string; // stable fleet key used in leg ids and the schedule (keep it stable)
+  type: string;
+  operator: string;
+  baseAirport: string;
+  autoList: boolean;
+  tail?: string; // tail-number style registration for display, e.g. "N305JX" (fictional)
+};
+export type Operator = { id: string; name: string; blurb?: string; base?: string };
 
 export type SchedFlight = { id: string; aircraft: string; from: string; to: string; day?: number; date?: string; dep: string };
 
@@ -62,6 +70,8 @@ export type EmptyLeg = {
   prev: string; // description of the flight before / after, for "why flagged"
   next: string;
   gapMin: number; // idle time between the two scheduled flights
+  tail?: string; // registration of the aircraft, for display
+  source?: "detected" | "imported"; // imported = offered explicitly in an operator CSV
 };
 
 export type Segment = {
@@ -80,6 +90,11 @@ export type Segment = {
   typeId?: string;
   caveat?: string;
   nonstop?: boolean;
+  carrier?: string; // scheduled first class: simulated carrier name
+  flightNo?: string; // e.g. "CRL 214" (simulated)
+  equip?: string; // aircraft family on the scheduled service
+  seatsLeft?: number; // first-class seats still open in the simulated inventory
+  fareClass?: string;
 };
 
 export type Journey = {
@@ -160,4 +175,31 @@ export type SearchResult = {
   excluded: Excluded[];
   assumptions: string[];
   flexProfile: { flexH: number; emptyLegs: number; total: number }[];
+};
+
+/** A flight row accepted from an operator CSV (see csvImport.ts), normalised to the app's time model. */
+export type ImportedRow = {
+  line: number; // 1-based line in the CSV file
+  tail: string;
+  aircraftId: string; // fleet id the row belongs to (the seeded id when the tail is already in the fleet)
+  typeId: string;
+  from: string;
+  to: string;
+  depDate: string; // local at origin, YYYY-MM-DD
+  depTime: string; // HH:mm local at origin
+  arrDate: string;
+  arrTime: string;
+  dep: number; // absolute minutes
+  arr: number;
+  seats: number;
+  price: number | null; // whole-aircraft offer in USD, null when the row did not give one
+  status: "booked" | "empty" | "limited" | "unavailable";
+};
+
+/** Normalised operator inventory that can be merged into the empty-leg engine. */
+export type ImportedInventory = {
+  fleet: Aircraft[]; // tails that are not in the seeded fleet
+  schedule: SchedFlight[]; // booked flights, same shape as the Operator page's custom flights
+  offered: ImportedRow[]; // rows the operator already lists as empty legs (with their own price)
+  rows: ImportedRow[]; // every accepted row
 };

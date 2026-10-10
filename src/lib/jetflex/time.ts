@@ -51,3 +51,19 @@ export const fmtDur = (min: number) => {
 };
 
 export const usd = (n: number) => `${n < 0 ? "−" : ""}$${Math.abs(Math.round(n)).toLocaleString("en-US")}`;
+
+// ---- strict parsing (used by the operator CSV import) -----------------------------------------
+/** True for a real calendar date written YYYY-MM-DD (rejects 2026-02-31). */
+export const isValidDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && daysToDate(dateToDays(d)) === d;
+/** True for a 24-hour HH:mm clock time (rejects 24:00 and 99:99). */
+export const isValidHHmm = (t: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+/**
+ * Reads "YYYY-MM-DD HH:mm" or "YYYY-MM-DDTHH:mm" (a trailing Z or offset is rejected: the app only
+ * deals in local wall-clock times). Returns null when the shape or the date does not exist.
+ */
+export function parseLocalDateTime(s: string): { date: string; time: string } | null {
+  const m = s.trim().match(/^(\d{4}-\d{2}-\d{2})[T ]+(\d{1,2}:\d{2})$/);
+  if (!m) return null;
+  const time = m[2].padStart(5, "0");
+  return isValidDate(m[1]) && isValidHHmm(time) ? { date: m[1], time } : null;
+}

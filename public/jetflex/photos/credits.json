@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "note": "One entry per photo slot. To use a photo: drop the file next to this manifest, set \"added\" to true, set \"status\" to \"added\", and fill in photographer, sourceUrl and licence. Until \"added\" is true the app shows a built-in illustration and makes no request for the file.",
+  "photos": {
+    "jet-apron": {
+      "file": "jet-apron.jpg",
+      "title": "Private jet on the apron",
+      "alt": "A private jet parked on the apron at dusk with its cabin lights on",
+      "where": "Overview hero background (wide, subject on the right third)",
+      "focal": "72% 55%",
+      "added": false,
+      "status": "file not yet added",
+      "photographer": null,
+      "sourceUrl": null,
+      "licence": null
+    },
+    "cabin-interior": {
+      "file": "cabin-interior.jpg",
+      "title": "Private jet cabin interior",
+      "alt": "The cabin of a private jet with leather club seats and a polished table",
+      "where": "Overview feature tile for My Cabin",
+      "focal": "50% 50%",
+      "added": false,
+      "status": "file not yet added",
+      "photographer": null,
+      "sourceUrl": null,
+      "licence": null
+    },
+    "runway-dusk": {
+      "file": "runway-dusk.jpg",
+      "title": "Runway at dusk",
+      "alt": "A runway at dusk with edge lights glowing under an orange and violet sky",
+      "where": "Overview feature tile for empty-leg opportunities",
+      "focal": "50% 60%",
+      "added": false,
+      "status": "file not yet added",
+      "photographer": null,
+      "sourceUrl": null,
+      "licence": null
+    },
+    "miami-skyline": {
+      "file": "miami-skyline.jpg",
+      "title": "Miami skyline",
+      "alt": "The Miami skyline across the water at sunset",
+      "where": "Overview feature tile for the Miami demo trip",
+      "focal": "50% 55%",
+      "added": false,
+      "status": "file not yet added",
+      "photographer": null,
+      "sourceUrl": null,
+      "licence": null
+    }
+  }
+}

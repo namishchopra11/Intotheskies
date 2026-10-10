@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AIRPORTS, DEMAND } from "./data";
+import { AIRCRAFT_TYPES, AIRPORTS, DEMAND } from "./data";
 import { deriveLegs } from "./inventory";
 import { validate } from "./journeys";
 import { analyze, demandList } from "./operator";
@@ -57,7 +57,7 @@ describe("search", () => {
   });
   it("respects capacity: 8 travelers rules out the 6-seat empty legs and light charter", () => {
     for (const i of run({ pax: 8 }).itineraries)
-      for (const s of i.journeys.flatMap((j) => j.segments)) if (s.typeId) expect(["latitude", "challenger", "g450"]).toContain(s.typeId);
+      for (const s of i.journeys.flatMap((j) => j.segments)) if (s.typeId) expect(AIRCRAFT_TYPES[s.typeId].cap).toBeGreaterThanOrEqual(8);
   });
   it("budget excludes expensive options", () => {
     const r = run({ budget: 12000 });

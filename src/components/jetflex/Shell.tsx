@@ -41,7 +41,7 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
             const on = href === "/jetflex" ? path === href : path.startsWith(href);
             return (
               <Link key={href} href={href} onClick={onNavigate} aria-current={on ? "page" : undefined}
-                className={cx("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors", on ? "bg-panel-2 text-warm shadow-[inset_2px_0_0_0_#D5B779]" : "text-steel hover:bg-panel hover:text-warm")}>
+                className={cx("flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors", on ? "bg-panel-2 text-warm shadow-[inset_2px_0_0_0_#D5B779]" : "text-steel hover:bg-panel hover:text-warm")}>
                 <Icon size={17} strokeWidth={1.6} className={on ? "text-gold" : ""} aria-hidden />
                 {label}
               </Link>
@@ -65,10 +65,10 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
   }, [onClose]);
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-midnight/80 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal aria-label="Settings" onClick={onClose}>
-      <div className="rise w-full max-w-md rounded-2xl border border-line bg-panel p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="rise max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-line bg-panel p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="display text-2xl">Profile & settings</h2>
-          <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-steel hover:text-warm"><X size={18} /></button>
+          <button onClick={onClose} aria-label="Close" className="-mr-2 flex h-11 w-11 items-center justify-center rounded-lg text-steel hover:text-warm"><X size={18} /></button>
         </div>
         <Field label="Traveler name" hint="Used on cabin service briefs. Stored only in this browser.">
           {(id) => <Input id={id} value={cabin.name} onChange={(e) => setCabin({ ...cabin, name: e.target.value })} placeholder="e.g. Alex Morgan" />}
@@ -99,7 +99,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
         <div className="space-y-3">
           <p className="rounded-xl border border-warn/30 bg-warn/5 px-3 py-2 text-[11px] leading-snug text-warn">Demo inventory is simulated. Nothing here is bookable or real-time.</p>
-          <button onClick={() => setSettings(true)} className="flex w-full items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-left hover:bg-panel">
+          <button onClick={() => setSettings(true)} className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-left hover:bg-panel">
             <span className="display flex h-8 w-8 items-center justify-center rounded-full bg-gold/15 text-gold">{initial.toUpperCase()}</span>
             <span className="min-w-0 flex-1"><span className="block truncate text-sm">{ready && name ? name : "Guest traveler"}</span><span className="block text-xs text-steel">Profile & settings</span></span>
             <Settings size={15} className="text-steel" aria-hidden />
@@ -110,8 +110,8 @@ export function Shell({ children }: { children: ReactNode }) {
       <div className="min-w-0">
         <div className="sticky top-0 z-40 border-b border-line bg-midnight/90 backdrop-blur lg:hidden">
           <div className="flex h-14 items-center justify-between px-4">
-            <Link href="/jetflex" aria-label="JetFlex home"><Wordmark /></Link>
-            <button aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)} className="rounded-lg p-2 text-warm">{open ? <X size={20} /> : <Menu size={20} />}</button>
+            <Link href="/jetflex" aria-label="JetFlex home" className="flex min-h-11 items-center"><Wordmark /></Link>
+            <button aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)} className="-mr-2 flex h-11 w-11 items-center justify-center rounded-lg text-warm">{open ? <X size={20} /> : <Menu size={20} />}</button>
           </div>
           {open && (
             <div className="rise max-h-[80dvh] overflow-y-auto border-t border-line bg-deep px-3 py-4">
@@ -120,7 +120,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           )}
         </div>
-        <main className="mx-auto w-full max-w-[1240px] px-4 py-8 sm:px-8 sm:py-10">{children}</main>
+        <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-8 sm:py-10">{children}</main>
       </div>
       {settings && <SettingsDialog onClose={() => setSettings(false)} />}
     </div>

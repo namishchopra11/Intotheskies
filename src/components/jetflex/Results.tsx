@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
-import { Check, ChevronDown, ListFilter, Sparkles } from "lucide-react";
+import { Check, ChevronDown, ListFilter, Repeat2, Sparkles } from "lucide-react";
 import { FLEX_LABEL } from "@/lib/jetflex/journeys";
 import { PRESETS } from "@/lib/jetflex/search";
 import { fmtDur, usd } from "@/lib/jetflex/time";
 import type { Excluded, Itinerary, Kind, SearchResult, TripRequest } from "@/lib/jetflex/types";
 import { KIND_COLOR, KIND_NAME, ScoreBars } from "./charts";
 import { riskLabel, riskTone } from "./Itinerary";
-import { Badge, Button, Card, cx } from "./ui";
+import { Badge, Button, Card, CountUp, cx, LinkButton, stagger } from "./ui";
 
 const KINDS: Kind[] = ["charter", "empty_leg", "first_class", "hybrid"];
 const EMPTY: Record<Kind, string> = {
@@ -31,64 +31,126 @@ const ROWS: Row[] = [
   { label: "Saves vs charter", get: (i) => (i.kind === "charter" ? "Baseline" : i.savingsVsCharter == null ? "n/a" : i.savingsVsCharter >= 0 ? usd(i.savingsVsCharter) : `${usd(-i.savingsVsCharter)} more`) },
 ];
 
-/** The best option of each mode, side by side, with the recommended one marked. */
+/** The best option of each mode, side by side, with the recommended one marked. Stacked cards on phones, a table from md up. */
 export function Comparison({ items, selectedId, onSelect, topId }: { items: Itinerary[]; selectedId?: string; onSelect: (id: string) => void; topId?: string }) {
   const best = KINDS.map((k) => items.find((i) => i.kind === k));
   const present = best.filter(Boolean) as Itinerary[];
   const winner = (r: Row, i: Itinerary) => { if (!r.num || present.length < 2) return false; const v = present.map(r.num); const t = r.low ? Math.min(...v) : Math.max(...v); return r.num(i) === t && new Set(v).size > 1; };
+  const rowOf = (label: string) => ROWS.find((r) => r.label === label)!;
   return (
-    <div className="overflow-x-auto rounded-2xl border border-line">
-      <table className="w-full min-w-[720px] border-collapse text-sm">
-        <caption className="sr-only">Best option in each travel mode, same party size and dates</caption>
-        <thead>
-          <tr>
-            <th className="w-[170px] bg-panel/50 p-3" />
-            {KINDS.map((k, n) => {
-              const it = best[n];
-              return (
-                <th key={k} scope="col" className={cx("relative border-l border-line p-3 text-left align-top font-normal", it && it.id === selectedId ? "bg-panel-2" : "bg-panel/50")}>
-                  <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-[0.14em]" style={{ color: KIND_COLOR[k] }}><span className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR[k] }} />{KIND_NAME[k]}</span>
-                  {it ? (
-                    <>
-                      <button onClick={() => onSelect(it.id)} className="text-left text-[13px] leading-snug text-warm underline-offset-2 hover:underline">{it.name}</button>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {it.id === topId && <Badge tone="gold"><Sparkles size={10} />Recommended</Badge>}
-                        {it.tags.map((t) => <Badge key={t} tone="teal">{t}</Badge>)}
-                        {it.id === selectedId && <Badge tone="ok"><Check size={10} />Selected</Badge>}
-                      </div>
-                    </>
-                  ) : <span className="text-xs text-steel">Not available</span>}
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {ROWS.map((r) => (
-            <tr key={r.label} className="border-t border-line/70">
-              <th scope="row" className="p-3 text-left text-xs font-normal text-steel">{r.label}</th>
-              {best.map((it, n) => (
-                <td key={KINDS[n]} className={cx("num border-l border-line/70 p-3", it && it.id === selectedId && "bg-panel-2/60", it && winner(r, it) ? "text-gold" : "text-warm")}>
-                  {it ? r.get(it) : n === 0 || r.label !== ROWS[0].label ? "–" : ""}
-                </td>
-              ))}
+    <>
+      <ul className="grid gap-3 md:hidden" aria-label="Best option in each travel mode">
+        {KINDS.map((k, n) => {
+          const it = best[n];
+          const on = Boolean(it && it.id === selectedId);
+          if (!it)
+            return (
+              <li key={k} className="rise rounded-2xl border border-dashed border-line p-4" style={stagger(n)}>
+                <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-[0.14em]" style={{ color: KIND_COLOR[k] }}><span className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR[k] }} />{KIND_NAME[k]}</span>
+                <p className="text-sm text-steel">{EMPTY[k]}</p>
+              </li>
+            );
+          const win = (label: string) => (winner(rowOf(label), it) ? "text-gold" : "text-warm");
+          return (
+            <li key={k} className="rise" style={stagger(n)}>
+              <button onClick={() => onSelect(it.id)} aria-pressed={on} className={cx("block w-full rounded-2xl border p-4 text-left transition-colors", on ? "border-gold bg-panel-2" : "border-line bg-panel/60 active:bg-panel-2")}>
+                <span className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-xs uppercase tracking-[0.14em]" style={{ color: KIND_COLOR[k] }}><span className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR[k] }} />{KIND_NAME[k]}</span>
+                  <span className="flex gap-1">{it.id === topId && <Badge tone="gold"><Sparkles size={10} />Recommended</Badge>}{on && <Badge tone="ok"><Check size={10} />Selected</Badge>}</span>
+                </span>
+                <span className="mt-1.5 block text-[13px] leading-snug text-warm">{it.name}</span>
+                <span className="mt-3 flex items-baseline gap-2">
+                  <span className={cx("num text-2xl", win("Total trip price"))}><CountUp value={it.totalPrice} format={usd} /></span>
+                  <span className="num text-xs text-steel">{usd(it.perPerson)} pp</span>
+                </span>
+                <span className="num mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <span><span className="block text-[11px] font-normal text-steel">Door-to-door</span><span className={win("Door-to-door")}>{fmtDur(it.door2doorMin)}</span></span>
+                  <span><span className="block text-[11px] font-normal text-steel">Connections</span><span className={win("Connections")}>{it.stops ? it.stops : "Nonstop"}</span></span>
+                  <span><span className="block text-[11px] font-normal text-steel">Schedule risk (modeled)</span><span className={win("Schedule risk (modeled)")}>{riskLabel(it.risk)} · {Math.round(it.risk * 100)}%</span></span>
+                  <span><span className="block text-[11px] font-normal text-steel">Saves vs charter</span><span>{rowOf("Saves vs charter").get(it)}</span></span>
+                </span>
+                {it.tags.length > 0 && <span className="mt-3 flex flex-wrap gap-1">{it.tags.map((t) => <Badge key={t} tone="teal">{t}</Badge>)}</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="hidden overflow-x-auto rounded-2xl border border-line md:block">
+        <table className="w-full min-w-[720px] border-collapse text-sm">
+          <caption className="sr-only">Best option in each travel mode, same party size and dates</caption>
+          <thead>
+            <tr>
+              <th className="w-[170px] bg-panel/50 p-3" />
+              {KINDS.map((k, n) => {
+                const it = best[n];
+                return (
+                  <th key={k} scope="col" className={cx("rise relative border-l border-line p-3 text-left align-top font-normal", it && it.id === selectedId ? "bg-panel-2" : "bg-panel/50")} style={stagger(n)}>
+                    <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-[0.14em]" style={{ color: KIND_COLOR[k] }}><span className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR[k] }} />{KIND_NAME[k]}</span>
+                    {it ? (
+                      <>
+                        <button onClick={() => onSelect(it.id)} className="text-left text-[13px] leading-snug text-warm underline-offset-2 hover:underline">{it.name}</button>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {it.id === topId && <Badge tone="gold"><Sparkles size={10} />Recommended</Badge>}
+                          {it.tags.map((t) => <Badge key={t} tone="teal">{t}</Badge>)}
+                          {it.id === selectedId && <Badge tone="ok"><Check size={10} />Selected</Badge>}
+                        </div>
+                      </>
+                    ) : <span className="text-xs text-steel">Not available</span>}
+                  </th>
+                );
+              })}
             </tr>
-          ))}
-          {best.some((b) => !b) && (
-            <tr className="border-t border-line/70">
-              <th scope="row" className="p-3 text-left text-xs font-normal text-steel">Why not shown</th>
-              {best.map((it, n) => <td key={KINDS[n]} className="border-l border-line/70 p-3 align-top text-xs leading-snug text-steel">{it ? "" : EMPTY[KINDS[n]]}</td>)}
-            </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {ROWS.map((r, ri) => (
+              <tr key={r.label} className="rise border-t border-line/70" style={stagger(ri + 2)}>
+                <th scope="row" className="p-3 text-left text-xs font-normal text-steel">{r.label}</th>
+                {best.map((it, n) => (
+                  <td key={KINDS[n]} className={cx("num border-l border-line/70 p-3", it && it.id === selectedId && "bg-panel-2/60", it && winner(r, it) ? "text-gold" : "text-warm")}>
+                    {it ? (r.label === "Total trip price" ? <CountUp value={it.totalPrice} format={usd} /> : r.get(it)) : n === 0 || r.label !== ROWS[0].label ? "–" : ""}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {best.some((b) => !b) && (
+              <tr className="border-t border-line/70">
+                <th scope="row" className="p-3 text-left text-xs font-normal text-steel">Why not shown</th>
+                {best.map((it, n) => <td key={KINDS[n]} className="border-l border-line/70 p-3 align-top text-xs leading-snug text-steel">{it ? "" : EMPTY[KINDS[n]]}</td>)}
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+/** Shown when the current flexibility window has no empty-leg itinerary. Says why and offers the next step. */
+export function EmptyLegNotice({ profile, req, onFlex }: { profile: SearchResult["flexProfile"]; req: TripRequest; onFlex: (f: TripRequest["flexH"]) => void }) {
+  const here = profile.find((p) => p.flexH === req.flexH)?.emptyLegs ?? 0;
+  if (here > 0) return null;
+  const next = profile.find((p) => p.flexH > req.flexH && p.emptyLegs > 0);
+  return (
+    <div className="rise flex flex-col gap-3 rounded-2xl border border-teal/30 bg-teal/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex gap-3">
+        <Repeat2 size={20} className="mt-0.5 shrink-0 text-teal" aria-hidden />
+        <div>
+          <p className="text-sm font-medium">No empty-leg match for this route and window</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-steel">
+            {next ? `Positioning flights are timed by operators. ${next.emptyLegs} empty-leg option${next.emptyLegs > 1 ? "s appear" : " appears"} if you allow ${next.flexH === 24 ? "the whole day" : `±${next.flexH} hours`}.` : "No published empty leg fits this route, date and party size at any flexibility. Try another date, or check Operator Intelligence for legs that are detected but not yet published."}
+          </p>
+        </div>
+      </div>
+      {next ? <Button size="sm" variant="primary" className="shrink-0" onClick={() => onFlex(next.flexH as TripRequest["flexH"])}>Allow {next.flexH === 24 ? "whole day" : `±${next.flexH}h`}</Button>
+        : <LinkButton href="/jetflex/operator" size="sm" className="shrink-0">Open Operator Intelligence</LinkButton>}
     </div>
   );
 }
 
 export function WhyPanel({ it, req, rank, total }: { it: Itinerary; req: TripRequest; rank: number; total: number }) {
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className="rise p-5 sm:p-6" style={stagger(1)}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="display text-xl">Why this recommendation?</h3>
         <Badge tone="gold">Rank {rank} of {total} · {it.score.toFixed(1)} pts</Badge>
@@ -104,7 +166,7 @@ export function WhyPanel({ it, req, rank, total }: { it: Itinerary; req: TripReq
         </div>
       )}
       <details className="group mt-4">
-        <summary className="flex cursor-pointer items-center gap-1.5 text-sm text-gold"><ChevronDown size={14} className="transition-transform group-open:rotate-180" />Score breakdown (points earned / points available)</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center gap-1.5 text-sm text-gold sm:min-h-0"><ChevronDown size={14} className="transition-transform group-open:rotate-180" />Score breakdown (points earned / points available)</summary>
         <div className="mt-3"><ScoreBars it={it} /></div>
       </details>
     </Card>
@@ -118,7 +180,7 @@ export function RankedList({ items, selectedId, onSelect }: { items: Itinerary[]
     <div>
       <ol className="space-y-2">
         {shown.map((it, n) => (
-          <li key={it.id}>
+          <li key={it.id} className="rise" style={stagger(n)}>
             <button onClick={() => onSelect(it.id)} aria-pressed={it.id === selectedId}
               className={cx("grid w-full grid-cols-[28px_1fr_auto] items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors sm:grid-cols-[28px_1fr_90px_90px_80px]", it.id === selectedId ? "border-gold bg-panel-2" : "border-line bg-panel/50 hover:border-steel")}>
               <span className="num text-xs text-steel">{n + 1}</span>
@@ -142,7 +204,7 @@ export function ExcludedPanel({ excluded, req, onFlex }: { excluded: Excluded[];
   if (!excluded.length) return null;
   return (
     <details className="rounded-2xl border border-line bg-panel/40 p-4">
-      <summary className="flex cursor-pointer items-center gap-2 text-sm"><ListFilter size={15} className="text-steel" />Options excluded by your constraints ({excluded.length})</summary>
+      <summary className="flex min-h-11 cursor-pointer items-center gap-2 text-sm sm:min-h-0"><ListFilter size={15} className="text-steel" />Options excluded by your constraints ({excluded.length})</summary>
       <ul className="mt-3 divide-y divide-line/60 text-sm">
         {excluded.map((e, i) => (
           <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-2">

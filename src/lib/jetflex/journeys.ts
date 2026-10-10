@@ -1,8 +1,8 @@
 // Journey generator: builds every feasible one-direction journey (segments in order) between two
 // places from the simulated timetable, on-demand charter, published empty legs and hybrid templates.
-import { AIRCRAFT_TYPES, AIRPORTS, FC_ROUTES, HYBRIDS, metroAirports, RULES, type FcRoute } from "./data";
-import { blockMin, charterPrice, groundCost, groundMin, isDoor } from "./inventory";
-import { addDays, fmtDur, fmtHHmm, localDate, localHHmm, toAbs } from "./time";
+import { AIRCRAFT_TYPES, AIRPORTS, FC_ROUTES, fcFlightInfo, HYBRIDS, metroAirports, RULES, type FcRoute } from "./data";
+import { blockMin, canReach, charterPrice, distKm, groundCost, groundMin, isDoor } from "./inventory";
+import { addDays, fmtDay, fmtDur, fmtHHmm, fmtTime, localDate, localHHmm, toAbs } from "./time";
 import type { AircraftType, Dir, EmptyLeg, Excluded, Journey, Kind, Segment } from "./types";
 
 export type Spec = {
@@ -31,6 +31,9 @@ const hash = (s: string) => {
   return (h >>> 0).toString(36);
 };
 const r5 = (n: number) => Math.round(n / 5) * 5;
+/** "3:07 PM–12:23 PM" reads as inverted when the window spans days, so name the day when the two ends differ. */
+const windowLabel = (a: number, b: number, tz: number) =>
+  localDate(a, tz) === localDate(b, tz) ? `${fmtTime(a, tz)}–${fmtTime(b, tz)}` : `${fmtDay(a, tz)} ${fmtTime(a, tz)} – ${fmtDay(b, tz)} ${fmtTime(b, tz)}`;
 const typeName = (id?: string) => (id ? AIRCRAFT_TYPES[id].name : "");
 
 const seg = (s: Pick<Segment, "id" | "mode" | "from" | "to" | "dep" | "arr" | "cost" | "label"> & Partial<Segment>): Segment => ({ gapBefore: 0, gapAfter: 0, risk: 0.03, ...s });
@@ -42,7 +45,13 @@ export function groundSeg(from: string, to: string, dep: number, pax: number): S
 const fcSeg = (r: FcRoute, date: string, time: string, pax: number): Segment => {
   const dep = toAbs(date, time, AIRPORTS[r.from].tz);
   const id = `fc:${r.from}${r.to}@${dep}`;
-  return seg({ id, ref: id, mode: "commercial", from: r.from, to: r.to, dep, arr: dep + r.dur, cost: r.fare * pax, label: `First class · ${r.from} → ${r.to}`, gapBefore: RULES.fcGapBefore, gapAfter: RULES.fcGapAfter, risk: 0.14, nonstop: true, caveat: "Simulated schedule and fare (per-passenger fare × party size)." });
+  const info = fcFlightInfo(r, date, time);
+  return seg({
+    id, ref: id, mode: "commercial", from: r.from, to: r.to, dep, arr: dep + r.dur, cost: info.fare * pax,
+    label: `First class · ${r.from} → ${r.to} · ${info.flightNo}`, gapBefore: RULES.fcGapBefore, gapAfter: RULES.fcGapAfter, risk: 0.14, nonstop: true,
+    carrier: info.carrier, flightNo: info.flightNo, equip: info.equip, seatsLeft: info.seatsLeft, fareClass: "First",
+    caveat: `Simulated schedule and fare: ${info.carrier}, ${info.equip}, $${info.fare.toLocaleString("en-US")} per passenger × party size, ${info.seatsLeft} first-class seats left (illustrative).`,
+  });
 };
 const charterSeg = (t: AircraftType, from: string, to: string, dep: number, pax: number): Segment => {
   const block = blockMin(from, to, t);
@@ -50,7 +59,7 @@ const charterSeg = (t: AircraftType, from: string, to: string, dep: number, pax:
   return seg({ id, ref: `ch:${t.id}:${from}${to}`, mode: "charter", from, to, dep, arr: dep + block, cost: charterPrice(t, block), label: `Private charter · ${t.name} · ${from} → ${to}`, typeId: t.id, gapBefore: RULES.pvGapBefore, gapAfter: RULES.pvGapAfter, risk: 0.05, caveat: `Whole-aircraft price for up to ${t.cap} passengers; ${pax} travelling.` });
 };
 const elSeg = (l: EmptyLeg, dep: number): Segment =>
-  seg({ id: `el:${l.id}@${dep}`, ref: l.id, mode: "empty_leg", from: l.from, to: l.to, dep, arr: dep + l.durMin, cost: l.price, label: `Empty leg · ${typeName(l.typeId)} · ${l.from} → ${l.to}`, typeId: l.typeId, gapBefore: RULES.pvGapBefore, gapAfter: RULES.pvGapAfter, risk: l.risk, caveat: "Repositioning flight: timing set by the operator, can change or be withdrawn. Not a confirmed booking." });
+  seg({ id: `el:${l.id}@${dep}`, ref: l.id, mode: "empty_leg", from: l.from, to: l.to, dep, arr: dep + l.durMin, cost: l.price, label: `Empty leg · ${typeName(l.typeId)} · ${l.from} → ${l.to}${l.tail ? ` · ${l.tail}` : ""}`, typeId: l.typeId, gapBefore: RULES.pvGapBefore, gapAfter: RULES.pvGapAfter, risk: l.risk, caveat: "Repositioning flight: timing set by the operator, can change or be withdrawn. Not a confirmed booking." });
 
 /** Chronology and geography check: every segment starts where the last ended, with the minimum transfer time. */
 export function validate(segs: Segment[]): string[] {
@@ -124,10 +133,19 @@ export function generate(spec: Spec): { journeys: Journey[]; excluded: Excluded[
   };
 
   // ---- scheduled first class (nonstop and one stop) ----
+  const soldOut = new Set<string>();
   const flightsOn = (a: string, b: string, lo: number, hi: number) =>
     FC_ROUTES.filter((r) => r.from === a && r.to === b).flatMap((r) =>
       datesBetween(lo, hi, AIRPORTS[a].tz).flatMap((d) => r.deps.map((t) => fcSeg(r, d, t, pax))),
-    ).filter((f) => f.dep >= lo && f.dep <= hi);
+    ).filter((f) => {
+      if (f.dep < lo || f.dep > hi) return false;
+      if ((f.seatsLeft ?? 99) >= pax) return true;
+      if (!soldOut.has(f.id)) {
+        soldOut.add(f.id);
+        excluded.push({ label: `First class · ${f.flightNo} · ${f.from} → ${f.to} · ${fmtHHmm(localHHmm(f.dep, AIRPORTS[f.from].tz))}`, reason: `Only ${f.seatsLeft} first-class seat${f.seatsLeft === 1 ? "" : "s"} left, you need ${pax}` });
+      }
+      return false;
+    });
   for (const o of O.filter((a) => a.comm))
     for (const d of D.filter((a) => a.comm)) {
       if (o.code === d.code) continue;
@@ -135,6 +153,8 @@ export function generate(spec: Spec): { journeys: Journey[]; excluded: Excluded[
       const hubs = new Set(FC_ROUTES.filter((r) => r.from === o.code).map((r) => r.to));
       for (const h of hubs) {
         if (h === d.code || !FC_ROUTES.some((r) => r.from === h && r.to === d.code)) continue;
+        // A connection only makes sense when the hub is roughly on the way.
+        if (distKm(o.code, h) + distKm(h, d.code) > 1.4 * distKm(o.code, d.code)) continue;
         for (const f1 of flightsOn(o.code, h, spec.lo, spec.hi)) {
           const f2 = flightsOn(h, d.code, f1.arr, f1.arr + 1440).find((f) => f.dep >= f1.arr + RULES.fcConnect && f.dep - f1.arr <= 300);
           if (f2) add([{ ...f1, nonstop: false }, f2], [`Connection at ${h}: ${fmtDur(f2.dep - f1.arr)} between flights`]);
@@ -150,9 +170,12 @@ export function generate(spec: Spec): { journeys: Journey[]; excluded: Excluded[
   };
   const [co, cd] = [pickGA(O, spec.from), pickGA(D, spec.to)];
   if (co && cd && co.code !== cd.code) {
-    const fit = Object.values(AIRCRAFT_TYPES).filter((t) => t.cap >= pax).sort((a, b) => a.cap - b.cap);
+    const seats = Object.values(AIRCRAFT_TYPES).filter((t) => t.cap >= pax);
+    const km = distKm(co.code, cd.code);
+    const fit = seats.filter((t) => canReach(t, km)).sort((a, b) => a.cap - b.cap); // stable: the first-listed type wins a tie on seats
     const types = [...new Set([fit[0], fit.find((t) => t.id === "challenger") ?? fit[1]])].filter(Boolean);
-    if (!fit.length) excluded.push({ label: "Private charter", reason: `No aircraft in the simulated fleet seats ${pax}` });
+    if (!seats.length) excluded.push({ label: "Private charter", reason: `No aircraft in the simulated fleet seats ${pax}` });
+    else if (!fit.length) excluded.push({ label: "Private charter", reason: `${co.code} → ${cd.code} is ${Math.round(km).toLocaleString("en-US")} km, beyond the nonstop range of every aircraft that seats ${pax}` });
     const accessMin = spec.from === co.code ? 0 : groundMin(spec.from, co.code);
     const egressMin = spec.to === cd.code ? 0 : groundMin(cd.code, spec.to);
     for (const t of types) {
@@ -194,7 +217,7 @@ export function generate(spec: Spec): { journeys: Journey[]; excluded: Excluded[
       continue;
     }
     const dep = Math.min(b, Math.max(a, r5(Math.min(Math.max(spec.pref, a), b))));
-    const reason = add([elSeg(l, dep)], [`Operator window ${fmtHHmm(localHHmm(l.earliest, AIRPORTS[l.from].tz))}–${fmtHHmm(localHHmm(l.latest, AIRPORTS[l.from].tz))}`]);
+    const reason = add([elSeg(l, dep)], [`Operator window ${windowLabel(l.earliest, l.latest, AIRPORTS[l.from].tz)}`]);
     if (reason) excluded.push({ label, reason });
   }
 

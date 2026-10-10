@@ -91,4 +91,15 @@ Four people in a 24-hour hackathon.
 
 ## JetFlex prototype
 
-A second, separate prototype lives at `/jetflex` (private aviation intelligence: charter vs empty legs vs first class vs hybrid, JetShield recovery, TimeBack, operator dashboard). See [docs/jetflex.md](docs/jetflex.md).
+A second, separate prototype lives at `/jetflex` (run `pnpm dev`, open
+http://localhost:3000/jetflex). It is private aviation intelligence: it detects empty
+repositioning legs from an operator's schedule, lets the operator price and publish them,
+ranks charter, empty leg, first class and hybrid for a traveler's party, and re-plans with
+JetShield when a trip breaks. All inventory is simulated and nothing is bookable.
+
+- [docs/jetflex.md](docs/jetflex.md): what is in it, the code map, the operator CSV import
+  and the optional AI parser (`ANTHROPIC_API_KEY`, falls back to rules)
+- [docs/jetflex/demo-script.md](docs/jetflex/demo-script.md): the timed three-minute demo
+- [docs/jetflex/pitch-60s.md](docs/jetflex/pitch-60s.md): 60, 20 and 10 second pitches
+- [docs/jetflex/why-this-works.md](docs/jetflex/why-this-works.md): the one-slide mechanism
+- [docs/jetflex/data-provenance.md](docs/jetflex/data-provenance.md): what is real and what is simulated

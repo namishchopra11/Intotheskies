@@ -1,5 +1,6 @@
 // Centralised SIMULATED inventory. Nothing here is real market data: airports and distances are
 // real, but every schedule, fare, fleet, price and availability value is illustrative.
+import { dowOf } from "./time";
 import type { Aircraft, AircraftType, Airport, Operator, SchedFlight } from "./types";
 
 export const DATA_NOTICE = "Simulated demo inventory. Prices, schedules and availability are illustrative, not bookable.";
@@ -49,6 +50,11 @@ export const AIRPORTS: Record<string, Airport> = Object.fromEntries(
     ap("ORD", "Chicago O'Hare", "Chicago", "chi", 41.9742, -87.9073, -5, true, false, 40),
     ap("MDW", "Chicago Midway", "Chicago", "chi", 41.7868, -87.7522, -5, true, false, 30),
     ap("PWK", "Chicago Executive", "Wheeling", "chi", 42.1142, -87.9015, -5, false, true, 40),
+    ap("DPA", "DuPage", "West Chicago", "chi", 41.9078, -88.2486, -5, false, true, 50),
+    ap("MMU", "Morristown Municipal", "Morristown", "nyc", 40.7994, -74.4149, -4, false, true, 60),
+    ap("FRG", "Republic", "Farmingdale", "nyc", 40.7288, -73.4134, -4, false, true, 58),
+    ap("FXE", "Fort Lauderdale Executive", "Fort Lauderdale", "mia", 26.1973, -80.1707, -4, false, true, 45),
+    ap("SNA", "John Wayne / Orange County", "Santa Ana", "lax", 33.6757, -117.8683, -7, false, true, 55),
   ].map((a) => [a.code, a]),
 );
 
@@ -60,33 +66,53 @@ export const DEMO_METROS = ["nyc", "mia", "ase", "lax", "sfo", "chi"];
 const at = (id: string, name: string, short: string, cls: AircraftType["cls"], cap: number, speed: number, rate: number, o: Partial<AircraftType>): AircraftType =>
   ({ id, name, short, cls, cap, speed, rate, wifi: "basic", lav: true, galley: "cold", standUp: false, bags: 8, pets: true, bed: false, ...o });
 
+/**
+ * Charter class economics (illustrative 2026 USD per block hour, typical seats, block speed and
+ * nonstop range in km). Rates are in the range US charter brokers quote for each class; nothing here
+ * is a quote.
+ */
 export const AIRCRAFT_TYPES: Record<string, AircraftType> = Object.fromEntries(
   [
-    at("phenom", "Embraer Phenom 300E", "Phenom 300E", "Light jet", 6, 800, 4300, { bags: 8 }),
-    at("latitude", "Cessna Citation Latitude", "Latitude", "Midsize", 8, 790, 5600, { standUp: true, bags: 12 }),
-    at("challenger", "Challenger 350", "Challenger 350", "Super-midsize", 9, 840, 6800, { wifi: "high-speed", galley: "hot", standUp: true, bags: 14 }),
-    at("g450", "Gulfstream G450", "G450", "Heavy jet", 13, 880, 9300, { wifi: "high-speed", galley: "hot", standUp: true, bags: 22, bed: true }),
+    at("phenom", "Embraer Phenom 300E", "Phenom 300E", "Light jet", 6, 800, 4300, { bags: 8, range: 3650 }),
+    at("cj3", "Cessna Citation CJ3+", "CJ3+", "Light jet", 6, 760, 3800, { bags: 6, range: 3700 }),
+    at("latitude", "Cessna Citation Latitude", "Latitude", "Midsize", 8, 790, 5600, { standUp: true, bags: 12, range: 5000 }),
+    at("challenger", "Challenger 350", "Challenger 350", "Super-midsize", 9, 840, 6800, { wifi: "high-speed", galley: "hot", standUp: true, bags: 14, range: 5900 }),
+    at("praetor", "Embraer Praetor 600", "Praetor 600", "Super-midsize", 8, 850, 7400, { wifi: "high-speed", galley: "hot", standUp: true, bags: 16, range: 7200 }),
+    at("g450", "Gulfstream G450", "G450", "Heavy jet", 13, 880, 9300, { wifi: "high-speed", galley: "hot", standUp: true, bags: 22, bed: true, range: 8000 }),
+    at("global", "Bombardier Global 6000", "Global 6000", "Ultra-long-range", 14, 900, 11800, { wifi: "high-speed", galley: "hot", standUp: true, bags: 28, bed: true, range: 11100 }),
   ].map((t) => [t.id, t]),
 );
 
 export const OPERATORS: Record<string, Operator> = {
-  aerolux: { id: "aerolux", name: "Aerolux Jets (sim)" },
-  skyline: { id: "skyline", name: "Skyline Charter (sim)" },
+  aerolux: { id: "aerolux", name: "Aerolux Jets (sim)", base: "TEB", blurb: "Northeast light-to-heavy charter from Teterboro and Westchester" },
+  skyline: { id: "skyline", name: "Skyline Charter (sim)", base: "TEB", blurb: "Owner-managed fleet, NYC area and Chicago" },
+  meridian: { id: "meridian", name: "Meridian Private Aviation (sim)", base: "OPF", blurb: "Florida-based, flies the New York to South Florida corridor" },
+  harborline: { id: "harborline", name: "Harborline Air (sim)", base: "VNY", blurb: "California shuttle and Rocky Mountain charter" },
+  imported: { id: "imported", name: "Imported operator feed (sim)", blurb: "Aircraft that arrive through an operator CSV import" },
 };
 
-const ac = (id: string, type: string, operator: string, baseAirport: string, autoList: boolean): Aircraft => ({ id, type, operator, baseAirport, autoList });
+const ac = (id: string, type: string, operator: string, baseAirport: string, autoList: boolean, tail: string): Aircraft => ({ id, type, operator, baseAirport, autoList, tail });
 export const FLEET: Aircraft[] = [
-  ac("JX101", "phenom", "aerolux", "TEB", true),
-  ac("JX102", "phenom", "aerolux", "VNY", true),
-  ac("JX204", "challenger", "aerolux", "HPN", true),
-  ac("JX305", "g450", "aerolux", "TEB", true),
-  ac("AX411", "challenger", "aerolux", "TEB", true),
-  ac("AX412", "g450", "aerolux", "TEB", true),
-  ac("SK112", "latitude", "skyline", "TEB", true),
-  ac("AX413", "phenom", "aerolux", "PWK", true),
-  ac("SK118", "phenom", "skyline", "TEB", false),
-  ac("SK221", "challenger", "skyline", "TEB", true),
+  ac("JX101", "phenom", "aerolux", "TEB", true, "N101JX"),
+  ac("JX102", "phenom", "aerolux", "VNY", true, "N102JX"),
+  ac("JX204", "challenger", "aerolux", "HPN", true, "N204JX"),
+  ac("JX305", "g450", "aerolux", "TEB", true, "N305JX"),
+  ac("AX411", "challenger", "aerolux", "TEB", true, "N411AX"),
+  ac("AX412", "g450", "aerolux", "TEB", true, "N412AX"),
+  ac("SK112", "latitude", "skyline", "TEB", true, "N112SK"),
+  ac("AX413", "phenom", "aerolux", "PWK", true, "N413AX"),
+  ac("SK118", "cj3", "skyline", "TEB", false, "N118SK"),
+  ac("SK221", "challenger", "skyline", "TEB", true, "N221SK"),
+  ac("MP601", "phenom", "meridian", "OPF", true, "N601MP"),
+  ac("MP602", "praetor", "meridian", "FXE", true, "N602MP"),
+  ac("MP603", "latitude", "meridian", "PBI", false, "N603MP"),
+  ac("HL701", "latitude", "harborline", "VNY", true, "N701HL"),
+  ac("HL702", "challenger", "harborline", "VNY", true, "N702HL"),
+  ac("AX414", "global", "aerolux", "TEB", true, "N414AX"),
 ];
+
+/** Fleet key for a registration ("N101JX" -> "JX101"), or the input itself when it is not a seeded tail. */
+export const fleetIdForTail = (tail: string) => FLEET.find((a) => a.tail === tail || a.id === tail)?.id ?? tail;
 
 /** Booked (revenue) flights. `day` is days from the anchor Friday. Gaps between them are the repositioning legs. */
 const sf = (id: string, aircraft: string, from: string, to: string, day: number, dep: string): SchedFlight => ({ id, aircraft, from, to, day, dep });
@@ -104,23 +130,121 @@ export const SCHEDULE: SchedFlight[] = [
   sf("B801", "AX412", "TEB", "ASE", 0, "09:00"), sf("B802", "AX412", "TEB", "OPF", 3, "08:00"),
   sf("B901", "SK221", "PWK", "TEB", -1, "12:00"), sf("B902", "SK221", "PWK", "TEB", 0, "20:00"),
   sf("B905", "AX413", "TEB", "PWK", 0, "07:00"), sf("B906", "AX413", "TEB", "OPF", 1, "10:00"),
+  // Meridian (Florida corridor). Gaps between these fall out as TEB<->OPF/PBI repositioning legs.
+  sf("M101", "MP601", "PBI", "TEB", -1, "09:30"), sf("M102", "MP601", "OPF", "HPN", 0, "17:30"),
+  sf("M103", "MP601", "HPN", "PBI", 2, "10:00"), sf("M104", "MP601", "TEB", "OPF", 3, "07:30"),
+  sf("M201", "MP602", "OPF", "TEB", 0, "06:30"), sf("M202", "MP602", "PBI", "TEB", 1, "13:00"),
+  sf("M203", "MP602", "TEB", "OPF", 3, "09:00"),
+  sf("M301", "MP603", "PBI", "TEB", -1, "17:00"), sf("M302", "MP603", "PBI", "HPN", 0, "19:00"),
+  sf("M303", "MP603", "HPN", "OPF", 2, "15:00"), sf("M304", "MP603", "TEB", "PBI", 3, "11:00"),
+  // Harborline (California and mountain west).
+  sf("H101", "HL701", "VNY", "SQL", -1, "18:00"), sf("H102", "HL701", "VNY", "SQL", 1, "08:30"),
+  sf("H103", "HL701", "SQL", "VNY", 3, "07:00"),
+  sf("H201", "HL702", "ASE", "VNY", 1, "11:00"), sf("H202", "HL702", "ASE", "VNY", 3, "12:00"),
+  // Aerolux Global 6000: transcontinental positioning.
+  sf("A401", "AX414", "VNY", "TEB", -1, "08:00"), sf("A402", "AX414", "VNY", "TEB", 1, "10:00"),
+  sf("A403", "AX414", "TEB", "VNY", 3, "09:00"),
 ];
 export const SCHEDULE_WEEKS = 2;
 
-/** Scheduled first-class service: [from, to, minutes, fare per passenger (USD), departure times, stops label]. */
-type Fc = [string, string, number, number, string];
-const FC_RAW: Fc[] = [
-  ["JFK", "MIA", 190, 780, "06:30 09:45 13:15 17:40"], ["LGA", "MIA", 185, 720, "07:15 11:30 16:20"], ["EWR", "FLL", 190, 690, "08:00 12:30 18:10"],
-  ["MIA", "JFK", 195, 790, "08:20 12:40 16:50 19:30"], ["MIA", "LGA", 190, 740, "10:10 15:30 18:45"], ["FLL", "EWR", 185, 700, "09:30 14:00 17:45 20:50"],
-  ["JFK", "DEN", 255, 1150, "07:00 12:15"], ["DEN", "ASE", 55, 520, "11:30 14:40 17:30"], ["EWR", "EGE", 285, 1380, "08:30"],
-  ["ASE", "DEN", 55, 520, "09:10 13:00 16:20"], ["DEN", "JFK", 215, 1120, "12:30 15:45 19:20"], ["EGE", "EWR", 225, 1340, "13:10"],
-  ["LAX", "SFO", 85, 380, "07:00 09:30 12:00 15:00 18:30"], ["BUR", "OAK", 80, 340, "08:15 13:40 17:50"], ["LAX", "SJC", 75, 320, "08:40 15:10"],
-  ["SFO", "LAX", 85, 380, "07:30 10:15 13:00 16:45 19:30"], ["OAK", "BUR", 80, 340, "09:00 14:30 18:15"], ["SJC", "LAX", 75, 320, "10:00 17:30"],
-  ["LGA", "ORD", 160, 590, "06:00 07:15 08:30 10:00 12:00 14:00 17:00 19:00"], ["EWR", "MDW", 160, 540, "07:30 11:45 15:20"],
-  ["ORD", "LGA", 135, 560, "11:00 13:00 15:00 16:30 18:00 19:30 21:00"], ["MDW", "EWR", 130, 520, "12:30 16:10 19:45"],
+/**
+ * Scheduled first-class service. Carriers are fictional brands (every flight number here is made up).
+ * Block time and base fare come from the great-circle distance, so every route follows the same
+ * model: ~740 km/h plus 40 minutes of taxi and approach, a tailwind or headwind allowance on east/west
+ * routes, and a fare that flattens with distance. The departure lists are local times at the origin.
+ */
+export const CARRIERS: Record<string, { code: string; name: string }> = {
+  crl: { code: "CRL", name: "Crestline Air (sim)" },
+  hlc: { code: "HLC", name: "Halcyon Airways (sim)" },
+  nbm: { code: "NBM", name: "Northbeam Airlines (sim)" },
+  pcc: { code: "PCC", name: "Pacifica Coastal (sim)" },
+};
+
+const FC_SPEC: [from: string, to: string, carrier: string, equip: string, deps: string][] = [
+  // New York area <-> South Florida
+  ["JFK", "MIA", "crl", "A321", "06:00 07:30 09:15 11:00 13:15 15:30 17:45 19:30"], ["LGA", "MIA", "crl", "A320", "06:30 08:00 10:30 12:45 15:00 17:15 19:00"],
+  ["EWR", "FLL", "crl", "B737-800", "06:15 08:30 10:45 13:30 16:00 18:20"], ["EWR", "MIA", "crl", "B737-800", "07:05 12:10 17:20"],
+  ["JFK", "FLL", "crl", "A321", "07:20 12:00 16:40 20:10"], ["JFK", "PBI", "crl", "A320", "07:45 11:30 16:15"],
+  ["LGA", "PBI", "crl", "A319", "08:20 14:10 18:40"], ["EWR", "PBI", "crl", "B737-800", "09:05 15:25 19:35"],
+  ["MIA", "JFK", "crl", "A321", "06:10 08:25 10:40 13:00 15:20 17:30 19:50"], ["MIA", "LGA", "crl", "A320", "07:00 09:45 12:15 14:50 17:10 19:25"],
+  ["FLL", "EWR", "crl", "B737-800", "06:40 09:30 12:00 14:30 17:45 20:50"], ["MIA", "EWR", "crl", "B737-800", "08:15 13:10 18:20"],
+  ["FLL", "JFK", "crl", "A321", "07:50 12:35 16:20 19:10"], ["PBI", "JFK", "crl", "A320", "08:40 12:50 17:25"],
+  ["PBI", "LGA", "crl", "A319", "09:30 15:05 19:15"], ["PBI", "EWR", "crl", "B737-800", "10:10 16:00 20:20"],
+  // New York area <-> Colorado (Aspen is served through Denver or seasonally nonstop to Eagle)
+  ["JFK", "DEN", "hlc", "B737-800", "07:00 12:15 17:10"], ["EWR", "DEN", "hlc", "B737-900", "07:40 13:30 18:20"],
+  ["DEN", "ASE", "hlc", "E175", "09:20 11:30 14:40 17:30"], ["DEN", "EGE", "hlc", "E175", "09:45 12:10 15:30"],
+  ["EWR", "EGE", "hlc", "B737-800", "08:30"], ["ASE", "DEN", "hlc", "E175", "07:30 09:10 13:00 16:20 18:30"],
+  ["EGE", "DEN", "hlc", "E175", "08:25 11:50 15:00"], ["DEN", "JFK", "hlc", "B737-800", "08:30 12:30 15:45 19:20"],
+  ["DEN", "EWR", "hlc", "B737-900", "09:10 14:00 18:45"], ["EGE", "EWR", "hlc", "B737-800", "13:10"],
+  // New York area <-> Chicago
+  ["LGA", "ORD", "nbm", "A320", "06:00 07:15 08:30 10:00 12:00 14:00 16:00 18:00 19:30"], ["JFK", "ORD", "nbm", "B737-800", "07:00 10:30 14:30 18:15"],
+  ["EWR", "ORD", "nbm", "B737-800", "06:45 09:30 12:30 15:30 18:00"], ["EWR", "MDW", "nbm", "B737-700", "07:30 11:45 15:20"],
+  ["LGA", "MDW", "nbm", "B737-700", "09:15 17:40"],
+  ["ORD", "LGA", "nbm", "A320", "06:30 08:00 10:15 12:30 14:30 16:30 18:00 19:30 21:00"], ["ORD", "JFK", "nbm", "B737-800", "08:15 12:00 16:15 19:50"],
+  ["ORD", "EWR", "nbm", "B737-800", "07:10 10:40 13:50 17:25 20:05"], ["MDW", "EWR", "nbm", "B737-700", "12:30 16:10 19:45"],
+  ["MDW", "LGA", "nbm", "B737-700", "10:20 18:30"],
+  // California
+  ["LAX", "SFO", "pcc", "A320", "07:00 08:15 09:30 11:00 12:00 13:30 15:00 16:30 18:30"], ["BUR", "OAK", "pcc", "E175", "08:15 13:40 17:50"],
+  ["LAX", "SJC", "pcc", "E175", "08:40 15:10"], ["SFO", "LAX", "pcc", "A320", "07:30 09:00 10:15 12:00 13:00 14:30 16:45 19:30"],
+  ["OAK", "BUR", "pcc", "E175", "09:00 14:30 18:15"], ["SJC", "LAX", "pcc", "E175", "10:00 17:30"],
+  // Transcontinental and mountain connections that make other city pairs usable
+  ["JFK", "LAX", "pcc", "A321T", "06:00 08:00 10:30 13:00 16:30 19:00"], ["LAX", "JFK", "pcc", "A321T", "07:00 09:30 12:30 15:00 17:30 22:10"],
+  ["JFK", "SFO", "pcc", "A321T", "07:15 09:45 14:20 18:10"], ["SFO", "JFK", "pcc", "A321T", "08:00 10:30 15:15 21:50"],
+  ["EWR", "LAX", "pcc", "B787-9", "07:30 11:20 17:40"], ["LAX", "EWR", "pcc", "B787-9", "08:10 13:45 21:30"],
+  ["MIA", "LAX", "crl", "A321", "08:00 12:50 17:00"], ["LAX", "MIA", "crl", "A321", "07:20 11:40 15:30"],
+  ["ORD", "LAX", "nbm", "B737-800", "07:00 09:15 12:45 16:30"], ["LAX", "ORD", "nbm", "B737-800", "07:45 10:10 13:20 17:00"],
+  ["ORD", "SFO", "nbm", "B737-800", "08:05 13:25 17:35"], ["SFO", "ORD", "nbm", "B737-800", "07:40 11:30 16:20"],
+  ["MIA", "ORD", "nbm", "A320", "07:55 12:10 17:15"], ["ORD", "MIA", "nbm", "A320", "08:40 13:20 18:05"],
+  ["ORD", "DEN", "hlc", "B737-800", "08:15 12:00 15:40 19:10"], ["DEN", "ORD", "hlc", "B737-800", "07:50 11:30 15:00 18:40"],
+  ["LAX", "DEN", "hlc", "B737-800", "07:45 12:15 17:30"], ["DEN", "LAX", "hlc", "B737-800", "08:55 13:10 17:45"],
+  ["LAX", "ASE", "hlc", "E175", "09:50"], ["ASE", "LAX", "hlc", "E175", "12:30"],
+  ["SFO", "DEN", "hlc", "B737-800", "07:10 11:45 16:05"], ["DEN", "SFO", "hlc", "B737-800", "08:00 12:40 17:20"],
+  ["ORD", "ASE", "nbm", "E175", "09:30"], ["ASE", "ORD", "nbm", "E175", "13:45"],
+  ["MIA", "DEN", "hlc", "B737-800", "07:30 12:20 17:10"], ["DEN", "MIA", "hlc", "B737-800", "09:00 13:40 18:30"],
 ];
-export type FcRoute = { from: string; to: string; dur: number; fare: number; deps: string[] };
-export const FC_ROUTES: FcRoute[] = FC_RAW.map(([from, to, dur, fare, d]) => ({ from, to, dur, fare, deps: d.split(" ") }));
+
+export type FcRoute = { from: string; to: string; dur: number; fare: number; deps: string[]; carrier: string; equip: string };
+
+const r5n = (n: number) => Math.round(n / 5) * 5;
+const hashStr = (s: string) => {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return h >>> 0;
+};
+const gcKm = (a: Airport, b: Airport) => {
+  const r = Math.PI / 180;
+  const h = Math.sin(((b.lat - a.lat) * r) / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(((b.lon - a.lon) * r) / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+};
+/** Gate-to-gate minutes: cruise at ~740 km/h plus 40 minutes, with a headwind (west) or tailwind (east) allowance. */
+export function fcBlockMin(from: string, to: string) {
+  const [a, b] = [AIRPORTS[from], AIRPORTS[to]];
+  const wind = b.lon - a.lon > 12 ? 0.9 : b.lon - a.lon < -12 ? 1.05 : 1;
+  return r5n(40 + (gcKm(a, b) / 740) * 60 * wind);
+}
+/** Base first-class fare per passenger: flattens beyond ~1,800 km, with a small stable per-route spread. */
+export function fcBaseFare(from: string, to: string) {
+  const km = gcKm(AIRPORTS[from], AIRPORTS[to]);
+  const spread = 0.94 + (hashStr(`${from}${to}`) % 13) / 100; // 0.94..1.06
+  const seasonal = ["EGE", "ASE"].some((c) => c === from || c === to) ? 1.18 : 1;
+  return r5n((180 + 0.3 * Math.min(km, 1800) + 0.18 * Math.max(0, km - 1800)) * spread * seasonal);
+}
+export const FC_ROUTES: FcRoute[] = FC_SPEC.map(([from, to, carrier, equip, d]) => ({
+  from, to, carrier, equip, dur: fcBlockMin(from, to), fare: fcBaseFare(from, to), deps: d.split(" "),
+}));
+
+/** Per-departure facts the simulated airline would show: flight number, equipment, fare and seats left. */
+export function fcFlightInfo(r: FcRoute, date: string, time: string) {
+  const carrier = CARRIERS[r.carrier];
+  const flightNo = `${carrier.code} ${100 + (hashStr(`${r.from}${r.to}${time}`) % 880)}`;
+  const hour = Number(time.slice(0, 2));
+  const dow = dowOf(date);
+  const peak = hour <= 8 || (hour >= 16 && hour <= 19) ? 1.14 : hour >= 20 || hour < 6 ? 0.9 : 0.95;
+  const day = dow === 5 || dow === 0 ? 1.06 : dow === 6 ? 0.9 : 1;
+  const h = hashStr(`${r.from}${r.to}${date}${time}`);
+  const seatsLeft = h % 10 === 0 ? 1 + ((h >>> 4) % 3) : 4 + ((h >>> 4) % 13);
+  return { carrier: carrier.name, flightNo, equip: r.equip, fare: r5n(r.fare * peak * day), seatsLeft };
+}
 
 /** Seeded hybrid templates: airline service to a hub, a ground transfer, then a short private hop. */
 export const HYBRIDS = [{ metro: "ase", hub: "DEN", ga: "APA", local: "ASE" }];
@@ -139,6 +263,11 @@ export const DEMAND: DemandSearch[] = [
   { id: "D9", label: "Two partners, Chicago day trip", from: "nyc", to: "chi", day: 0, time: "07:00", pax: 2, flexH: 6, budget: 14000 },
   { id: "D10", label: "Chicago to New York, same day", from: "chi", to: "nyc", day: 0, time: "17:30", pax: 2, flexH: 6, budget: 14000 },
   { id: "D11", label: "Ski group heading home", from: "ase", to: "nyc", day: 2, time: "15:00", pax: 4, flexH: 12, budget: 46000 },
+  { id: "D12", label: "Golf weekend, three friends", from: "nyc", to: "mia", day: 0, time: "11:00", pax: 3, flexH: 12, budget: 12000 },
+  { id: "D13", label: "Film crew, Los Angeles to the Bay", from: "lax", to: "sfo", day: 1, time: "09:00", pax: 5, flexH: 6, budget: 14000 },
+  { id: "D14", label: "Executives, Chicago to New York", from: "chi", to: "nyc", day: 2, time: "18:00", pax: 3, flexH: 6, budget: 17000 },
+  { id: "D15", label: "Last-minute Aspen weekend", from: "nyc", to: "ase", day: 1, time: "10:00", pax: 2, flexH: 12, budget: 30000 },
+  { id: "D16", label: "Board offsite, New York to Los Angeles", from: "nyc", to: "lax", day: 0, time: "09:00", pax: 5, flexH: 12, budget: 60000 },
 ];
 
 /** Cost model constants (all illustrative). */
@@ -146,6 +275,7 @@ export const RULES = {
   fcGapBefore: 90, // arrive at the airport this long before a first-class departure
   fcGapAfter: 25, // deplane and collect bags
   fcConnect: 55, // minimum airline connection
+  fet: 0.075, // US federal excise tax on charter air transportation, applied to every charter price
   pvGapBefore: 15,
   pvGapAfter: 10,
   turnaround: 60, // aircraft turnaround for a repositioning leg

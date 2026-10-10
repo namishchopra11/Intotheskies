@@ -3,7 +3,7 @@
 import { RULES } from "./data";
 import { classify, generate, type Spec } from "./journeys";
 import { tzOf } from "./inventory";
-import { toAbs, usd } from "./time";
+import { fmtDay, fmtDur, fmtTime, toAbs, usd } from "./time";
 import { makeItinerary } from "./search";
 import { AIRCRAFT_TYPES } from "./data";
 import type { Dir, EmptyLeg, Itinerary, Journey, Segment, TripRequest } from "./types";
@@ -46,6 +46,7 @@ export type ShieldResult = {
   options: Recovery[];
   rejected: { name: string; reason: string }[];
   keep: Segment[]; // already-completed segments kept in a replacement
+  considered: number; // candidate journeys generated or ruled out before ranking (for the search step)
 };
 
 const need = (p: Segment, s: Segment) => (p.mode === "commercial" && s.mode === "commercial" ? RULES.fcConnect : Math.max(p.gapAfter, s.gapBefore));
@@ -198,6 +199,7 @@ export function simulate(it: Itinerary, req: TripRequest, scenario: ScenarioId, 
   return {
     scenario, dir, headline, consequences, original: segs, statuses,
     stranded: keepOriginal ? null : { place, readyAt }, originalArrival: origArrival, options: feasible.slice(0, 6), rejected: dedupe(rejected), keep,
+    considered: journeys.length + excluded.length + (keepOriginal ? 1 : 0),
   };
 }
 
@@ -212,3 +214,141 @@ export function applyRecovery(it: Itinerary, req: TripRequest, res: ShieldResult
   return { ...next, id: `${it.id}~${opt.id}`, name: `${it.name} (recovered)`, recoveredFrom: it.name };
 }
 export const costDelta = (n: number) => (n > 0 ? `+${usd(n)}` : n < 0 ? `−${usd(-n)}` : "no change");
+
+// ---- Recovery timeline -------------------------------------------------------------------------------
+// The live-demo sequence: planned itinerary, disruption detected, options searched, replacements ranked,
+// awaiting approval. Pure data with relative delays so the screen can play, skip and replay it, and so
+// it can be tested without a browser.
+
+export type TimelineStepId = "plan" | "detect" | "search" | "rank" | "approval";
+export type TimelineStep = {
+  id: TimelineStepId;
+  title: string;
+  detail: string;
+  stamp?: string; // simulated clock time, shown beside the title
+  tone: "steel" | "bad" | "gold" | "ok";
+  delayMs: number; // after the previous step starts (0 for the first)
+  at: number; // ms from the start of the run when this step appears
+  count?: number; // a number that ticks up from 0 over countMs once the step appears
+  countMs?: number;
+};
+
+/** Gaps between steps. Each is within the 400 to 700 ms band so the sequence reads without dragging. */
+export const STEP_DELAYS: Record<Exclude<TimelineStepId, "plan">, number> = { detect: 500, search: 600, rank: 700, approval: 500 };
+export const COUNT_MS = 600;
+
+const placeLabel = (p: string) => (p.startsWith("door:") ? "home" : p);
+const routeOf = (segs: Segment[]) => {
+  const f = segs.filter((s) => s.mode !== "ground");
+  return f.length ? `${f[0].from}→${f[f.length - 1].to}` : "ground only";
+};
+const stampOf = (abs: number, place: string) => `${fmtDay(abs, tzOf(place))} ${fmtTime(abs, tzOf(place))} at ${placeLabel(place)}`;
+
+/** When JetShield "notices" the disruption (simulated): ahead of departure, or just after a missed one. */
+export function detectedAt(res: ShieldResult): { abs: number; place: string } {
+  const i = Math.max(0, res.statuses.findIndex((s) => s !== "ok"));
+  const seg = res.original[i];
+  if (res.stranded) return { abs: res.stranded.readyAt, place: res.stranded.place };
+  const shift = res.scenario === "delay" ? DELAY_MIN : res.scenario === "ground" ? GROUND_DELAY_MIN : 0;
+  return { abs: seg.dep - shift - 60, place: seg.from };
+}
+
+export function buildRecoveryTimeline(it: Itinerary, res: ShieldResult): TimelineStep[] {
+  const j = it.journeys.find((x) => x.dir === res.dir) ?? it.journeys[0];
+  const last = j.segments[j.segments.length - 1];
+  const sc = SCENARIOS.find((s) => s.id === res.scenario);
+  const det = detectedAt(res);
+  const best = res.options[0];
+  const ruledOut = Math.max(0, res.considered - res.options.length);
+  const raw: Omit<TimelineStep, "at" | "delayMs">[] = [
+    {
+      id: "plan", tone: "steel", title: "Planned itinerary",
+      detail: `${routeOf(j.segments)} · ${it.pax} traveler${it.pax > 1 ? "s" : ""} · arrives ${fmtDay(last.arr, tzOf(last.to))} ${fmtTime(last.arr, tzOf(last.to))}.`,
+    },
+    {
+      id: "detect", tone: "bad", title: "Disruption detected", stamp: stampOf(det.abs, det.place),
+      detail: `${res.headline} (cause: ${(sc?.label ?? "disruption").toLowerCase()}). ${res.consequences[0] ?? ""}`.trim(),
+    },
+    {
+      id: "search", tone: "steel", title: "Options searched", count: res.considered, countMs: COUNT_MS,
+      detail: `Checked against ${it.pax} traveler${it.pax > 1 ? "s" : ""}, timing, aircraft and your return journey.`,
+    },
+    {
+      id: "rank", tone: best ? "gold" : "bad", title: best ? "Replacements ranked" : "No replacement found",
+      detail: best
+        ? `${res.options.length} feasible, ${ruledOut} ruled out. Best match: ${best.name}${best.vsPlan === 0 ? ", on the original arrival" : `, ${fmtDur(best.vsPlan)} ${best.vsPlan > 0 ? "later" : "earlier"} than planned`}.`
+        : "Nothing in the simulated inventory fits your party, timing and return journey.",
+    },
+    {
+      id: "approval", tone: "ok", title: best ? "Awaiting your approval" : "Awaiting your decision",
+      detail: "Nothing changes until you approve a replacement. Approving updates this simulated itinerary only.",
+    },
+  ];
+  let at = 0;
+  return raw.map((s, n) => {
+    const delayMs = n === 0 ? 0 : STEP_DELAYS[s.id as keyof typeof STEP_DELAYS];
+    at += delayMs;
+    return { ...s, delayMs, at };
+  });
+}
+
+/** Time until everything, including a ticking count, has finished. */
+export const timelineTotalMs = (steps: TimelineStep[]) => steps.reduce((m, s) => Math.max(m, s.at + (s.countMs ?? 0)), 0);
+/** How many steps are showing after `elapsedMs`. Steps reveal in order. */
+export const revealedCount = (steps: TimelineStep[], elapsedMs: number) => steps.filter((s) => s.at <= elapsedMs).length;
+/** The number a counting step shows at `elapsedMs`: 0 before it appears, its final value once done. */
+export function countAt(step: TimelineStep, elapsedMs: number): number {
+  if (step.count == null) return 0;
+  const ms = step.countMs ?? 0;
+  if (ms <= 0) return step.count;
+  const t = Math.min(1, Math.max(0, (elapsedMs - step.at) / ms));
+  return Math.round(step.count * t);
+}
+
+// ---- Before / after ----------------------------------------------------------------------------------
+
+export type Protection = { id: "arrive_by" | "return" | "party" | "risk"; label: string; ok: boolean; detail: string };
+export type RecoveryDiff = {
+  name: string;
+  place: string; // where the arrival is measured
+  arrival: { before: number; after: number; deltaMin: number };
+  cost: { before: number; after: number; delta: number }; // the part of the trip being replaced
+  protections: Protection[];
+};
+
+/** What approving `opt` changes, and which commitments it keeps. Pure; the screen shows it after approval. */
+export function buildRecoveryDiff(it: Itinerary, req: TripRequest, res: ShieldResult, opt: Recovery): RecoveryDiff {
+  const dest = res.original[res.original.length - 1].to;
+  const tz = tzOf(dest);
+  const planned = (it.journeys.find((x) => x.dir === res.dir) ?? it.journeys[0]).segments;
+  const costBefore = planned.slice(res.keep.length).reduce((a, s) => a + s.cost, 0); // the part being replaced
+  const protections: Protection[] = [];
+  if (res.dir === "out" && req.arriveBy) {
+    const deadline = toAbs(req.departDate, req.arriveBy, tz);
+    const margin = deadline - opt.arrival;
+    protections.push({
+      id: "arrive_by", label: `Arrive-by commitment, ${fmtTime(deadline, tz)}`, ok: margin >= 0,
+      detail: margin >= 0 ? `Arrives ${fmtDur(margin)} before it.` : `Arrives ${fmtDur(margin)} after it. This option does not protect the commitment.`,
+    });
+  }
+  const ret = res.dir === "out" ? it.journeys.find((x) => x.dir === "ret") : undefined;
+  if (ret) {
+    const dep = ret.segments[0].dep;
+    const margin = dep - opt.arrival;
+    protections.push({
+      id: "return", label: `Return journey, ${fmtTime(dep, tzOf(ret.segments[0].from))}`, ok: margin >= 60,
+      detail: margin >= 60 ? `Still departs as booked, ${fmtDur(margin)} after you arrive.` : "Leaves less than an hour after you arrive.",
+    });
+  }
+  protections.push({ id: "party", label: `Party of ${it.pax}`, ok: true, detail: `All ${it.pax} traveler${it.pax > 1 ? "s" : ""} are seated on the replacement.` });
+  protections.push({
+    id: "risk", label: "Modeled disruption risk", ok: opt.risk <= 0.25,
+    detail: `${Math.round(opt.risk * 100)}% across the new segments${opt.segments.some((s) => s.mode === "empty_leg") ? "; empty legs can still be changed or withdrawn by the operator" : ""}.`,
+  });
+  return {
+    name: opt.name, place: dest,
+    arrival: { before: res.originalArrival, after: opt.arrival, deltaMin: opt.arrival - res.originalArrival },
+    cost: { before: costBefore, after: costBefore + opt.extraCost, delta: opt.extraCost },
+    protections,
+  };
+}
