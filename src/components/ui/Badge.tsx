@@ -1,22 +1,77 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { FlightStatus } from "@/lib/types";
+import { cx } from "./cx";
 import { Icon, type IconName } from "./Icon";
+
+/**
+ * ok = on time · warn = delayed or tight · bad = cancelled or missed · done = rebooked or sorted.
+ * Each tone has its own icon so the state reads without colour.
+ */
 export type Tone = "ok" | "warn" | "bad" | "done" | "neutral";
-const toneStatus = { ok: "on-time", warn: "warning", bad: "danger", done: "resolved", neutral: "neutral" } as const;
-export type BadgeStatus = "on-time" | "warning" | "danger" | "resolved" | "neutral";
-const labels: Record<BadgeStatus, string> = { "on-time": "On time", warning: "Delayed / tight", danger: "Cancelled / missed", resolved: "Resolved", neutral: "Update" };
-const paths: Record<BadgeStatus, ReactNode> = {
- "on-time": <><circle cx="8" cy="8" r="5.5" /><path d="M8 4.5V8l2.5 1.5" /></>,
- warning: <><path d="M8 2 14 13H2Z" /><path d="M8 6v3m0 2v.1" /></>,
- danger: <><path d="M5 2h6l3 3v6l-3 3H5l-3-3V5Z" /><path d="m6 6 4 4m0-4-4 4" /></>,
- resolved: <><circle cx="8" cy="8" r="5.5" /><path d="m5 8 2 2 4-4" /></>,
- neutral: <><circle cx="8" cy="8" r="5.5" /><path d="M8 7v4m0-7v.1" /></>,
+
+const TONES: Record<Tone, { className: string; icon: IconName | null }> = {
+  ok: { className: "bg-ok-bg text-ok-fg", icon: "circle-check" },
+  warn: { className: "bg-warn-bg text-warn-fg", icon: "clock" },
+  bad: { className: "bg-bad-bg text-bad-fg", icon: "x" },
+  done: { className: "bg-done-bg text-done-fg", icon: "check" },
+  neutral: { className: "bg-sunk text-ink-2", icon: null },
 };
-export function Badge({ status, tone = "neutral", icon, size = "sm", children, className = "", ...props }: HTMLAttributes<HTMLSpanElement> & { status?: BadgeStatus; tone?: Tone; icon?: IconName | null; size?: "sm" | "md" }) {
- const resolved = status ?? toneStatus[tone];
- return <span className={`ck-badge ck-badge-${resolved} ${size === "md" ? "ck-badge-md" : ""} ${className}`} {...props}>{icon ? <Icon name={icon} size={16} /> : icon !== null && <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[resolved]}</svg>}{children ?? labels[resolved]}</span>;
+
+export const TONE_ICON: Record<Tone, IconName | null> = {
+  ok: TONES.ok.icon,
+  warn: TONES.warn.icon,
+  bad: TONES.bad.icon,
+  done: TONES.done.icon,
+  neutral: null,
+};
+
+type BadgeProps = {
+  tone?: Tone;
+  children: ReactNode;
+  /** Override the tone's icon, or pass null to hide it. */
+  icon?: IconName | null;
+  size?: "sm" | "md";
+  className?: string;
+};
+
+export function Badge({ tone = "neutral", children, icon, size = "sm", className }: BadgeProps) {
+  const t = TONES[tone];
+  const iconName = icon === undefined ? t.icon : icon;
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-badge font-semibold",
+        size === "sm" ? "h-[26px] pr-2.5 pl-2 text-[13px]" : "h-8 pr-3 pl-2.5 text-[15px]",
+        t.className,
+        className,
+      )}
+    >
+      {iconName && <Icon name={iconName} size={size === "sm" ? 14 : 16} strokeWidth={2.5} />}
+      {children}
+    </span>
+  );
 }
-export const TONE_ICON: Record<Tone, IconName | null> = { ok: "circle-check", warn: "alert", bad: "circle-x", done: "checks", neutral: null };
-export const FLIGHT_STATUS_BADGE: Record<FlightStatus, { tone: Tone; label: string }> = { scheduled: { tone: "ok", label: "On time" }, delayed: { tone: "warn", label: "Delayed" }, cancelled: { tone: "bad", label: "Cancelled" }, rebooked: { tone: "done", label: "Rebooked" } };
-export const CONNECTION_BADGE = { ok: { tone: "ok", label: "Enough time" }, tight: { tone: "warn", label: "Tight connection" }, missed: { tone: "bad", label: "Missed connection" } } as const;
-export function FlightStatusBadge({ status, size }: { status: FlightStatus; size?: "sm" | "md" }) { const badge = FLIGHT_STATUS_BADGE[status]; return <Badge tone={badge.tone} size={size}>{badge.label}</Badge>; }
+
+/** Tone and wording for a flight's status: <Badge tone={...}>{label}</Badge>. */
+export const FLIGHT_STATUS_BADGE: Record<FlightStatus, { tone: Tone; label: string }> = {
+  scheduled: { tone: "ok", label: "On time" },
+  delayed: { tone: "warn", label: "Delayed" },
+  cancelled: { tone: "bad", label: "Cancelled" },
+  rebooked: { tone: "done", label: "Rebooked" },
+};
+
+/** Tone and wording for Impact.connection.status. */
+export const CONNECTION_BADGE: Record<"ok" | "tight" | "missed", { tone: Tone; label: string }> = {
+  ok: { tone: "ok", label: "Enough time" },
+  tight: { tone: "warn", label: "Tight connection" },
+  missed: { tone: "bad", label: "Missed connection" },
+};
+
+export function FlightStatusBadge({ status, size }: { status: FlightStatus; size?: "sm" | "md" }) {
+  const b = FLIGHT_STATUS_BADGE[status];
+  return (
+    <Badge tone={b.tone} size={size}>
+      {b.label}
+    </Badge>
+  );
+}

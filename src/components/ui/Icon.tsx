@@ -1,10 +1,7 @@
 import type { SVGProps } from "react";
 
-// A small hand-picked line-icon set (24px grid, 1.75 stroke). Use these, never emoji.
+// A small hand-picked line-icon set (24px grid, 2px stroke). Use these, never emoji.
 const PATHS = {
- route: <><path d="M5 17V8a4 4 0 0 1 8 0v8a3 3 0 0 0 6 0V5" /><path d="m16 8 3-3 3 3" /><circle cx="5" cy="18" r="1" /></>,
- back: <path d="m10 5-7 7 7 7M3 12h18" />,
- arrow: <path d="m14 5 7 7-7 7M3 12h18" />,
   check: <path d="M5 12l5 5L20 7" />,
   "circle-check": (
     <>
@@ -46,12 +43,14 @@ const PATHS = {
       <path d="M2 7v10M22 17v-3H2M12 14h10v-2a3 3 0 0 0-3-3h-7z" />
     </>
   ),
-  share: (
+  "circle-dashed": <circle cx="12" cy="12" r="9" strokeDasharray="3 3" />,
+  "circle-alert": (
     <>
-      <path d="M12 3v12M8 7l4-4 4 4" />
-      <path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v4M12 16h.01" />
     </>
   ),
+  share: <path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />,
   copy: (
     <>
       <rect x="8" y="8" width="12" height="12" rx="2" />
@@ -59,8 +58,10 @@ const PATHS = {
     </>
   ),
   link: (
-    <path d="M9 15l6-6M11 6l.5-.5a5 5 0 0 1 7 7l-.5.5M13 18l-.4.5a5 5 0 0 1-7.1 0 5 5 0 0 1 0-7l.5-.5" />
+    <path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1" />
   ),
+  listen: <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   message: (
     <path d="M8 9h8M8 13h5M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-5l-5 3v-3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z" />
   ),
@@ -82,7 +83,7 @@ const PATHS = {
   plus: <path d="M12 5v14M5 12h14" />,
   x: <path d="M6 6l12 12M18 6L6 18" />,
   "arrow-right": <path d="M5 12h14M13 6l6 6-6 6" />,
-  "chevron-left": <path d="M15 6l-6 6 6 6" />,
+  "chevron-left": <path d="M15 5l-7 7 7 7" />,
   "chevron-right": <path d="M9 6l6 6-6 6" />,
   sun: (
     <>
@@ -116,7 +117,7 @@ export function Icon({ name, size = 20, label, ...rest }: IconProps) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.75}
+      strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden={label ? undefined : true}
@@ -130,5 +131,3 @@ export function Icon({ name, size = 20, label, ...rest }: IconProps) {
     </svg>
   );
 }
-
-export function Brand() { return <header className="ck-brand"><span className="ck-mark"><Icon name="route" size={21} /></span><span>ConnectionKeeper</span></header>; }

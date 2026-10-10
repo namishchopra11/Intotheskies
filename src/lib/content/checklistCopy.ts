@@ -82,3 +82,27 @@ export const checklistCopy = {
 } satisfies Record<string, ChecklistCopyEntry>;
 
 export type ChecklistCopyKey = keyof typeof checklistCopy;
+
+// How a task reads to the person waiting on the traveler: the "Still sorting" line in the
+// shared message, the "Still being sorted" list on /s, and the summary text. Same keys and
+// placeholders as above; every key must appear here so a new task forces a decision.
+//   - a string is the recipient-facing line. It has no "you", so it works whether the
+//     reader sees it in the traveler's voice or a third-person page.
+//   - null means the task is the traveler's own business (or is the share itself) and is
+//     left out of anything the recipient sees.
+// Same wording rule: stay general, no claims about rights or compensation.
+export const shareCopy = {
+  ask_rebooking_options: "Getting rebooked with {airline}",
+  go_to_transfer_desk: "Getting rebooked with {airline}",
+  confirm_new_times: "Confirming the latest times for {flight}",
+  confirm_new_booking: "Confirming the new booking for {flight}",
+  rebook_onward: "Rebooking the onward flight {onwardFlight}",
+  check_bags: "Finding out where the checked bags are",
+  tell_hotel: "Letting {hotel} know about a late arrival",
+  rearrange_pickup: "Rearranging the pickup or transfer",
+  send_update: null,
+  ask_entitlements: null,
+  get_it_in_writing: null,
+  keep_receipts: null,
+  contact_insurer: null,
+} satisfies Record<ChecklistCopyKey, string | null>;
