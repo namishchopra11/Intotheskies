@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   Badge,
+  Button,
+  buttonClasses,
   Card,
   CONNECTION_BADGE,
   FLIGHT_STATUS_BADGE,
@@ -12,6 +14,9 @@ import {
 } from "@/components/ui";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
 import { formatDate, formatDuration, timePart } from "@/lib/domain/time";
+import { isDemoCluster } from "@/lib/solana/config";
+import { buildTransferRequestUrl } from "@/lib/solana/pay";
+import { copyText } from "../share/[id]/copyText";
 
 // The URL fragment never reaches a server, so it is read on the client only.
 // `null` while rendering on the server, then the hash (possibly "").
@@ -162,6 +167,8 @@ function Update({ s }: { s: ShareSnapshot }) {
           </Section>
         )}
 
+        {s.fundsRequest && <SendHelp s={s} first={first} request={s.fundsRequest} />}
+
         <details className="group rounded-card border border-line bg-surface">
           <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 font-medium [&::-webkit-details-marker]:hidden">
             <Icon name="message" size={18} className="text-ink-3" />
@@ -191,6 +198,63 @@ function Update({ s }: { s: ShareSnapshot }) {
         </footer>
       </div>
     </>
+  );
+}
+
+function SendHelp({
+  s,
+  first,
+  request,
+}: {
+  s: ShareSnapshot;
+  first: string;
+  request: NonNullable<ShareSnapshot["fundsRequest"]>;
+}) {
+  const [copied, setCopied] = useState<boolean | null>(null);
+  const url = buildTransferRequestUrl({
+    recipient: request.recipient,
+    amountUsdc: request.amountUsdc,
+    tripName: s.tripName,
+    travelerName: s.travelerName,
+    cluster: request.cluster,
+  });
+  if (!url) return null;
+  const demo = isDemoCluster(request.cluster);
+  return (
+    <Section title={`Help ${first} with costs`} icon="user">
+      <Card>
+        <p className="text-ink-2">{first} is asking for</p>
+        <p className="font-num text-[30px] leading-tight font-semibold tabular-nums">
+          {request.amountUsdc} <span className="font-sans text-[17px] font-medium text-ink-2">USDC</span>
+        </p>
+        {demo && (
+          <p className="mt-3 flex items-start gap-2 rounded-control bg-warn-bg px-3 py-2.5 text-[14px] text-warn-fg">
+            <Icon name="info" size={18} className="mt-px" />
+            Demo on Solana&apos;s test network (devnet). No real money moves.
+          </p>
+        )}
+        <a href={url} className={buttonClasses({ variant: "primary", block: true, className: "mt-4" })}>
+          <Icon name="arrow-right" size={20} />
+          Send help
+        </a>
+        <p className="mt-2 text-[14px] leading-snug text-ink-3">
+          Opens your Solana wallet app{demo ? " (set it to devnet)" : ""}. You check and approve the
+          payment there. Nothing is sent from this page.
+        </p>
+        <div className="mt-4 border-t border-line pt-3">
+          <p className="text-[13px] text-ink-3">No wallet on this device? Send to this address</p>
+          <p className="mt-1 font-num text-[14px] break-all text-ink-2">{request.recipient}</p>
+          <Button
+            size="sm"
+            className="mt-2"
+            icon={copied ? "check" : "copy"}
+            onClick={async () => setCopied(await copyText(request.recipient))}
+          >
+            {copied ? "Copied" : copied === false ? "Couldn't copy" : "Copy address"}
+          </Button>
+        </div>
+      </Card>
+    </Section>
   );
 }
 

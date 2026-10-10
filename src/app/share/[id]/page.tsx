@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Button, Card, Icon, PageHeader, Toggle, cx } from "@/components/ui";
+import Link from "next/link";
+import { Button, Card, Field, Icon, PageHeader, Toggle, cx } from "@/components/ui";
 import { encodeShare } from "@/lib/domain/shareLink";
 import { buildSummary, DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
+import { SOLANA_CLUSTER, isDemoCluster } from "@/lib/solana/config";
+import { normalizeUsdcAmount } from "@/lib/solana/pay";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import { ShareSkeleton } from "../ShareSkeleton";
 import { copyText } from "./copyText";
@@ -24,6 +27,8 @@ export default function SharePage() {
   const trip = useTripStore((s) => s.trip);
   const [options, setOptions] = useState<SummaryOptions>(DEFAULT_SUMMARY_OPTIONS);
   const [done, setDone] = useState<Done | null>(null);
+  const [askFunds, setAskFunds] = useState(false);
+  const [amount, setAmount] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -55,7 +60,15 @@ export default function SharePage() {
     );
   }
 
-  const link = () => `${window.location.origin}/s#${encodeShare(trip, disruption.id, options)}`;
+  const fundsOn = askFunds && Boolean(trip.payoutAddress);
+  const amountOk = normalizeUsdcAmount(amount) !== null;
+  const amountError =
+    fundsOn && amount.trim() !== "" && !amountOk ? "Enter an amount like 50 or 85.50." : undefined;
+  const link = () =>
+    `${window.location.origin}/s#${encodeShare(trip, disruption.id, {
+      ...options,
+      fundsRequest: fundsOn && amountOk ? { amountUsdc: amount } : null,
+    })}`;
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const confirm = (d: Done) => {
@@ -63,7 +76,7 @@ export default function SharePage() {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setDone(null), 2600);
   };
-  const set = (key: keyof SummaryOptions) => (value: boolean) => {
+  const set = (key: "includeBookingRefs" | "includeStays" | "includeOpenTasks") => (value: boolean) => {
     setOptions((o) => ({ ...o, [key]: value }));
     setDone(null);
   };
@@ -136,6 +149,62 @@ export default function SharePage() {
             <p className="mt-2 flex items-start gap-2 rounded-control bg-warn-bg px-3 py-2.5 text-[14px] text-warn-fg">
               <Icon name="lock" size={18} className="mt-px" />
               Only send booking references to people you trust.
+            </p>
+          )}
+        </section>
+
+        <section aria-labelledby="funds-h">
+          <h2 id="funds-h" className="mb-2 text-[14px] font-semibold text-ink-3">
+            Ask for help
+          </h2>
+          <Card className="py-1">
+            <Toggle
+              checked={fundsOn}
+              onChange={(v) => {
+                setAskFunds(v);
+                setDone(null);
+              }}
+              disabled={!trip.payoutAddress}
+              label="Add a Send help button"
+              description={
+                trip.payoutAddress
+                  ? "People who open the link can send you USDC from their own Solana wallet."
+                  : "Add your Solana address on the trip screen first."
+              }
+            />
+            {fundsOn && (
+              <Field
+                className="pb-3"
+                label="Amount in USDC"
+                hint={
+                  isDemoCluster(SOLANA_CLUSTER)
+                    ? "Demo only: this uses Solana's test network, so no real money moves."
+                    : undefined
+                }
+                inputMode="decimal"
+                placeholder="50"
+                value={amount}
+                onChange={(e) => {
+                  setAmount(e.target.value);
+                  setDone(null);
+                }}
+                error={amountError}
+              />
+            )}
+          </Card>
+          {!trip.payoutAddress && (
+            <Link href="/" className="mt-2 inline-flex min-h-11 items-center text-[14px] font-medium underline underline-offset-4">
+              Go to your trip to add one
+            </Link>
+          )}
+          {fundsOn && (
+            <p className="mt-2 flex items-start gap-2 text-[14px] leading-snug text-ink-2">
+              <Icon name="info" size={18} className="mt-px text-ink-3" />
+              <span>
+                {amountOk
+                  ? "The button is on the linked page only, not in the message text. Your address is visible to anyone with the link."
+                  : "Enter an amount, or the link is shared without the button."}
+              </span>
             </p>
           )}
         </section>
