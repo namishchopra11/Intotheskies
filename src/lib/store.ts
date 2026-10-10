@@ -15,6 +15,7 @@ import {
   type Flight,
   type FlightStatus,
   type LocalDateTime,
+  type Ride,
   type Stay,
   type Trip,
 } from "@/lib/types";
@@ -28,14 +29,27 @@ export type FlightRevision = {
 
 export type TripState = {
   trip: Trip | null;
+  /** Trips put aside with saveAndCloseTrip, most recent first. */
+  savedTrips: Trip[];
 
   loadSampleTrip: () => void;
   resetTrip: () => void;
+  /** Starts an empty trip (replacing any current one) for the traveler to fill in. */
+  startTrip: (details: { name: string; travelerName: string }) => void;
+  /** Puts the current trip in savedTrips (replacing an older copy of it) and closes it. */
+  saveAndCloseTrip: () => void;
+  /** Reopens a saved trip. The current trip, if any, is saved first so nothing is lost. */
+  openSavedTrip: (tripId: string) => void;
+  removeSavedTrip: (tripId: string) => void;
+  /** Renames the trip or the traveler. */
+  updateTripDetails: (details: { name?: string; travelerName?: string }) => void;
 
   upsertFlight: (flight: Flight) => void;
   removeFlight: (flightId: string) => void;
   upsertStay: (stay: Stay) => void;
   removeStay: (stayId: string) => void;
+  upsertRide: (ride: Ride) => void;
+  removeRide: (rideId: string) => void;
   upsertContact: (contact: Contact) => void;
   removeContact: (contactId: string) => void;
 
@@ -81,11 +95,45 @@ export const useTripStore = create<TripState>()(
           disruptions: trip.disruptions.map((d) => (d.id === disruptionId ? fn(d) : d)),
         }));
 
+      const withSaved = (saved: Trip[], trip: Trip | null) =>
+        trip ? [trip, ...saved.filter((t) => t.id !== trip.id)] : saved;
+
       return {
         trip: null,
+        savedTrips: [],
 
         loadSampleTrip: () => set({ trip: structuredClone(sampleTrip) }),
         resetTrip: () => set({ trip: null }),
+        startTrip: ({ name, travelerName }) =>
+          set({
+            trip: {
+              id: newId(),
+              name: name.trim(),
+              travelerName: travelerName.trim(),
+              flights: [],
+              stays: [],
+              rides: [],
+              contacts: [],
+              disruptions: [],
+            },
+          }),
+        saveAndCloseTrip: () =>
+          set((state) => ({ trip: null, savedTrips: withSaved(state.savedTrips, state.trip) })),
+        openSavedTrip: (tripId) =>
+          set((state) => {
+            const saved = state.savedTrips.find((t) => t.id === tripId);
+            if (!saved) return state;
+            const rest = withSaved(state.savedTrips, state.trip).filter((t) => t.id !== tripId);
+            return { trip: saved, savedTrips: rest };
+          }),
+        removeSavedTrip: (tripId) =>
+          set((state) => ({ savedTrips: state.savedTrips.filter((t) => t.id !== tripId) })),
+        updateTripDetails: ({ name, travelerName }) =>
+          updateTrip((trip) => ({
+            ...trip,
+            name: name?.trim() ?? trip.name,
+            travelerName: travelerName?.trim() ?? trip.travelerName,
+          })),
 
         upsertFlight: (flight) =>
           updateTrip((trip) => ({ ...trip, flights: upsert(trip.flights, flight) })),
@@ -98,6 +146,10 @@ export const useTripStore = create<TripState>()(
         upsertStay: (stay) => updateTrip((trip) => ({ ...trip, stays: upsert(trip.stays, stay) })),
         removeStay: (stayId) =>
           updateTrip((trip) => ({ ...trip, stays: trip.stays.filter((s) => s.id !== stayId) })),
+        upsertRide: (ride) =>
+          updateTrip((trip) => ({ ...trip, rides: upsert(trip.rides ?? [], ride) })),
+        removeRide: (rideId) =>
+          updateTrip((trip) => ({ ...trip, rides: (trip.rides ?? []).filter((r) => r.id !== rideId) })),
         upsertContact: (contact) =>
           updateTrip((trip) => ({ ...trip, contacts: upsert(trip.contacts, contact) })),
         removeContact: (contactId) =>
@@ -183,14 +235,20 @@ export const useTripStore = create<TripState>()(
       storage: createJSONStorage(() =>
         typeof window === "undefined" ? noopStorage : window.localStorage,
       ),
-      partialize: (state) => ({ trip: state.trip }),
+      partialize: (state) => ({ trip: state.trip, savedTrips: state.savedTrips }),
       // Hydration is started by useStoreReady() after mount, so the server render and
       // the first client render both see `trip: null` and never mismatch.
       skipHydration: true,
       // Anything in localStorage that no longer matches the schema is discarded.
       merge: (persisted, current) => {
-        const parsed = TripSchema.nullable().safeParse((persisted as { trip?: unknown })?.trip);
-        return { ...current, trip: parsed.success ? parsed.data : null };
+        const p = persisted as { trip?: unknown; savedTrips?: unknown } | undefined;
+        const parsed = TripSchema.nullable().safeParse(p?.trip);
+        const saved = Array.isArray(p?.savedTrips) ? p.savedTrips : [];
+        const savedTrips = saved.flatMap((t) => {
+          const r = TripSchema.safeParse(t);
+          return r.success ? [r.data] : [];
+        });
+        return { ...current, trip: parsed.success ? parsed.data : null, savedTrips };
       },
     },
   ),

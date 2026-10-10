@@ -49,6 +49,20 @@ export const StaySchema = z.object({
 });
 export type Stay = z.infer<typeof StaySchema>;
 
+// A booked ride, e.g. an airport pickup or a transfer to the hotel. `pickupAt` is local time
+// where the ride starts.
+export const RideSchema = z.object({
+  id: z.string(),
+  provider: z.string(), // "Uber", "Hotel shuttle", a driver's name
+  pickupAt: LocalDateTimeSchema,
+  from: z.string(), // a place, or an airport code
+  to: z.string(),
+  phone: z.string().optional(),
+  confirmation: z.string().optional(),
+  notes: z.string().optional(),
+});
+export type Ride = z.infer<typeof RideSchema>;
+
 export const ContactKindSchema = z.enum(["airline", "hotel", "insurance", "other"]);
 export type ContactKind = z.infer<typeof ContactKindSchema>;
 
@@ -96,6 +110,7 @@ export const TripSchema = z.object({
   travelerName: z.string(),
   flights: z.array(FlightSchema),
   stays: z.array(StaySchema),
+  rides: z.array(RideSchema).optional(), // optional so trips saved before rides existed still load
   contacts: z.array(ContactSchema),
   disruptions: z.array(DisruptionSchema),
   payoutAddress: z.string().optional(), // a Solana address; unused until a later add-on

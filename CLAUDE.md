@@ -1,11 +1,11 @@
-# ConnectionKeeper
+# Layover
 
 Read this first. It is the shared contract for all four sessions working in this repo.
 
 ## Product
 
 When a flight is delayed or cancelled, travelers juggle an airline app, confirmation
-emails, and a hotel booking. ConnectionKeeper keeps reservations, next steps, and contacts
+emails, and a hotel booking. Layover keeps reservations, next steps, and contacts
 in one place. The user tells it what changed; it shows what is now at risk downstream,
 generates a checklist of what to do, and writes an update for the people waiting on them.
 The link between those three is the whole demo: trip data drives the checklist, and both

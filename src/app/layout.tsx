@@ -19,12 +19,12 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "ConnectionKeeper",
-    template: "%s · ConnectionKeeper",
+    default: "Layover",
+    template: "%s · Layover",
   },
   description: "Your trip, next steps and contacts in one place when a flight changes.",
-  applicationName: "ConnectionKeeper",
-  appleWebApp: { capable: true, title: "ConnectionKeeper", statusBarStyle: "default" },
+  applicationName: "Layover",
+  appleWebApp: { capable: true, title: "Layover", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 

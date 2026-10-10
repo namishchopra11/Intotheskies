@@ -29,6 +29,7 @@ export default function TripStatusPage() {
   const ready = useStoreReady();
   const trip = useTripStore((s) => s.trip);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   const menuButton = (
     <button
@@ -43,9 +44,10 @@ export default function TripStatusPage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <AppHeader action={menuButton} />
-      {!ready ? <Loading /> : trip ? <Status trip={trip} /> : <NoTrip />}
+      <AppHeader action={menuButton} onLogoClick={trip ? () => setLeaveOpen(true) : undefined} />
+      {!ready ? <Loading /> : !trip ? <NoTrip /> : trip.flights.length === 0 ? <NoFlights trip={trip} /> : <Status trip={trip} />}
       <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
+      <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
     </main>
   );
 }
@@ -413,7 +415,7 @@ const HOW_IT_WORKS: { n: string; icon: IconName; title: string; body: string }[]
 ];
 
 function NoTrip() {
-  const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
+  const savedTrips = useTripStore((s) => s.savedTrips);
   return (
     <div className="flex flex-1 flex-col">
       <SignalBar aside="Nothing to watch">No trip yet</SignalBar>
@@ -444,17 +446,107 @@ function NoTrip() {
         ))}
       </ol>
 
+      {savedTrips.length > 0 && <SavedTrips trips={savedTrips} />}
+
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(340)}>
         <p className="mx-1 mb-1 flex items-start gap-2 text-[13px] leading-[1.4] text-ink-2">
           <Icon name="lock" size={16} className="mt-px" />
           Everything stays on this phone. No account, nothing uploaded.
         </p>
-        <Button variant="primary" size="lg" block chip="arrow-right" onClick={loadSampleTrip}>
-          Try the sample trip
+        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
+          Add your trip
         </Button>
-        <p className="text-center font-num text-[12px] tracking-[0.04em] text-ink-2 uppercase">
-          San Francisco → London → Rome
+      </div>
+    </div>
+  );
+}
+
+function SavedTrips({ trips }: { trips: Trip[] }) {
+  const openSavedTrip = useTripStore((s) => s.openSavedTrip);
+  const removeSavedTrip = useTripStore((s) => s.removeSavedTrip);
+  return (
+    <Section title="Saved trips" delay={280}>
+      <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
+        {trips.map((t) => {
+          const first = t.flights[0];
+          const last = t.flights[t.flights.length - 1];
+          const meta = [
+            t.travelerName,
+            first && `${cityName(first.from)} → ${cityName(last.to)}`,
+            first && formatDate(first.departAt),
+          ].filter(Boolean);
+          return (
+            <li key={t.id} className="flex items-center">
+              <button
+                type="button"
+                onClick={() => openSavedTrip(t.id)}
+                className="flex min-w-0 flex-1 cursor-pointer flex-col items-start px-4 py-3.5 text-left hover:bg-sunk"
+              >
+                <span className="w-full truncate font-semibold">{t.name || "Untitled trip"}</span>
+                <span className="w-full truncate text-[14px] text-ink-2">{meta.join(" · ")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => removeSavedTrip(t.id)}
+                aria-label={`Delete saved trip ${t.name}`}
+                className="mr-2 inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-3 hover:bg-sunk hover:text-ink"
+              >
+                <Icon name="x" size={18} />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </Section>
+  );
+}
+
+/** Logo tapped with a trip open: close it, keeping a copy or not, or stay. */
+function LeaveTripSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const saveAndCloseTrip = useTripStore((s) => s.saveAndCloseTrip);
+  const resetTrip = useTripStore((s) => s.resetTrip);
+  const leave = (fn: () => void) => {
+    fn();
+    onClose();
+    window.scrollTo({ top: 0 });
+  };
+  return (
+    <Sheet open={open} onClose={onClose} title="Head back to the start?">
+      <div className="flex flex-col gap-3 pt-1">
+        <p className="mb-2 leading-snug text-ink-2">
+          This trip will close. Unless you save it, its flights, hotels and rides will be gone
+          for good.
         </p>
+        <Button variant="primary" block icon="check" onClick={() => leave(saveAndCloseTrip)}>
+          Save it for later
+        </Button>
+        <Button variant="danger" block onClick={() => leave(resetTrip)}>
+          Discard this trip
+        </Button>
+        <Button variant="ghost" block onClick={onClose}>
+          Stay on this trip
+        </Button>
+      </div>
+    </Sheet>
+  );
+}
+
+/** A trip has been started but has no flights yet, so there is nothing to watch. */
+function NoFlights({ trip }: { trip: Trip }) {
+  return (
+    <div className="flex flex-1 flex-col">
+      <SignalBar aside="Nothing to watch">No flights yet</SignalBar>
+      <section className="ck-rise flex flex-col gap-2 px-5 pt-[22px]" style={rise(100)}>
+        <p className="text-[14px] text-ink-2">{[trip.travelerName, trip.name].filter(Boolean).join(" · ")}</p>
+        <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
+          Add a flight and Layover starts watching it.
+        </h1>
+        <p className="text-ink-2">When it changes, you will see what is affected and what to do next.</p>
+      </section>
+      <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(220)}>
+        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
+          Add your bookings
+        </Button>
       </div>
     </div>
   );
@@ -486,6 +578,11 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
               onClick={async () => setAlerts(await Notification.requestPermission())}
             >
               Allow phone notifications
+            </Button>
+          )}
+          {hasTrip && (
+            <Button variant="secondary" block icon="pencil" href="/trip">
+              Edit flights, hotels and rides
             </Button>
           )}
           <Button

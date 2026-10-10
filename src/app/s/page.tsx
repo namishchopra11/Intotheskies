@@ -98,7 +98,7 @@ function Update({ s }: { s: ShareSnapshot }) {
         </p>
         <span className="inline-flex items-center gap-2 text-[13px] text-ink-2">
           <BrandMark size={18} className="rounded-[3px]" />
-          Shared with ConnectionKeeper
+          Shared with Layover
         </span>
       </footer>
     </div>
