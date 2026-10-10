@@ -97,7 +97,10 @@ export function encodeShare(trip: Trip, disruptionId: string, options: SummaryOp
       : [],
     summary: buildSummary(trip, disruptionId, options),
   };
-  return compressToEncodedURIComponent(JSON.stringify(snapshot));
+  // lz-string's alphabet includes "+" and "$", which some messaging apps mangle in links.
+  return compressToEncodedURIComponent(JSON.stringify(snapshot))
+    .replace(/\+/g, "_")
+    .replace(/\$/g, "~");
 }
 
 /** Accepts the fragment with or without a leading "#". Returns null for anything malformed. */
@@ -105,7 +108,8 @@ export function decodeShare(fragment: string): ShareSnapshot | null {
   try {
     const raw = fragment.replace(/^#/, "").trim();
     if (!raw) return null;
-    const json = decompressFromEncodedURIComponent(raw);
+    if (!/^[A-Za-z0-9_~+$-]+$/.test(raw)) return null;
+    const json = decompressFromEncodedURIComponent(raw.replace(/_/g, "+").replace(/~/g, "$"));
     if (!json) return null;
     const parsed = ShareSnapshotSchema.safeParse(JSON.parse(json));
     return parsed.success ? parsed.data : null;
