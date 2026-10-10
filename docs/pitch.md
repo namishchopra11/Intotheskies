@@ -72,10 +72,10 @@ words, so the word count is lower than it looks. The full tap-by-tap demo is in
 
 ### 6. Hand-off (about 10 seconds)
 
-> We each built a different part. [Name] did the logic, [Name] the screens, [Name] the design.
-> Ask us anything, or let's look at the code.
+> We each built a different part. Namish led the code, Boris built the logic, and Will
+> designed the screens. Ask us anything, or let's look at the code.
 
-*Fill in the three names and roles before tomorrow.*
+*Sebastian's part (Solana and ElevenLabs) goes in only once it works. See "Tracks" below.*
 
 ---
 
@@ -152,11 +152,15 @@ are off by default.
 
 **How is this different from an airline app or TripIt?**
 An airline app knows one airline's flight. It does not know your hotel or the other
-airline's flight. TripIt is good at collecting an itinerary and sending alerts. We start
-after the alert: what is now at risk across everything you have booked, what to do first,
-and the message for the people waiting. We are not replacing them. Their trip data could
-feed ours. *(Check what TripIt does today before tomorrow. I answered from general
-knowledge, so make sure nothing here is out of date.)*
+airline's flight. TripIt is a good app: it collects your bookings from your emails, and the
+paid version sends delay alerts and suggests other flights. So we are not competing on
+alerts or finding a new flight. We start after the alert: what the change means for
+everything else you have booked, what to do first, and the message for the people waiting.
+Their trip data could feed ours.
+
+*Say only what is true: do not say TripIt "can't" do something. We checked its public
+description (see sources below), not the app itself. If a judge pushes, say "as far as we
+know, it does not write the update for the people waiting".*
 
 **Isn't this just a to-do list?**
 A to-do list holds what you type. Here the list is written from your trip: it names your
@@ -193,8 +197,20 @@ built the logic.)*
 - Do not say "AI" about anything unless a teammate has confirmed it is true.
 - Do not promise features. Say "next, we would..."
 
+## Who to hand questions to
+
+| Person | Role | Ask them about |
+| --- | --- | --- |
+| Namish | Head coder | How it is built, the store, the share link |
+| Boris | Code and logic | How the connection time, checklist and message are worked out |
+| Will | Frontend design | The screens, the look, phone layout |
+| Sebastian | Presenter, Solana, ElevenLabs | The story, plus those two features once they work |
+
 ## Open items
 
-1. Names and roles for the hand-off line.
-2. Which of the three tracks are actually working. Tell me and I will update this file.
-3. A spot-check of the TripIt answer.
+1. Which of the three tracks are actually working. Tell me and I will update this file.
+2. Where the TripIt answer came from: public descriptions of TripIt, not the app itself.
+   Sources: [TripIt Pro review](https://www.iphonejd.com/?p=1094),
+   [TechCrunch on the launch of TripIt Pro](https://techcrunch.com/2009/06/23/tripit-goes-pro-launches-premium-flight-monitoring-and-alerts),
+   [Cornell travel blog](https://blogs.cornell.edu/travel/2018/05/02/tripit-pro-powerful-features-minimize-travel-hassles).
+   Some are old, so open tripit.com once and skim the features.
