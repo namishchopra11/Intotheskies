@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button, Card, Icon, PageHeader, Toggle, cx } from "@/components/ui";
+import { sendUpdateTaskId } from "@/lib/domain/checklist";
 import { encodeShare } from "@/lib/domain/shareLink";
 import { DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
 import { useStoreReady, useTripStore } from "@/lib/store";
@@ -30,6 +31,7 @@ export default function SharePage() {
   const { id } = useParams<{ id: string }>();
   const ready = useStoreReady();
   const trip = useTripStore((s) => s.trip);
+  const toggleTask = useTripStore((s) => s.toggleTask);
   const [options, setOptions] = useState<SummaryOptions>(DEFAULT_SUMMARY_OPTIONS);
   const [done, setDone] = useState<Done | null>(null);
   const [openedAt] = useState(clockNow);
@@ -54,8 +56,8 @@ export default function SharePage() {
         <PageHeader variant="bar" title="Nothing to share yet" back={{ href: "/", label: "Back to trip" }} />
         <div className="px-4 pt-2">
           <Card className="text-ink-2">
-            This update isn&apos;t on this phone. Report what changed on your trip first, then
-            share it from there.
+            This update isn&apos;t on this phone. Changes to your flights show up on your trip
+            automatically, so open it and share from there.
             <Button href="/" variant="primary" block chip="arrow-right" className="mt-4">
               Go to your trip
             </Button>
@@ -68,7 +70,16 @@ export default function SharePage() {
   const link = () => `${window.location.origin}/s#${encodeShare(trip, disruption.id, options)}`;
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
+  // Sharing or copying the update is the "send an update" task, so tick it off for them.
+  // Read the live store: toggleTask flips the state, so it must only run while still open.
+  const markSent = () => {
+    const current = useTripStore.getState().trip?.disruptions.find((d) => d.id === disruption.id);
+    const task = current?.tasks.find((t) => t.id === sendUpdateTaskId(disruption.id));
+    if (task && !task.done) toggleTask(disruption.id, task.id);
+  };
+
   const confirm = (d: Done) => {
+    if (d !== "error") markSent();
     setDone(d);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setDone(null), 1800);

@@ -1,6 +1,6 @@
-import { checklistCopy, type ChecklistCopyKey } from "@/lib/content/checklistCopy";
-import type { Contact, ContactKind, Disruption, DisruptionType, Task, Trip } from "@/lib/types";
-import type { Impact } from "./impact";
+import { checklistCopy, shareCopy, type ChecklistCopyKey } from "@/lib/content/checklistCopy";
+import type { Contact, ContactKind, Disruption, DisruptionType, Flight, Task, Trip } from "@/lib/types";
+import { computeImpact, type Impact } from "./impact";
 
 // Most urgent first. Every key in checklistCopy appears here exactly once.
 const URGENCY: ChecklistCopyKey[] = [
@@ -37,9 +37,16 @@ const FALLBACK: Required<Vars> = {
   insurer: "",
 };
 
-function fill(text: string, vars: Vars): string {
+// Same blanks as FALLBACK, but worded for someone reading about the traveler.
+const RECIPIENT_FALLBACK: Required<Vars> = {
+  ...FALLBACK,
+  flight: "the flight",
+  hotel: "the hotel",
+};
+
+function fill(text: string, vars: Vars, fallback: Required<Vars> = FALLBACK): string {
   const filled = text
-    .replace(/\{(\w+)\}/g, (_, name: keyof Vars) => vars[name] ?? FALLBACK[name] ?? "")
+    .replace(/\{(\w+)\}/g, (_, name: keyof Vars) => vars[name] ?? fallback[name] ?? "")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+([.,])/g, "$1")
     .replace(/[:\s]+$/, "")
@@ -59,6 +66,23 @@ function findContact(trip: Trip, kind: ContactKind, name?: string): Contact | un
     return have !== "" && (have === wanted || have.includes(wanted) || wanted.includes(have));
   });
 }
+
+// The airline that caused the change is the one to ask; the new one for a new booking.
+function baseVarsFor(flight: Flight | undefined, onward: Flight | undefined, insurer: Contact | undefined): Vars {
+  return {
+    airline: flight?.original?.airline ?? flight?.airline,
+    flight: flight?.original?.flightNumber ?? flight?.flightNumber,
+    onwardAirline: onward?.airline,
+    onwardFlight: onward?.flightNumber,
+    insurer: insurer?.name,
+  };
+}
+
+/** Generated task ids are `${disruptionId}:${copyKey}`, plus `:${stayId}` for hotel tasks. */
+const taskId = (disruptionId: string, key: ChecklistCopyKey, idSuffix = "") => `${disruptionId}:${key}${idSuffix}`;
+
+/** The id of the "send an update" task, so the share screen can tick it off. */
+export const sendUpdateTaskId = (disruptionId: string) => taskId(disruptionId, "send_update");
 
 /**
  * Builds the task list for a disruption. Generated task ids are
@@ -87,16 +111,8 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
   if (insurer) keys.add("contact_insurer");
   keys.add("send_update");
 
-  // The airline that caused the change is the one to ask; the new one for a new booking.
-  const causingAirline = flight?.original?.airline ?? flight?.airline;
-  const causingFlight = flight?.original?.flightNumber ?? flight?.flightNumber;
-  const baseVars: Vars = {
-    airline: causingAirline,
-    flight: causingFlight,
-    onwardAirline: onward?.airline,
-    onwardFlight: onward?.flightNumber,
-    insurer: insurer?.name,
-  };
+  const baseVars = baseVarsFor(flight, onward, insurer);
+  const causingAirline = baseVars.airline;
   const causingContact = causingAirline ? findContact(trip, "airline", causingAirline) : undefined;
 
   const contactFor: Partial<Record<ChecklistCopyKey, Contact | undefined>> = {
@@ -110,7 +126,7 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
   const make = (key: ChecklistCopyKey, vars: Vars, contact?: Contact, idSuffix = ""): Task => {
     const copy: { title: string; detail?: string } = checklistCopy[key];
     return {
-      id: `${disruption.id}:${key}${idSuffix}`,
+      id: taskId(disruption.id, key, idSuffix),
       title: fill(copy.title, vars),
       ...(copy.detail ? { detail: fill(copy.detail, vars) } : {}),
       done: false,
@@ -137,4 +153,45 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
     }
   }
   return tasks;
+}
+
+/**
+ * The open tasks worded for the person waiting on the traveler, in checklist order. Used by
+ * the shared message, the link and the summary text, so none of them repeat advice written
+ * to the traveler ("keep receipts") or the share task itself.
+ *
+ * Generated tasks use their shareCopy line (null = left out). Tasks the traveler added
+ * themselves are passed through as written. Hotel tasks need `includeStays`, otherwise the
+ * hotel's name would leak past the "Hotel details" switch.
+ */
+export function recipientTasks(trip: Trip, disruption: Disruption, options: { includeStays: boolean }): string[] {
+  const flight = trip.flights.find((f) => f.id === disruption.flightId);
+  const impact = computeImpact(trip, disruption.flightId);
+  const onward = impact.connection ? trip.flights.find((f) => f.id === impact.connection?.flightId) : undefined;
+  const baseVars = baseVarsFor(flight, onward, findContact(trip, "insurance"));
+
+  const lines: string[] = [];
+  for (const task of disruption.tasks) {
+    if (task.done) continue;
+    if (task.source === "custom") {
+      lines.push(task.title);
+      continue;
+    }
+    if (!task.id.startsWith(`${disruption.id}:`)) continue;
+    const [key, stayId] = task.id.slice(disruption.id.length + 1).split(":");
+    if (!Object.hasOwn(shareCopy, key)) continue;
+    const template = shareCopy[key as ChecklistCopyKey];
+    if (!template) continue;
+
+    let vars = baseVars;
+    if (key === "tell_hotel") {
+      const stay = options.includeStays ? trip.stays.find((s) => s.id === stayId) : undefined;
+      if (!stay) continue;
+      vars = { ...baseVars, hotel: stay.name };
+    } else if (key === "confirm_new_booking") {
+      vars = { ...baseVars, airline: flight?.airline, flight: flight?.flightNumber };
+    }
+    lines.push(fill(template, vars, RECIPIENT_FALLBACK));
+  }
+  return [...new Set(lines)];
 }
