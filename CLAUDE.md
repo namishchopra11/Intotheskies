@@ -77,6 +77,7 @@ State is `{ trip: Trip | null }`. Actions (get them with
 | Action | Signature |
 | --- | --- |
 | `loadSampleTrip` | `() => void` |
+| `startTrip` | `(trip: Trip) => void` (replaces the trip with one the traveler entered) |
 | `resetTrip` | `() => void` |
 | `upsertFlight` | `(flight: Flight) => void` (adds, or replaces by id) |
 | `removeFlight` | `(flightId: string) => void` (also removes its disruptions) |
@@ -97,7 +98,9 @@ update for it. It throws if there is no trip or the flight id is unknown.
 Status it sets: `delay` gives `delayed`; `rebooked` gives `rebooked`; `cancellation` and
 `missed_connection` give `cancelled`, or `rebooked` if revised times were supplied.
 
-Nothing in the UI calls `reportDisruption` from a form. The only caller is the simulated
+Flights, stays and contacts are entered in `src/components/trip/TripEditor.tsx` (`NewTripSheet` on
+the empty home screen, `ReservationsSheet` from the home screen and menu). Nothing in the UI calls
+`reportDisruption` from a form. The only caller is the simulated
 feed, `simulateFlightChange()` in `src/components/trip/simulateChange.ts` (see Routes below).
 Example, a 45-minute delay:
 
@@ -207,7 +210,8 @@ their own, and the home screen shows the latest one.
 
 With no backend, the airline feed is simulated. `FlightWatcher`
 (`src/components/trip/FlightWatcher.tsx`, mounted in the root layout) waits 6 seconds
-(`WATCH_DELAY_MS`) after a trip with no disruptions is on screen, then calls
+(`WATCH_DELAY_MS`) after the sample trip with no disruptions is on screen (a trip the traveler
+entered waits for the visible "Simulate a change" button instead), then calls
 `simulateFlightChange()` (`src/components/trip/simulateChange.ts`) and shows a notification
 banner. It never runs on `/s`. On the sample trip the change is: BA 286 runs 2h 10m late,
 AZ 201 is missed, the traveler is rebooked on AZ 207 (14:25 to 18:00).

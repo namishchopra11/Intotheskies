@@ -31,6 +31,8 @@ export type TripState = {
   trip: Trip | null;
 
   loadSampleTrip: () => void;
+  /** Replaces the current trip with one the traveler entered. */
+  startTrip: (trip: Trip) => void;
   resetTrip: () => void;
 
   upsertFlight: (flight: Flight) => void;
@@ -92,6 +94,7 @@ export const useTripStore = create<TripState>()(
         trip: null,
 
         loadSampleTrip: () => set({ trip: structuredClone(sampleTrip) }),
+        startTrip: (trip) => set({ trip }),
         resetTrip: () => set({ trip: null }),
 
         upsertFlight: (flight) =>

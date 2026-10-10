@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { triggerFlightChange } from "@/components/trip/simulateChange";
+import { NewTripSheet, ReservationsSheet } from "@/components/trip/TripEditor";
 import { useSpeech } from "@/components/trip/useSpeech";
 import {
   AppHeader,
@@ -22,6 +23,7 @@ import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
+import { sampleTrip } from "@/lib/sampleTrip";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import type { Contact, Disruption, Flight, Stay, Trip } from "@/lib/types";
 
@@ -31,6 +33,7 @@ export default function TripStatusPage() {
   const ready = useStoreReady();
   const trip = useTripStore((s) => s.trip);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const menuButton = (
     <button
@@ -46,13 +49,22 @@ export default function TripStatusPage() {
   return (
     <main className="flex flex-1 flex-col">
       <AppHeader action={menuButton} />
-      {!ready ? <Loading /> : trip ? <Status trip={trip} /> : <NoTrip />}
-      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
+      {!ready ? <Loading /> : trip ? <Status trip={trip} onEdit={() => setEditing(true)} /> : <NoTrip />}
+      <TripMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        hasTrip={Boolean(trip)}
+        onEdit={() => {
+          setMenuOpen(false);
+          setEditing(true);
+        }}
+      />
+      <ReservationsSheet open={editing} onClose={() => setEditing(false)} />
     </main>
   );
 }
 
-function Status({ trip }: { trip: Trip }) {
+function Status({ trip, onEdit }: { trip: Trip; onEdit: () => void }) {
   const disruption = trip.disruptions[trip.disruptions.length - 1];
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
@@ -66,11 +78,11 @@ function Status({ trip }: { trip: Trip }) {
     .filter(Boolean)
     .join(" · ");
 
-  if (!disruption || !changed || !impact) return <OnTrack trip={trip} eyebrow={eyebrow} />;
+  if (!disruption || !changed || !impact) return <OnTrack trip={trip} eyebrow={eyebrow} onEdit={onEdit} />;
 
   return (
     <>
-      <SignalBar key={`band-${disruption.id}`} aside={`Updated ${clock(disruption.createdAt)}`}>
+      <SignalBar key={`band-${disruption.id}`} aside="Simulated feed">
         {bannerFor(disruption, changed)}
       </SignalBar>
 
@@ -97,7 +109,9 @@ function Status({ trip }: { trip: Trip }) {
 
       <StaysSection stays={trip.stays} delay={520} />
       <ContactsSection contacts={trip.contacts} delay={600} />
-      <div className="pb-[max(env(safe-area-inset-bottom),26px)]" />
+      <div className="px-4 pt-7 pb-[max(env(safe-area-inset-bottom),26px)]">
+        <EditButton onClick={onEdit} />
+      </div>
     </>
   );
 }
@@ -351,7 +365,7 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
 
 /* ---------- On track: nothing has changed yet ---------- */
 
-function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
+function OnTrack({ trip, eyebrow, onEdit }: { trip: Trip; eyebrow: string; onEdit: () => void }) {
   const count = trip.flights.length;
   const tight = tightLayover(trip);
   return (
@@ -360,7 +374,7 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         aside={
           <span className="inline-flex items-center gap-2">
             <span aria-hidden="true" className="ck-pulse h-2 w-2 rounded-full bg-current" />
-            Watching live
+            Simulated feed
           </span>
         }
       >
@@ -397,16 +411,30 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
       <StaysSection stays={trip.stays} delay={340} />
       <ContactsSection contacts={trip.contacts} delay={420} />
 
-      <div className="ck-rise mt-auto px-5 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
-        <p className="flex items-start gap-2.5 border-t border-line pt-4 text-[13px] leading-snug text-ink-2">
+      <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
+        <Button variant="primary" size="lg" block chip="arrow-right" onClick={triggerFlightChange}>
+          Simulate a change
+        </Button>
+        <EditButton onClick={onEdit} />
+        <p className="flex items-start gap-2.5 border-t border-line px-1 pt-4 text-[13px] leading-snug text-ink-2">
           <span aria-hidden="true" className="ck-pulse mt-1.5 h-2 w-2 shrink-0 rounded-full bg-current text-ok" />
-          Watching {count === 1 ? "your flight" : `all ${count} flights`}. If anything changes, your plan
-          updates itself and you&apos;ll get a notification.
+          Watching {count === 1 ? "your flight" : `all ${count} flights`} with a simulated airline feed
+          (no live data). {isDemo(trip) ? "A change arrives on its own in a few seconds, or tap the button." : "Tap the button to see what a delay does to your plan."}
         </p>
       </div>
     </>
   );
 }
+
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button variant="secondary" block icon="plus" onClick={onClick}>
+      Add or edit reservations
+    </Button>
+  );
+}
+
+const isDemo = (trip: Trip) => trip.id === sampleTrip.id;
 
 /* ---------- Stays and contacts (shown in every state) ---------- */
 
@@ -505,6 +533,7 @@ const HOW_IT_WORKS: { n: string; icon: IconName; title: string; body: string }[]
 
 function NoTrip() {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
+  const [entering, setEntering] = useState(false);
   return (
     <div className="flex flex-1 flex-col">
       <SignalBar aside="Nothing to watch">No trip yet</SignalBar>
@@ -543,6 +572,10 @@ function NoTrip() {
         <Button variant="primary" size="lg" block chip="arrow-right" onClick={loadSampleTrip}>
           Try the sample trip
         </Button>
+        <Button variant="secondary" block onClick={() => setEntering(true)}>
+          Enter your own trip
+        </Button>
+        <NewTripSheet open={entering} onClose={() => setEntering(false)} />
         <p className="text-center font-num text-[12px] tracking-[0.04em] text-ink-2 uppercase">
           San Francisco → London → Rome
         </p>
@@ -551,10 +584,9 @@ function NoTrip() {
   );
 }
 
-function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => void; hasTrip: boolean }) {
+function TripMenu({ open, onClose, hasTrip, onEdit }: { open: boolean; onClose: () => void; hasTrip: boolean; onEdit: () => void }) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
-  const pristine = useTripStore((s) => Boolean(s.trip && s.trip.disruptions.length === 0));
   const [alerts, setAlerts] = useState<NotificationPermission | "unsupported">("unsupported");
 
   useEffect(() => {
@@ -581,16 +613,9 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
               Allow phone notifications
             </Button>
           )}
-          {pristine && (
-            <Button
-              variant="secondary"
-              block
-              onClick={() => {
-                triggerFlightChange();
-                onClose();
-              }}
-            >
-              Trigger the change now
+          {hasTrip && (
+            <Button variant="secondary" block icon="plus" onClick={onEdit}>
+              Add or edit reservations
             </Button>
           )}
           <Button
@@ -618,8 +643,8 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
         </div>
         {hasTrip && (
           <p className="text-[13px] leading-snug text-ink-2">
-            Restarting puts the trip back on time. A few seconds later the airline changes it, and
-            you get the notification again.
+            Restarting loads the sample trip back on time. A few seconds later the simulated airline
+            changes it, and you get the notification again.
           </p>
         )}
       </div>
@@ -704,11 +729,4 @@ function headlineFor(d: Disruption, f: Flight, impact: Impact): string {
       return `${lead} Your connection still works.`;
     }
   }
-}
-
-// createdAt is a real ISO timestamp (when it was reported), shown in the phone's own time.
-function clock(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "just now";
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }

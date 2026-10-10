@@ -11,7 +11,7 @@ pixels, touch screen):
 2. Read the new plan, tick two tasks, check the counter.
 3. Tap **Share the new plan**, check the preview, tap **Copy link**, open the link as the
    recipient.
-4. Menu: **Trigger the change now**, **Restart the demo trip**, **Clear this trip**.
+4. Menu: **Add or edit reservations**, **Restart the demo trip**, **Clear this trip**.
 5. The Solana path: save a wallet address, switch on **Add a Send help button**, enter an
    amount, copy the link, open the recipient page.
 6. **Listen to summary**.
@@ -49,7 +49,7 @@ None blocks the demo. All of these are small.
 - **What happened:** after **Try the sample trip** the screen shows the on-track trip for about 7
   seconds before the change arrives.
 - **What to do:** the script has the opening lines to fill that gap. If a judge is waiting, use
-  menu > **Trigger the change now** to skip it.
+  tap **Simulate a change** to skip it.
 
 ### 3. Call buttons still dial the made-up Rome numbers
 

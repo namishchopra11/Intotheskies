@@ -1,4 +1,5 @@
 import { useTripStore } from "@/lib/store";
+import { findConnection } from "@/lib/domain/impact";
 import { cityName } from "@/lib/domain/airports";
 import { addMinutes, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 
@@ -31,7 +32,10 @@ export function simulateFlightChange(): FlightAlertContent | null {
   const { trip, upsertFlight, reportDisruption } = useTripStore.getState();
   if (!trip || trip.disruptions.length > 0 || trip.flights.length === 0) return null;
   // Wall-clock strings sort correctly as text; the array order is not guaranteed.
-  const [first, onward] = [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
+  const sorted = [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
+  // Break the first real connection; a trip without one just gets a delay on its first flight.
+  const first = sorted.find((f) => findConnection(trip, f)) ?? sorted[0];
+  const onward = findConnection(trip, first);
 
   if (!onward) {
     const late = 90;
@@ -93,7 +97,7 @@ export function simulateFlightChange(): FlightAlertContent | null {
 /** Fired on window when a change lands, so the watcher can show the notification. */
 export const FLIGHT_CHANGE_EVENT = "ck:flight-change";
 
-/** Runs the simulation now and tells the watcher. Used by the timer and the trip menu. */
+/** Runs the simulation now and tells the watcher. Used by the timer and the "Simulate a change" button. */
 export function triggerFlightChange(): FlightAlertContent | null {
   const change = simulateFlightChange();
   if (change && typeof window !== "undefined") {

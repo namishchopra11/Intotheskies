@@ -59,6 +59,17 @@ describe("simulateFlightChange", () => {
     expect(current().disruptions[0].type).toBe("delay");
   });
 
+  it("delays only the first flight when the flights do not connect", () => {
+    const [a, b] = sampleTrip.flights;
+    load({ ...sampleTrip, flights: [a, { ...b, from: "CDG", departAt: "2026-10-25T09:00", arriveAt: "2026-10-25T11:00" }] });
+    simulateFlightChange();
+    const [first, second] = current().flights;
+    expect(first.status).toBe("delayed");
+    expect(first.arriveAt).toBe("2026-10-17T12:05"); // 90 minutes, not days
+    expect(second.status).toBe("scheduled");
+    expect(current().disruptions[0].type).toBe("delay");
+  });
+
   it("does nothing when the trip already has a disruption", () => {
     load(sampleTrip);
     simulateFlightChange();

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBanner } from "@/components/ui";
+import { sampleTrip } from "@/lib/sampleTrip";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import { FLIGHT_CHANGE_EVENT, triggerFlightChange, type FlightAlertContent } from "./simulateChange";
 
@@ -11,19 +12,21 @@ const WATCH_DELAY_MS = 6000;
 
 /**
  * Watches the trip for changes and tells the traveler the moment one lands. With no backend,
- * the change itself is simulated (see simulateChange.ts): a few seconds after a trip with no
+ * the change itself is simulated (see simulateChange.ts): a few seconds after the sample trip with no
  * disruptions loads, the airline delays and rebooks it. Mounted once, in the root layout.
  */
 export function FlightWatcher() {
   const ready = useStoreReady();
-  const hasTrip = useTripStore((s) => Boolean(s.trip));
+  const isDemo = useTripStore((s) => s.trip?.id === sampleTrip.id);
   const disruptions = useTripStore((s) => s.trip?.disruptions.length ?? 0);
   const pathname = usePathname();
   const router = useRouter();
-  const [alert, setAlert] = useState<FlightAlertContent | null>(null);
+  // The banner belongs to the screen it appeared on; it doesn't follow the traveler to /share.
+  const [alert, setAlert] = useState<{ change: FlightAlertContent; path: string } | null>(null);
 
-  // The recipient's read-only page never changes anyone's trip.
-  const watching = ready && hasTrip && disruptions === 0 && !pathname.startsWith("/s");
+  // The recipient's read-only page never changes anyone's trip, and neither does the timer on a
+  // trip the traveler entered themselves (they use the "Simulate a change" button).
+  const watching = ready && isDemo && disruptions === 0 && !pathname.startsWith("/s");
 
   useEffect(() => {
     if (!watching) return;
@@ -31,11 +34,11 @@ export function FlightWatcher() {
     return () => clearTimeout(t);
   }, [watching]);
 
-  // Both the timer and the trip menu's "Trigger the change now" arrive here.
+  // Both the timer and the "Simulate a change" button arrive here.
   useEffect(() => {
     const onChange = (e: Event) => {
       const change = (e as CustomEvent<FlightAlertContent>).detail;
-      setAlert(change);
+      setAlert({ change, path: window.location.pathname });
       notifyDevice(change);
     };
     window.addEventListener(FLIGHT_CHANGE_EVENT, onChange);
@@ -49,8 +52,9 @@ export function FlightWatcher() {
     else window.scrollTo({ top: 0, behavior: "smooth" });
   }, [pathname, router]);
 
-  if (!alert) return null;
-  return <NotificationBanner key={alert.disruptionId} title={alert.title} lines={alert.lines} onOpen={open} onDismiss={dismiss} />;
+  if (!alert || alert.path !== pathname) return null;
+  const { change } = alert;
+  return <NotificationBanner key={change.disruptionId} title={change.title} lines={change.lines} onOpen={open} onDismiss={dismiss} />;
 }
 
 /** A buzz, and a system notification too when the person has allowed them. */
