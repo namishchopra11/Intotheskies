@@ -7,8 +7,8 @@ Written to be said out loud. Short sentences. Read it aloud, not in your head, a
 where you run out of breath.
 
 **Judging criteria:** innovativeness, functionality, creativity, theme ("Into the Skies").
-**Tracks entered:** Solana and ElevenLabs (see "Tracks" near the end before you say anything
-about them).
+**Tracks entered:** Solana (see "Tracks" near the end before you say anything about it).
+ElevenLabs was dropped.
 
 ---
 
@@ -75,7 +75,7 @@ words, so the word count is lower than it looks. The full tap-by-tap demo is in
 > We each built a different part. Namish led the code, Boris built the logic, and Will
 > designed the screens. Ask us anything, or let's look at the code.
 
-*Sebastian's part (Solana and ElevenLabs) goes in only once it works. See "Tracks" below.*
+*Sebastian's part (Solana) goes in only once it works on a phone. See "Tracks" below.*
 
 ---
 
@@ -114,10 +114,19 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 
 ## Tracks (read this before you say a word about them)
 
-I cannot see any voice or Solana code in the app as it stands today. So:
+| Track | Where it stands | What must be true before you mention it | Who to ask |
+| --- | --- | --- | --- |
+| **Solana** | Built: a Solana address field on the trip screen, an "Ask for help" option on the share screen, and a "Send help" button on the shared link. Checked in a desktop browser only. | Someone has opened a shared link on a phone, tapped "Send help", and seen the request open in a wallet set to devnet. | Sebastian |
+| **ElevenLabs** | Dropped. There is no "Listen" button and no voice code in the app. | Nothing. Do not mention it. | |
 
-| Track | What must be true before you mention it | Who to ask |
-| --- | --- | --- |
+The Solana request uses devnet, Solana's test network, so no real money moves. Say that
+if you show it.
+
+If the phone test has not been done by tomorrow morning, say nothing about Solana at the
+table. A judge who sees a broken promise scores the whole project down. Tell me when it is
+confirmed and I will add one sentence to this pitch and one step to the demo script.
+
+--- | --- | --- |
 | **Solana** | The "Send help" button on the shared link works end to end on your phone. | Sebastian |
 | **ElevenLabs** | The "Listen" button reads the next steps aloud, with the ElevenLabs voice, on your phone. | Sebastian |
 
@@ -198,11 +207,11 @@ built the logic.)*
 | Namish | Head coder | How it is built, the store, the share link |
 | Boris | Code and logic | How the connection time, checklist and message are worked out |
 | Will | Frontend design | The screens, the look, phone layout |
-| Sebastian | Presenter, Solana, ElevenLabs | The story, plus those two features once they work |
+| Sebastian | Presenter, Solana | The story, plus "Send help" once it works on a phone |
 
 ## Open items
 
-1. Which of the three tracks are actually working. Tell me and I will update this file.
+1. Whether "Send help" works on a phone with a real wallet. Tell me and I will update this file.
 2. Where the TripIt answer came from: public descriptions of TripIt, not the app itself.
    Sources: [TripIt Pro review](https://www.iphonejd.com/?p=1094),
    [TechCrunch on the launch of TripIt Pro](https://techcrunch.com/2009/06/23/tripit-goes-pro-launches-premium-flight-monitoring-and-alerts),
