@@ -177,9 +177,17 @@ The core flow never depends on this. With no `payoutAddress` or no `fundsRequest
 links and pages behave exactly as before, and a malformed `fundsRequest` in a link is
 dropped rather than breaking `/s`.
 
-Status: library only. `src/lib/solana/**`, `Trip.payoutAddress`, `setPayoutAddress`,
-`SummaryOptions.fundsRequest` and `ShareSnapshot.fundsRequest` exist and are tested, but no
-screen (no address field, no share option, nothing on `/s`) uses them yet.
+Status: wired end to end. The library (`src/lib/solana/**`, `Trip.payoutAddress`,
+`setPayoutAddress`, `SummaryOptions.fundsRequest`, `ShareSnapshot.fundsRequest`) is used by
+three screens:
+
+- `/` (trip menu): the "Solana address (optional)" field saves `Trip.payoutAddress` through
+  `setPayoutAddress`.
+- `/share/[id]`: the "Ask for help" section has an "Add a Send help button" toggle (disabled
+  until an address is saved) and an amount field. It puts `fundsRequest` in the link.
+- `/s`: when the link carries a `fundsRequest`, the "Help {name} with costs" section renders
+  `FundsRequest` (`src/components/trip/FundsRequest.tsx`): the Send help button (a `solana:`
+  link), a QR code, a devnet notice and a copy-address fallback.
 
 - `src/lib/solana/config.ts`: `SOLANA_CLUSTER` (the one switch, `"devnet"`), `USDC_MINTS`.
 - `src/lib/solana/address.ts`: `isValidSolanaAddress`, `normalizeSolanaAddress`,
