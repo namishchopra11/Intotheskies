@@ -98,5 +98,6 @@ export const TripSchema = z.object({
   stays: z.array(StaySchema),
   contacts: z.array(ContactSchema),
   disruptions: z.array(DisruptionSchema),
+  payoutAddress: z.string().optional(), // a Solana address; unused until a later add-on
 });
 export type Trip = z.infer<typeof TripSchema>;

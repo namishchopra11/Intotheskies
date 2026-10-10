@@ -54,7 +54,8 @@ without the suffix.
 - `Task`: id, title, detail?, done, contactId?, source (`generated | custom`)
 - `Disruption`: id, type (`delay | cancellation | missed_connection | rebooked`),
   flightId, createdAt, tasks, notes?
-- `Trip`: id, name, travelerName, flights, stays, contacts, disruptions
+- `Trip`: id, name, travelerName, flights, stays, contacts, disruptions, payoutAddress?
+  (a Solana address, unused until a later add-on)
 
 Use `newId()` from `src/lib/id.ts` for new ids (works on non-HTTPS phone testing too).
 
@@ -129,6 +130,11 @@ generateChecklist(trip: Trip, disruption: Disruption, impact: Impact): Task[]
 buildSummary(trip: Trip, disruptionId: string, options: SummaryOptions): string
 type SummaryOptions = { includeBookingRefs: boolean; includeStays: boolean; includeOpenTasks: boolean };
 DEFAULT_SUMMARY_OPTIONS  // refs off, stays on, open tasks on
+
+// briefing.ts
+buildBriefing(trip: Trip, disruptionId: string): string
+// Two or three short sentences written to be spoken aloud (text-to-speech): what
+// changed, what is at risk, and the first unfinished task. "" if the id is unknown.
 
 // shareLink.ts
 encodeShare(trip: Trip, disruptionId: string, options: SummaryOptions): string  // URL fragment
