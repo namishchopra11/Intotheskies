@@ -31,7 +31,7 @@
 .ck-card {background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-card); padding:20px}
 .ck-field {display:grid; gap:8px}
 .ck-label {font-size:15px; font-weight:650}
-.ck-input {min-height:48px; width:100%; min-width:0; padding:12px; border:1px solid #94a4a6; border-radius:var(--radius-control); background:white; color:var(--foreground); font-size:16px}
+.ck-input {min-height:48px; width:100%; min-width:0; padding:12px; border:1px solid #94a4a6; border-radius:var(--radius-control); background:var(--surface); color:var(--foreground); font-size:16px}
 .ck-input[aria-invalid=true] {border-color:var(--status-danger)}
 .ck-error {color:var(--status-danger); font-size:14px; margin:0}
 .ck-hint {color:var(--muted); font-size:14px; margin:0}
@@ -50,8 +50,8 @@
 .ck-toggle-thumb {display:block; width:20px; height:20px; background:white; border-radius:50%; transition:transform 120ms}
 .ck-toggle[aria-checked=true] .ck-toggle-thumb {transform:translateX(18px)}
 .ck-toggle:disabled {opacity:.5; cursor:not-allowed}
-.ck-progress {width:100%; height:8px; display:block; border:0; border-radius:8px; overflow:hidden; background:#e3e9e5; accent-color:var(--accent)}
-.ck-progress::-webkit-progress-bar {background:#e3e9e5}
+.ck-progress {width:100%; height:8px; display:block; border:0; border-radius:8px; overflow:hidden; background:var(--sunk, #e3e9e5); accent-color:var(--accent)}
+.ck-progress::-webkit-progress-bar {background:var(--sunk, #e3e9e5)}
 .ck-progress::-webkit-progress-value {background:var(--accent); border-radius:8px}
 .ck-progress::-moz-progress-bar {background:var(--accent)}
 .ck-sheet {position:fixed; inset:auto 0 0; margin:0 auto; width:min(100%,480px); max-height:90dvh; border:0; border-radius:24px 24px 0 0; padding:24px 20px calc(24px + env(safe-area-inset-bottom)); color:var(--foreground); background:var(--surface)}
@@ -70,7 +70,7 @@
 .ck-stack {display:grid; gap:16px}
 .ck-options .ck-toggle-row + .ck-toggle-row {border-top:1px solid var(--border)}
 .ck-options .ck-toggle-row:last-child {padding-bottom:0}
-.ck-preview {padding:20px; border:1px solid var(--border); border-radius:18px 18px 18px 4px; background:#edf3ee}
+.ck-preview {padding:20px; border:1px solid var(--border); border-radius:18px 18px 18px 4px; background:var(--sunk, #edf3ee)}
 .ck-preview pre {white-space:pre-wrap; overflow-wrap:anywhere; margin:16px 0 0; font:inherit; font-size:14px; line-height:1.7}
 .ck-preview-meta {display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted)}
 .ck-actions {display:grid; gap:10px}
@@ -96,3 +96,41 @@
 .ck-open-tasks li {margin-top:12px; padding-left:4px; font-size:15px}
 .ck-footer {border-top:1px solid var(--border); padding-top:20px; margin-top:28px; font-size:12px; color:var(--muted)}
 @media (prefers-reduced-motion:reduce) {*,*::before,*::after {transition:none !important; scroll-behavior:auto !important}}
+
+/* Semantic tokens preserve the existing shared component API. */
+:root { --sunk:#edf3ee; --on-accent:#fff; --signal:#16675e; }
+@theme inline {
+ --color-canvas:var(--background); --color-surface:var(--surface); --color-sunk:var(--sunk);
+ --color-ink:var(--foreground); --color-ink-2:var(--muted); --color-ink-3:var(--muted);
+ --color-line:var(--border); --color-line-strong:#94a4a6; --color-accent:var(--accent); --color-on-accent:var(--on-accent); --color-signal:var(--signal);
+ --color-ok:var(--status-ok); --color-ok-fg:var(--status-ok); --color-ok-bg:var(--status-ok-bg);
+ --color-warn:var(--status-warning); --color-warn-fg:var(--status-warning); --color-warn-bg:var(--status-warning-bg);
+ --color-bad:var(--status-danger); --color-bad-fg:var(--status-danger); --color-bad-bg:var(--status-danger-bg);
+ --color-done:var(--status-resolved); --color-done-fg:var(--status-resolved); --color-done-bg:var(--status-resolved-bg);
+ --radius-control:12px; --radius-card:18px; --radius-sheet:24px; --font-num:var(--font-public-sans);
+}
+html[data-theme="dark"] {
+ --background:#152630; --foreground:#edf1ef; --surface:#1e3440; --sunk:#243e48; --muted:#b1c2c5; --border:#405761;
+ --accent:#91d4c0; --on-accent:#132f29; --focus:#85d6ed; --signal:#91d4c0;
+ --status-ok:#a2d8b5; --status-ok-bg:#213d31; --status-warning:#f3ce85; --status-warning-bg:#493b24;
+ --status-danger:#ffb8ad; --status-danger-bg:#4c2d2b; --status-resolved:#a7d8f4; --status-resolved-bg:#233e50;
+ color-scheme:dark;
+}
+.ck-button-primary {color:var(--on-accent)}
+.ck-button-primary:hover {filter:brightness(.93); background:var(--accent)}
+.ck-button-secondary:hover {background:var(--sunk)}
+.ck-button-sm {min-height:44px; padding:10px 16px; font-size:15px}
+.ck-badge-md {font-size:15px}
+.ck-card-no-padding {padding:0}
+.ck-card-inset {background:var(--sunk)}
+.ck-toggle-full {width:100%; border:0; background:transparent; color:inherit; text-align:left; border-radius:8px}
+.ck-toggle-full .ck-toggle-track {flex-shrink:0; display:block}
+.ck-toggle-full[aria-checked=true] .ck-toggle-track {background:var(--accent)}
+.ck-toggle-full[aria-checked=true] .ck-toggle-thumb {transform:translateX(18px)}
+.ck-toggle-full:disabled {opacity:.5; cursor:not-allowed}
+.ck-progress-count {display:flex; justify-content:space-between; gap:12px; font-size:14px; margin:0 0 8px; color:var(--muted)}
+.ck-sheet-footer {margin-top:20px; padding-top:16px; border-top:1px solid var(--border)}
+
+:root { --bg:var(--background); --ink:var(--foreground); --ink-2:var(--muted); --ink-3:var(--muted); --line:var(--border); --line-strong:#94a4a6; --font-ui:var(--font-public-sans); --font-num:var(--font-public-sans); --scrim:rgb(24 47 60 / .45); }
+@theme inline { --color-bg:var(--background); --color-focus:var(--focus); }
+html {background:var(--background); -webkit-text-size-adjust:100%}
