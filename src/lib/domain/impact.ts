@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { Trip } from "@/lib/types";
+import type { Flight, Stay, Trip } from "@/lib/types";
+import { datePart, formatDate, minutesBetween, timePart } from "./time";
 
 export const ConnectionStatusSchema = z.enum(["ok", "tight", "missed"]);
 export type ConnectionStatus = z.infer<typeof ConnectionStatusSchema>;
@@ -31,19 +32,110 @@ export type Impact = z.infer<typeof ImpactSchema>;
 /** A connection shorter than this many minutes is "tight". Below zero is "missed". */
 export const TIGHT_CONNECTION_MINUTES = 60;
 
-// STUB: returns plausible fixed values. Real logic lands in Part B.
+/** How long after an arrival a departure from the same airport still counts as a connection. */
+const MAX_CONNECTION_MINUTES = 24 * 60;
+
+/** True when the flight is cancelled and nobody has supplied replacement times. */
+export function isArrivalUnknown(flight: Flight): boolean {
+  return (
+    flight.status === "cancelled" &&
+    (!flight.original || flight.original.arriveAt === flight.arriveAt)
+  );
+}
+
+/**
+ * The onward flight booked after `flight`: the earliest departure from the airport it
+ * arrives at, within a day of its originally booked arrival. Null if there is none.
+ */
+export function findConnection(trip: Trip, flight: Flight): Flight | null {
+  const bookedArrival = flight.original?.arriveAt ?? flight.arriveAt;
+  const candidates = trip.flights
+    .filter((f) => f.id !== flight.id && f.from === flight.to)
+    .map((f) => ({ f, gap: minutesBetween(bookedArrival, f.original?.departAt ?? f.departAt) }))
+    .filter(({ gap }) => gap >= 0 && gap <= MAX_CONNECTION_MINUTES)
+    .sort((a, b) => a.gap - b.gap);
+  return candidates[0]?.f ?? null;
+}
+
+function connectionStatus(minutesAfter: number | null): ConnectionStatus {
+  if (minutesAfter === null || minutesAfter < 0) return "missed";
+  return minutesAfter < TIGHT_CONNECTION_MINUTES ? "tight" : "ok";
+}
+
 export function computeImpact(trip: Trip, flightId: string): Impact {
-  const index = trip.flights.findIndex((f) => f.id === flightId);
-  const next = index >= 0 ? trip.flights[index + 1] : undefined;
-  const stay = trip.stays[0];
-  return {
-    flightId,
-    delayMinutes: 45,
-    connection: next
-      ? { flightId: next.id, minutesBefore: 55, minutesAfter: 10, status: "tight" }
-      : null,
-    affectedStays: stay
-      ? [{ stayId: stay.id, reason: `Your onward flight is at risk, so you may reach ${stay.name} late.` }]
-      : [],
-  };
+  const flight = trip.flights.find((f) => f.id === flightId);
+  if (!flight) return { flightId, delayMinutes: 0, connection: null, affectedStays: [] };
+
+  const unknown = isArrivalUnknown(flight);
+  const bookedArrival = flight.original?.arriveAt ?? flight.arriveAt;
+  // Old vs new arrival at the same airport.
+  const delayMinutes = unknown ? null : minutesBetween(bookedArrival, flight.arriveAt);
+
+  const onward = findConnection(trip, flight);
+  let connection: ConnectionImpact | null = null;
+  if (onward) {
+    // Arrival vs the onward departure, both at the connecting airport.
+    const minutesAfter = unknown ? null : minutesBetween(flight.arriveAt, onward.departAt);
+    connection = {
+      flightId: onward.id,
+      minutesBefore: minutesBetween(bookedArrival, onward.original?.departAt ?? onward.departAt),
+      minutesAfter,
+      status: connectionStatus(minutesAfter),
+    };
+  }
+
+  // Follow the booked connections to the flight that actually lands where the traveler sleeps.
+  let last = flight;
+  const seen = new Set([flight.id]);
+  for (let next = onward; next && !seen.has(next.id); next = findConnection(trip, next)) {
+    seen.add(next.id);
+    last = next;
+  }
+  const bookedFinalDate = datePart(last.original?.arriveAt ?? last.arriveAt);
+  const stays = trip.stays.filter((s) => {
+    const daysAfterLanding = minutesBetween(`${bookedFinalDate}T00:00`, `${datePart(s.checkIn)}T00:00`) / 1440;
+    return daysAfterLanding >= 0 && daysAfterLanding <= 1;
+  });
+
+  const affectedStays: AffectedStay[] = [];
+  for (const stay of stays) {
+    const reason = stayReason(stay, flight, onward, connection, unknown);
+    if (reason) affectedStays.push({ stayId: stay.id, reason });
+  }
+
+  return { flightId, delayMinutes, connection, affectedStays };
+}
+
+function stayReason(
+  stay: Stay,
+  flight: Flight,
+  onward: Flight | null,
+  connection: ConnectionImpact | null,
+  unknown: boolean,
+): string | null {
+  if (unknown) {
+    return `${flight.flightNumber} is cancelled with no new arrival time yet, so check-in at ${stay.name} is at risk.`;
+  }
+  if (onward && connection) {
+    if (connection.status === "missed") {
+      return `You are likely to miss ${onward.flightNumber}, so you may reach ${stay.name} late or on a later day.`;
+    }
+    if (connection.status === "tight") {
+      return `Your connection to ${onward.flightNumber} is tight. If you miss it you will reach ${stay.name} late.`;
+    }
+    return null;
+  }
+  // No onward flight: this flight lands in the stay's city, so compare directly.
+  const arrival = flight.arriveAt;
+  if (datePart(arrival) > datePart(stay.checkIn)) {
+    return `You now land on ${formatDate(arrival)}, after your check-in date at ${stay.name}.`;
+  }
+  if (
+    stay.latestCheckIn &&
+    datePart(arrival) === datePart(stay.checkIn) &&
+    timePart(arrival) > stay.latestCheckIn
+  ) {
+    return `You now land at ${timePart(arrival)}, after the latest check-in time (${stay.latestCheckIn}) at ${stay.name}.`;
+  }
+  return null;
 }

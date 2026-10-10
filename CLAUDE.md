@@ -141,7 +141,13 @@ encodeShare(trip: Trip, disruptionId: string, options: SummaryOptions): string  
 decodeShare(fragment: string): ShareSnapshot | null   // null for anything malformed
 ```
 
-- A connection under 60 minutes is `tight`; below zero is `missed`.
+- A connection under 60 minutes is `tight`; below zero is `missed`. A cancelled flight
+  with no replacement times gives `delayMinutes: null`, `minutesAfter: null` and status
+  `missed`; show that as "at risk", not as a number.
+- The onward connection is the earliest flight leaving the arrival airport within 24
+  hours of the originally booked arrival. Stays are matched to the last flight of that
+  chain by check-in date.
+- `cityName("LHR")` in `airports.ts` gives `"London"` for display (falls back to the code).
 - `/share/[id]` is the screen where the traveler picks options, previews the summary and
   copies a link. `[id]` is a disruption id.
 - `/s` is the read-only page the recipient opens. The link is `/s#<encodeShare output>`;
