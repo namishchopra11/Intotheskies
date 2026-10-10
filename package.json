@@ -1,5 +1,5 @@
 {
-  "name": "connectionkeeper",
+  "name": "layover",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,6 +11,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "lz-string": "^1.5.0",
     "next": "16.4.0",
     "qrcode.react": "4.2.0",

@@ -21,12 +21,6 @@ describe("store", () => {
     useTripStore.getState().loadSampleTrip();
   });
 
-  it("startTrip replaces the trip with one the traveler entered", () => {
-    const own = { ...sampleTrip, id: "mine", name: "Mine", stays: [], contacts: [] };
-    useTripStore.getState().startTrip(own);
-    expect(useTripStore.getState().trip).toEqual(own);
-  });
-
   it("reportDisruption snapshots the original once and updates the flight", () => {
     const { reportDisruption } = useTripStore.getState();
     const flightId = sampleTrip.flights[0].id;

@@ -1,3 +1,4 @@
+import { buildMessage, messageText } from "@/app/share/[id]/message";
 import { describe, expect, it } from "vitest";
 import { sampleTrip } from "@/lib/sampleTrip";
 import { TripSchema, type Disruption, type DisruptionType, type Flight, type Trip } from "@/lib/types";
@@ -333,6 +334,17 @@ describe("buildSummary", () => {
     expect(still).toContain("- Confirming the latest times for BA 286");
     expect(still).toContain("- Letting Hotel Aventino Garden know about a late arrival");
     expect(still).not.toMatch(/send an update|receipts|entitled|in writing|\byou(r)?\b/i);
+  });
+
+  it("leaves the traveler's own admin tasks out of the message to others", () => {
+    const { trip } = delayFirst(45);
+    const text = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
+    expect(text).toMatch(/- Rebooking the onward flight AZ 201/);
+    expect(text).not.toMatch(/Send an update to someone|what you're entitled to|Keep receipts/);
+    const snapshot = decodeShare(encodeShare(trip, "d1", DEFAULT_SUMMARY_OPTIONS));
+    expect(snapshot!.openTasks.join(" ")).not.toMatch(/Send an update to someone|entitled to|receipts/);
+    expect(messageText(buildMessage(trip, "d1", DEFAULT_SUMMARY_OPTIONS))).not.toMatch(/send an update|entitled to|receipts/);
+    expect(trip.disruptions[0].tasks.some((t) => /receipts/.test(t.title))).toBe(true);
   });
 
   it("shows booking references only when the option is on", () => {

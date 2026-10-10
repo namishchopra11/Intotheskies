@@ -1,9 +1,9 @@
-# ConnectionKeeper
+# Layover
 
 Built for the "Into the Skies" hackathon.
 
 When a flight is delayed or cancelled, travelers juggle an airline app, confirmation
-emails and a hotel booking, while someone waits for news. ConnectionKeeper keeps the
+emails and a hotel booking, while someone waits for news. Layover keeps the
 trip in one place. You tell it what changed. It shows what is now at risk downstream,
 gives you a checklist of what to do, and writes an update for the people waiting on you.
 

@@ -1,11 +1,11 @@
-# ConnectionKeeper
+# Layover
 
 Read this first. It is the shared contract for all four sessions working in this repo.
 
 ## Product
 
 When a flight is delayed or cancelled, travelers juggle an airline app, confirmation
-emails, and a hotel booking. ConnectionKeeper keeps reservations, next steps, and contacts
+emails, and a hotel booking. Layover keeps reservations, next steps, and contacts
 in one place. When a flight changes it shows what is now at risk downstream, generates a
 checklist of what to do, and writes an update for the people waiting on them. The change
 itself comes from a simulated airline feed (there is no live flight data and no backend; see
@@ -77,7 +77,6 @@ State is `{ trip: Trip | null }`. Actions (get them with
 | Action | Signature |
 | --- | --- |
 | `loadSampleTrip` | `() => void` |
-| `startTrip` | `(trip: Trip) => void` (replaces the trip with one the traveler entered) |
 | `resetTrip` | `() => void` |
 | `upsertFlight` | `(flight: Flight) => void` (adds, or replaces by id) |
 | `removeFlight` | `(flightId: string) => void` (also removes its disruptions) |
@@ -98,9 +97,7 @@ update for it. It throws if there is no trip or the flight id is unknown.
 Status it sets: `delay` gives `delayed`; `rebooked` gives `rebooked`; `cancellation` and
 `missed_connection` give `cancelled`, or `rebooked` if revised times were supplied.
 
-Flights, stays and contacts are entered in `src/components/trip/TripEditor.tsx` (`NewTripSheet` on
-the empty home screen, `ReservationsSheet` from the home screen and menu). Nothing in the UI calls
-`reportDisruption` from a form. The only caller is the simulated
+Nothing in the UI calls `reportDisruption` from a form. The only caller is the simulated
 feed, `simulateFlightChange()` in `src/components/trip/simulateChange.ts` (see Routes below).
 Example, a 45-minute delay:
 
@@ -218,8 +215,8 @@ their own, and the home screen shows the latest one.
 
 With no backend, the airline feed is simulated. `FlightWatcher`
 (`src/components/trip/FlightWatcher.tsx`, mounted in the root layout) waits 6 seconds
-(`WATCH_DELAY_MS`) after the sample trip with no disruptions is on screen (a trip the traveler
-entered waits for the visible "Simulate a change" button instead), then calls
+(`WATCH_DELAY_MS`) after a trip with no disruptions is on screen at `/` (the home screen's visible
+"Simulate a change" button does the same on demand), then calls
 `simulateFlightChange()` (`src/components/trip/simulateChange.ts`) and shows a notification
 banner. It never runs on `/s`. On the sample trip the change is: BA 286 runs 2h 10m late,
 AZ 201 is missed, the traveler is rebooked on AZ 207 (14:25 to 18:00).

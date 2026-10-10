@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { ProfileButton } from "@/components/trip/ProfileButton";
 import { triggerFlightChange } from "@/components/trip/simulateChange";
-import { NewTripSheet, ReservationsSheet } from "@/components/trip/TripEditor";
+import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useSpeech } from "@/components/trip/useSpeech";
+import { DEFAULT_SPEECH_VOICE, SPEECH_VOICES, type SpeechVoice } from "@/components/trip/speechVoices";
 import {
   AppHeader,
   Badge,
@@ -23,17 +25,17 @@ import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
-import { sampleTrip } from "@/lib/sampleTrip";
-import { useStoreReady, useTripStore } from "@/lib/store";
-import type { Contact, Disruption, Flight, Stay, Trip } from "@/lib/types";
+import { useTripStore } from "@/lib/store";
+import type { AutoAction, Contact, Disruption, Flight, Ride, Stay, Trip } from "@/lib/types";
 
 const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 
 export default function TripStatusPage() {
-  const ready = useStoreReady();
+  const ready = useRequireProfile();
   const trip = useTripStore((s) => s.trip);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [voice, setVoice] = useState<SpeechVoice>(DEFAULT_SPEECH_VOICE);
 
   const menuButton = (
     <button
@@ -48,23 +50,31 @@ export default function TripStatusPage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <AppHeader action={menuButton} />
-      {!ready ? <Loading /> : trip ? <Status trip={trip} onEdit={() => setEditing(true)} /> : <NoTrip />}
-      <TripMenu
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        hasTrip={Boolean(trip)}
-        onEdit={() => {
-          setMenuOpen(false);
-          setEditing(true);
-        }}
+      <AppHeader
+        action={
+          <span className="flex items-center">
+            <ProfileButton />
+            {menuButton}
+          </span>
+        }
+        onLogoClick={trip ? () => setLeaveOpen(true) : undefined}
       />
-      <ReservationsSheet open={editing} onClose={() => setEditing(false)} />
+      {!ready ? (
+        <Loading />
+      ) : !trip ? (
+        <NoTrip />
+      ) : trip.flights.length === 0 ? (
+        <NoFlights trip={trip} />
+      ) : (
+        <Status trip={trip} voice={voice} />
+      )}
+      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} voice={voice} onVoiceChange={setVoice} />
+      <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
     </main>
   );
 }
 
-function Status({ trip, onEdit }: { trip: Trip; onEdit: () => void }) {
+function Status({ trip, voice }: { trip: Trip; voice: SpeechVoice }) {
   const disruption = trip.disruptions[trip.disruptions.length - 1];
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
@@ -78,7 +88,7 @@ function Status({ trip, onEdit }: { trip: Trip; onEdit: () => void }) {
     .filter(Boolean)
     .join(" · ");
 
-  if (!disruption || !changed || !impact) return <OnTrack trip={trip} eyebrow={eyebrow} onEdit={onEdit} />;
+  if (!disruption || !changed || !impact) return <OnTrack trip={trip} eyebrow={eyebrow} />;
 
   return (
     <>
@@ -93,6 +103,8 @@ function Status({ trip, onEdit }: { trip: Trip; onEdit: () => void }) {
         </h1>
       </section>
 
+      <ChangeBoxes trip={trip} disruption={disruption} flight={changed} impact={impact} />
+
       {trip.flights.length > 0 && (
         <section
           aria-label="Flights"
@@ -105,14 +117,94 @@ function Status({ trip, onEdit }: { trip: Trip; onEdit: () => void }) {
 
       <SortingItOut disruption={disruption} impact={impact} contacts={trip.contacts} />
 
-      <Actions trip={trip} disruption={disruption} />
+      <Actions key={buildBriefing(trip, disruption.id)} trip={trip} disruption={disruption} voice={voice} />
 
       <StaysSection stays={trip.stays} delay={520} />
+      <RidesSection rides={trip.rides ?? []} delay={560} />
       <ContactsSection contacts={trip.contacts} delay={600} />
-      <div className="px-4 pt-7 pb-[max(env(safe-area-inset-bottom),26px)]">
-        <EditButton onClick={onEdit} />
-      </div>
+      <div className="pb-[max(env(safe-area-inset-bottom),26px)]" />
     </>
+  );
+}
+
+/* ---------- What changed: three black boxes, like a departures board ---------- */
+
+function ChangeBoxes({ trip, disruption, flight, impact }: { trip: Trip; disruption: Disruption; flight: Flight; impact: Impact }) {
+  const was = flight.original ?? flight;
+  const unknown = impact.delayMinutes === null;
+  const late = impact.delayMinutes ?? 0;
+
+  let status: { word: string; sub?: string[] };
+  switch (disruption.type) {
+    case "cancellation":
+      status = { word: "Cancelled" };
+      break;
+    case "missed_connection": {
+      // The late inbound flight is what caused it.
+      const inbound = trip.flights.find((f) => f.to === flight.from && f.status === "delayed" && f.original);
+      const by = inbound?.original ? minutesBetween(inbound.original.arriveAt, inbound.arriveAt) : 0;
+      status = { word: "Missed", sub: inbound && by > 0 ? [`${inbound.flightNumber} late`, `+${formatDuration(by)}`] : ["connection"] };
+      break;
+    }
+    case "rebooked":
+      status = { word: "Changed" };
+      break;
+    default:
+      status = { word: "Delayed", sub: late > 0 ? [`+${formatDuration(late)}`] : undefined };
+  }
+
+  return (
+    <section aria-label="What changed" className="ck-rise grid grid-cols-3 gap-2 px-4 pb-4" style={rise(160)}>
+      <Box label="Booked">
+        <span className="text-[13px] opacity-70">{was.flightNumber}</span>
+        <BoxTimes from={flight.from} to={flight.to} departAt={was.departAt} arriveAt={was.arriveAt} struck />
+      </Box>
+      <Box label="Status">
+        <span className="text-[19px] leading-tight font-semibold text-signal">{status.word}</span>
+        {status.sub && (
+          <span className="mt-auto flex flex-col text-[13px] leading-snug opacity-70">
+            {status.sub.map((line) => (
+              <span key={line} className="whitespace-nowrap">
+                {line}
+              </span>
+            ))}
+          </span>
+        )}
+      </Box>
+      <Box label="New flight">
+        {unknown ? (
+          <span className="text-[14px] leading-snug">Finding one…</span>
+        ) : (
+          <>
+            <span className="text-[13px] opacity-70">{flight.flightNumber}</span>
+            <BoxTimes from={flight.from} to={flight.to} departAt={flight.departAt} arriveAt={flight.arriveAt} />
+          </>
+        )}
+      </Box>
+    </section>
+  );
+}
+
+function Box({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-[118px] min-w-0 flex-col gap-1 rounded-[10px] border border-line bg-band p-3 font-num text-on-band tabular-nums">
+      <span className="text-[10px] tracking-[0.08em] uppercase opacity-60">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function BoxTimes({ from, to, departAt, arriveAt, struck }: { from: string; to: string; departAt: string; arriveAt: string; struck?: boolean }) {
+  return (
+    <span className={cx("mt-auto flex flex-col text-[14px] leading-snug", struck && "line-through opacity-60")}>
+      {struck && <span className="sr-only">Was </span>}
+      <span>
+        {from} {timePart(departAt)}
+      </span>
+      <span>
+        {to} {timePart(arriveAt)}
+      </span>
+    </span>
   );
 }
 
@@ -228,7 +320,8 @@ function SortingItOut({
 
   return (
     <section className="ck-rise flex flex-col px-5 pt-[22px]" style={rise(340)}>
-      <ProgressBar label="Sorting it out" value={done} max={total} />
+      <HandledForYou actions={disruption.actions ?? []} />
+      <ProgressBar label="Left for you" value={done} max={total} />
       <ul className="mt-1 flex flex-col">
         {risks.map((r) => (
           <li key={r.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2">
@@ -275,6 +368,41 @@ function SortingItOut({
       </ul>
       <AddTask disruptionId={disruption.id} />
     </section>
+  );
+}
+
+/** What Layover already did by itself when the flight changed (see lib/domain/autoUpdates.ts). */
+function HandledForYou({ actions }: { actions: AutoAction[] }) {
+  if (actions.length === 0) return null;
+  return (
+    <div className="mb-6">
+      <h2 className="ck-label mb-1">Handled for you</h2>
+      <ul className="flex flex-col">
+        {actions.map((a) => {
+          const pending = a.status === "pending";
+          return (
+            <li key={a.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2">
+              <span
+                aria-hidden="true"
+                className={cx(
+                  "inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full",
+                  pending ? "border-2 border-dashed border-ink-2" : "bg-ok text-bg",
+                )}
+              >
+                {!pending && <Icon name="check" size={14} strokeWidth={3.5} />}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
+                <span>{a.title}</span>
+                {a.detail && <span className="text-[14px] leading-snug text-ink-2">{a.detail}</span>}
+              </span>
+              <span className={cx("text-[13px] font-semibold", pending ? "text-warn-fg" : "text-ok-fg")}>
+                {pending ? "Waiting" : "Done"}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -336,8 +464,8 @@ function TaskCircle() {
 
 /* ---------- Actions ---------- */
 
-function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | undefined }) {
-  const { supported, speaking, speak, stop } = useSpeech();
+function Actions({ trip, disruption, voice }: { trip: Trip; disruption: Disruption | undefined; voice: SpeechVoice }) {
+  const { speaking, loading, error, speak, stop } = useSpeech(voice);
   if (!disruption) return null;
 
   return (
@@ -348,7 +476,7 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
       <Button href={`/share/${disruption.id}`} variant="primary" size="lg" block chip="arrow-right">
         Share the new plan
       </Button>
-      {supported && (
+      {(
         <Button
           variant="secondary"
           block
@@ -356,16 +484,19 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
           onClick={() => (speaking ? stop() : speak(buildBriefing(trip, disruption.id)))}
           className="text-base"
         >
-          {speaking ? "Stop listening" : "Listen to summary"}
+          {loading ? "Cancel audio" : speaking ? "Stop listening" : "Listen to summary"}
         </Button>
       )}
+      {loading && <p role="status" className="px-1 text-[13px] text-ink-2">Preparing audio…</p>}
+      {error && <p role="alert" className="px-1 text-[13px] text-bad-fg">{error}</p>}
+      <p className="px-1 text-[12px] text-ink-2">Listen sends only this summary to ElevenLabs to create audio.</p>
     </div>
   );
 }
 
 /* ---------- On track: nothing has changed yet ---------- */
 
-function OnTrack({ trip, eyebrow, onEdit }: { trip: Trip; eyebrow: string; onEdit: () => void }) {
+function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
   const count = trip.flights.length;
   const tight = tightLayover(trip);
   return (
@@ -409,32 +540,22 @@ function OnTrack({ trip, eyebrow, onEdit }: { trip: Trip; eyebrow: string; onEdi
       </section>
 
       <StaysSection stays={trip.stays} delay={340} />
+      <RidesSection rides={trip.rides ?? []} delay={380} />
       <ContactsSection contacts={trip.contacts} delay={420} />
 
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
         <Button variant="primary" size="lg" block chip="arrow-right" onClick={triggerFlightChange}>
           Simulate a change
         </Button>
-        <EditButton onClick={onEdit} />
         <p className="flex items-start gap-2.5 border-t border-line px-1 pt-4 text-[13px] leading-snug text-ink-2">
           <span aria-hidden="true" className="ck-pulse mt-1.5 h-2 w-2 shrink-0 rounded-full bg-current text-ok" />
           Watching {count === 1 ? "your flight" : `all ${count} flights`} with a simulated airline feed
-          (no live data). {isDemo(trip) ? "A change arrives on its own in a few seconds, or tap the button." : "Tap the button to see what a delay does to your plan."}
+          (no live data). A change arrives on its own in a few seconds, or tap the button.
         </p>
       </div>
     </>
   );
 }
-
-function EditButton({ onClick }: { onClick: () => void }) {
-  return (
-    <Button variant="secondary" block icon="plus" onClick={onClick}>
-      Add or edit reservations
-    </Button>
-  );
-}
-
-const isDemo = (trip: Trip) => trip.id === sampleTrip.id;
 
 /* ---------- Stays and contacts (shown in every state) ---------- */
 
@@ -462,6 +583,41 @@ function StaysSection({ stays, delay }: { stays: Stay[]; delay: number }) {
               </div>
             )}
           </dl>
+        </div>
+      ))}
+    </Section>
+  );
+}
+
+function RidesSection({ rides, delay }: { rides: Ride[]; delay: number }) {
+  if (rides.length === 0) return null;
+  return (
+    <Section title="Your rides" delay={delay}>
+      {rides.map((r) => (
+        <div key={r.id} className="flex flex-col gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-semibold">{r.provider}</p>
+              <p className="text-[14px] text-ink-2">
+                {r.from} → {r.to}
+              </p>
+            </div>
+            {r.rescheduledFrom && <Badge tone="done">Moved</Badge>}
+          </div>
+          <div>
+            <p className="ck-label">Pickup</p>
+            <p className="mt-0.5 font-num text-[17px] font-medium tabular-nums">
+              {timePart(r.pickupAt)}{" "}
+              {r.rescheduledFrom && (
+                <span className="text-[14px] font-normal text-ink-faint line-through">
+                  <span className="sr-only">was </span>
+                  {timePart(r.rescheduledFrom)}
+                </span>
+              )}{" "}
+              <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(r.pickupAt)}</span>
+            </p>
+          </div>
+          {r.notes && <p className="text-[14px] leading-snug text-ink-2">{r.notes}</p>}
         </div>
       ))}
     </Section>
@@ -532,8 +688,7 @@ const HOW_IT_WORKS: { n: string; icon: IconName; title: string; body: string }[]
 ];
 
 function NoTrip() {
-  const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
-  const [entering, setEntering] = useState(false);
+  const savedTrips = useTripStore((s) => s.savedTrips);
   return (
     <div className="flex flex-1 flex-col">
       <SignalBar aside="Nothing to watch">No trip yet</SignalBar>
@@ -564,27 +719,119 @@ function NoTrip() {
         ))}
       </ol>
 
+      {savedTrips.length > 0 && <SavedTrips trips={savedTrips} />}
+
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(340)}>
         <p className="mx-1 mb-1 flex items-start gap-2 text-[13px] leading-[1.4] text-ink-2">
           <Icon name="lock" size={16} className="mt-px" />
-          Everything stays on this phone. No account, nothing uploaded.
+          Your trip is saved only on this phone. Listen sends the summary to ElevenLabs for audio. No account needed.
         </p>
-        <Button variant="primary" size="lg" block chip="arrow-right" onClick={loadSampleTrip}>
-          Try the sample trip
+        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
+          Add your trip
         </Button>
-        <Button variant="secondary" block onClick={() => setEntering(true)}>
-          Enter your own trip
-        </Button>
-        <NewTripSheet open={entering} onClose={() => setEntering(false)} />
-        <p className="text-center font-num text-[12px] tracking-[0.04em] text-ink-2 uppercase">
-          San Francisco → London → Rome
-        </p>
       </div>
     </div>
   );
 }
 
-function TripMenu({ open, onClose, hasTrip, onEdit }: { open: boolean; onClose: () => void; hasTrip: boolean; onEdit: () => void }) {
+function SavedTrips({ trips }: { trips: Trip[] }) {
+  const openSavedTrip = useTripStore((s) => s.openSavedTrip);
+  const removeSavedTrip = useTripStore((s) => s.removeSavedTrip);
+  return (
+    <Section title="Saved trips" delay={280}>
+      <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
+        {trips.map((t) => {
+          const first = t.flights[0];
+          const last = t.flights[t.flights.length - 1];
+          const meta = [
+            t.travelerName,
+            first && `${cityName(first.from)} → ${cityName(last.to)}`,
+            first && formatDate(first.departAt),
+          ].filter(Boolean);
+          return (
+            <li key={t.id} className="flex items-center">
+              <button
+                type="button"
+                onClick={() => openSavedTrip(t.id)}
+                className="flex min-w-0 flex-1 cursor-pointer flex-col items-start px-4 py-3.5 text-left hover:bg-sunk"
+              >
+                <span className="w-full truncate font-semibold">{t.name || "Untitled trip"}</span>
+                <span className="w-full truncate text-[14px] text-ink-2">{meta.join(" · ")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => removeSavedTrip(t.id)}
+                aria-label={`Delete saved trip ${t.name}`}
+                className="mr-2 inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-3 hover:bg-sunk hover:text-ink"
+              >
+                <Icon name="x" size={18} />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </Section>
+  );
+}
+
+/** Logo tapped with a trip open: close it, keeping a copy or not, or stay. */
+function LeaveTripSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const saveAndCloseTrip = useTripStore((s) => s.saveAndCloseTrip);
+  const resetTrip = useTripStore((s) => s.resetTrip);
+  const leave = (fn: () => void) => {
+    fn();
+    onClose();
+    window.scrollTo({ top: 0 });
+  };
+  return (
+    <Sheet open={open} onClose={onClose} title="Head back to the start?">
+      <div className="flex flex-col gap-3 pt-1">
+        <p className="mb-2 leading-snug text-ink-2">
+          This trip will close. Unless you save it, its flights, hotels and rides will be gone
+          for good.
+        </p>
+        <Button variant="primary" block icon="check" onClick={() => leave(saveAndCloseTrip)}>
+          Save it for later
+        </Button>
+        <Button variant="danger" block onClick={() => leave(resetTrip)}>
+          Discard this trip
+        </Button>
+        <Button variant="ghost" block onClick={onClose}>
+          Stay on this trip
+        </Button>
+      </div>
+    </Sheet>
+  );
+}
+
+/** A trip has been started but has no flights yet, so there is nothing to watch. */
+function NoFlights({ trip }: { trip: Trip }) {
+  return (
+    <div className="flex flex-1 flex-col">
+      <SignalBar aside="Nothing to watch">No flights yet</SignalBar>
+      <section className="ck-rise flex flex-col gap-2 px-5 pt-[22px]" style={rise(100)}>
+        <p className="text-[14px] text-ink-2">{[trip.travelerName, trip.name].filter(Boolean).join(" · ")}</p>
+        <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
+          Add a flight and Layover starts watching it.
+        </h1>
+        <p className="text-ink-2">When it changes, you will see what is affected and what to do next.</p>
+      </section>
+      <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(220)}>
+        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
+          Add your bookings
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function TripMenu({ open, onClose, hasTrip, voice, onVoiceChange }: {
+  open: boolean;
+  onClose: () => void;
+  hasTrip: boolean;
+  voice: SpeechVoice;
+  onVoiceChange: (voice: SpeechVoice) => void;
+}) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
   const [alerts, setAlerts] = useState<NotificationPermission | "unsupported">("unsupported");
@@ -602,6 +849,19 @@ function TripMenu({ open, onClose, hasTrip, onEdit }: { open: boolean; onClose: 
           <ThemeToggle />
         </div>
         {hasTrip && <PayoutAddress />}
+        <label className="flex flex-col gap-2">
+          <span className="ck-label">Listen voice</span>
+          <select
+            value={voice}
+            onChange={(event) => onVoiceChange(event.target.value as SpeechVoice)}
+            className="min-h-11 w-full rounded-control border border-line bg-surface px-3 text-base text-ink"
+          >
+            {Object.entries(SPEECH_VOICES).map(([key, choice]) => (
+              <option key={key} value={key}>{choice.label}</option>
+            ))}
+          </select>
+          <span className="text-[13px] font-normal text-ink-2">Used when you press Listen to summary.</span>
+        </label>
         <div className="flex flex-col gap-3">
           {alerts === "default" && (
             <Button
@@ -613,9 +873,12 @@ function TripMenu({ open, onClose, hasTrip, onEdit }: { open: boolean; onClose: 
               Allow phone notifications
             </Button>
           )}
+          <Button variant="secondary" block icon="user" href="/settings">
+            Settings
+          </Button>
           {hasTrip && (
-            <Button variant="secondary" block icon="plus" onClick={onEdit}>
-              Add or edit reservations
+            <Button variant="secondary" block icon="pencil" href="/trip">
+              Edit flights, hotels and rides
             </Button>
           )}
           <Button

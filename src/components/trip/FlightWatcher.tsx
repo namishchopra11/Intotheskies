@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBanner } from "@/components/ui";
-import { sampleTrip } from "@/lib/sampleTrip";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import { FLIGHT_CHANGE_EVENT, triggerFlightChange, type FlightAlertContent } from "./simulateChange";
 
@@ -12,21 +11,21 @@ const WATCH_DELAY_MS = 6000;
 
 /**
  * Watches the trip for changes and tells the traveler the moment one lands. With no backend,
- * the change itself is simulated (see simulateChange.ts): a few seconds after the sample trip with no
+ * the change itself is simulated (see simulateChange.ts): a few seconds after a trip with no
  * disruptions loads, the airline delays and rebooks it. Mounted once, in the root layout.
  */
 export function FlightWatcher() {
   const ready = useStoreReady();
-  const isDemo = useTripStore((s) => s.trip?.id === sampleTrip.id);
+  const hasTrip = useTripStore((s) => Boolean(s.trip));
+  const signedIn = useTripStore((s) => s.profile !== null);
   const disruptions = useTripStore((s) => s.trip?.disruptions.length ?? 0);
   const pathname = usePathname();
   const router = useRouter();
   // The banner belongs to the screen it appeared on; it doesn't follow the traveler to /share.
   const [alert, setAlert] = useState<{ change: FlightAlertContent; path: string } | null>(null);
 
-  // The recipient's read-only page never changes anyone's trip, and neither does the timer on a
-  // trip the traveler entered themselves (they use the "Simulate a change" button).
-  const watching = ready && isDemo && disruptions === 0 && !pathname.startsWith("/s");
+  // Only on the home screen: never on the recipient's /s page, mid-edit on /trip, or before sign-in.
+  const watching = ready && signedIn && hasTrip && disruptions === 0 && pathname === "/";
 
   useEffect(() => {
     if (!watching) return;
@@ -37,6 +36,8 @@ export function FlightWatcher() {
   // Both the timer and the "Simulate a change" button arrive here.
   useEffect(() => {
     const onChange = (e: Event) => {
+      // Switched off in Settings: the trip still updates, there's just no alert.
+      if (!useTripStore.getState().settings.notifications) return;
       const change = (e as CustomEvent<FlightAlertContent>).detail;
       setAlert({ change, path: window.location.pathname });
       notifyDevice(change);
