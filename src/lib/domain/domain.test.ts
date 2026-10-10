@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { sampleTrip } from "@/lib/sampleTrip";
 import { TripSchema, type Disruption, type DisruptionType, type Flight, type Trip } from "@/lib/types";
 import { buildBriefing } from "./briefing";
-import { generateChecklist } from "./checklist";
+import { generateChecklist, recipientTasks, sendUpdateTaskId } from "./checklist";
 import { computeImpact } from "./impact";
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 import { decodeShare, encodeShare } from "./shareLink";
 import { buildSummary, DEFAULT_SUMMARY_OPTIONS } from "./summary";
 import { addMinutes, minutesBetween } from "./time";
@@ -258,6 +259,59 @@ describe("generateChecklist", () => {
   });
 });
 
+describe("recipientTasks", () => {
+  const opts = { includeStays: true };
+
+  it("rewords generated tasks for the reader, in checklist order", () => {
+    const { trip, disruption } = delayFirst(45);
+    expect(recipientTasks(trip, disruption, opts)).toEqual([
+      "Confirming the latest times for BA 286",
+      "Rebooking the onward flight AZ 201",
+      "Letting Hotel Aventino Garden know about a late arrival",
+      "Rearranging the pickup or transfer",
+    ]);
+  });
+
+  it("leaves out the share task and the traveler's own chores, for every disruption type", () => {
+    const insured: Trip = {
+      ...baseTrip,
+      contacts: [...baseTrip.contacts, { id: "c-ins", kind: "insurance", name: "Northwind Cover" }],
+    };
+    const types: DisruptionType[] = ["delay", "cancellation", "missed_connection", "rebooked"];
+    for (const type of types) {
+      const { trip, disruption } = report(insured, FIRST, type);
+      const text = recipientTasks(trip, disruption, opts).join("\n");
+      expect(text).not.toMatch(/update|receipt|entitled|in writing|insur|Northwind/i);
+      expect(text).not.toMatch(/\byou(r)?\b|[{}]/i);
+    }
+  });
+
+  it("skips done tasks, keeps custom ones as written, and hides the hotel with includeStays off", () => {
+    const { trip, disruption } = delayFirst(45);
+    const tasks = [
+      ...disruption.tasks.map((t) => (t.id.endsWith(":confirm_new_times") ? { ...t, done: true } : t)),
+      { id: "c1", title: "Buy a phone charger", done: false, source: "custom" as const },
+      { id: "c2", title: "Pack the spare adapter", done: true, source: "custom" as const },
+    ];
+    const edited = { ...disruption, tasks };
+    const on = recipientTasks(trip, edited, opts);
+    expect(on).not.toContain("Confirming the latest times for BA 286");
+    expect(on).toContain("Buy a phone charger");
+    expect(on).not.toContain("Pack the spare adapter");
+    expect(on.join(" ")).toContain("Hotel Aventino Garden");
+
+    const off = recipientTasks(trip, edited, { includeStays: false });
+    expect(off.join(" ")).not.toContain("Aventino");
+    expect(off).toContain("Rebooking the onward flight AZ 201");
+  });
+
+  it("ignores generated tasks it does not recognise", () => {
+    const { trip, disruption } = delayFirst(45);
+    const odd = { ...disruption, tasks: [{ id: "d1:something_new", title: "Do a thing", done: false, source: "generated" as const }] };
+    expect(recipientTasks(trip, odd, opts)).toEqual([]);
+  });
+});
+
 describe("buildSummary", () => {
   it("says what changed, the revised itinerary and what is unresolved", () => {
     const { trip } = delayFirst(45);
@@ -269,7 +323,16 @@ describe("buildSummary", () => {
     expect(text).toContain("Revised itinerary:");
     expect(text).toContain("Hotel Aventino Garden");
     expect(text).toContain("Still to sort out:");
-    expect(text).toMatch(/- Rebook the onward flight AZ 201/);
+    expect(text).toMatch(/- Rebooking the onward flight AZ 201/);
+  });
+
+  it("words open tasks for the reader and leaves out the traveler's own chores", () => {
+    const { trip } = delayFirst(45);
+    const text = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
+    const still = text.slice(text.indexOf("Still to sort out:"));
+    expect(still).toContain("- Confirming the latest times for BA 286");
+    expect(still).toContain("- Letting Hotel Aventino Garden know about a late arrival");
+    expect(still).not.toMatch(/send an update|receipts|entitled|in writing|\byou(r)?\b/i);
   });
 
   it("shows booking references only when the option is on", () => {
@@ -293,7 +356,7 @@ describe("buildSummary", () => {
       disruptions: trip.disruptions.map((d) => ({ ...d, tasks: d.tasks.map((t) => ({ ...t, done: true })) })),
     };
     const done = buildSummary(allDone, "d1", DEFAULT_SUMMARY_OPTIONS);
-    expect(done).toContain("Everything on my list is done");
+    expect(done).toContain("Nothing outstanding.");
     expect(done).not.toContain("- Rebook");
   });
 
@@ -358,9 +421,38 @@ describe("share link", () => {
     expect(snapshot!.flights).toHaveLength(2);
     expect(snapshot!.flights[0].original?.arriveAt).toBe("2026-10-17T10:35");
     expect(snapshot!.stays[0].name).toBe("Hotel Aventino Garden");
-    expect(snapshot!.openTasks).toContain("Rebook the onward flight AZ 201");
-    expect(snapshot!.summary).toBe(buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS));
+    expect(snapshot!.openTasks).toContain("Rebooking the onward flight AZ 201");
+    expect(snapshot!.openTasks).not.toContain("Rebook the onward flight AZ 201");
     expect(decodeShare(`#${fragment}`)).toEqual(snapshot);
+  });
+
+  it("no longer carries the summary text, and still reads links that do", () => {
+    const { trip } = delayFirst(45);
+    const fragment = encodeShare(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
+    expect(decodeShare(fragment)!.summary).toBeUndefined();
+
+    const json = JSON.parse(
+      decompressFromEncodedURIComponent(fragment.replace(/_/g, "+").replace(/~/g, "$"))!,
+    );
+    expect(json).not.toHaveProperty("summary");
+    json.summary = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
+    const old = compressToEncodedURIComponent(JSON.stringify(json)).replace(/\+/g, "_").replace(/\$/g, "~");
+    expect(old.length).toBeGreaterThan(fragment.length);
+    expect(decodeShare(old)).toMatchObject({ tripName: "Rome via London", summary: json.summary });
+  });
+
+  it("never lists the send-an-update task, including on links made before it was dropped", () => {
+    const { trip } = delayFirst(45);
+    expect(trip.disruptions[0].tasks.some((t) => t.id === sendUpdateTaskId("d1"))).toBe(true);
+    const snapshot = decodeShare(encodeShare(trip, "d1", DEFAULT_SUMMARY_OPTIONS))!;
+    expect(snapshot.openTasks.join(" ")).not.toMatch(/send an update/i);
+
+    const json = JSON.parse(
+      decompressFromEncodedURIComponent(encodeShare(trip, "d1", DEFAULT_SUMMARY_OPTIONS).replace(/_/g, "+").replace(/~/g, "$"))!,
+    );
+    json.openTasks = ["Send an update to someone waiting for you", "Keep receipts for extra costs"];
+    const old = compressToEncodedURIComponent(JSON.stringify(json)).replace(/\+/g, "_").replace(/\$/g, "~");
+    expect(decodeShare(old)!.openTasks).toEqual(["Keep receipts for extra costs"]);
   });
 
   it("drops booking references, contacts and phone numbers unless asked", () => {
