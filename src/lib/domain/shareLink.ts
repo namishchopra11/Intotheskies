@@ -9,7 +9,7 @@ import {
   type Trip,
 } from "@/lib/types";
 import { computeImpact, ImpactSchema } from "./impact";
-import { buildSummary, type SummaryOptions } from "./summary";
+import { buildSummary, openTasksForOthers, type SummaryOptions } from "./summary";
 
 // What the read-only page (/s) receives. Nothing else leaves the device.
 // Links look like `/s#<fragment>`; the fragment never reaches a server.
@@ -93,7 +93,7 @@ export function encodeShare(trip: Trip, disruptionId: string, options: SummaryOp
       : [],
     impact: options.includeStays ? impact : { ...impact, affectedStays: [] },
     openTasks: options.includeOpenTasks
-      ? disruption.tasks.filter((t) => !t.done).map((t) => t.title)
+      ? openTasksForOthers(disruption).map((t) => t.title)
       : [],
     summary: buildSummary(trip, disruptionId, options),
   };

@@ -1,4 +1,4 @@
-import type { Disruption, Flight, Trip } from "@/lib/types";
+import type { Disruption, Flight, Task, Trip } from "@/lib/types";
 import { cityName } from "./airports";
 import { computeImpact, isArrivalUnknown, type Impact } from "./impact";
 import { datePart, formatDate, formatDateTime, formatDuration, timePart } from "./time";
@@ -14,6 +14,17 @@ export const DEFAULT_SUMMARY_OPTIONS: SummaryOptions = {
   includeStays: true,
   includeOpenTasks: true,
 };
+
+// Tasks that are the traveler's own admin. They make no sense in a message to the people
+// waiting ("Send an update to someone waiting for you" would be read by that someone).
+const PERSONAL_TASKS = ["send_update", "ask_entitlements", "get_it_in_writing", "keep_receipts", "contact_insurer"];
+
+/** The unfinished tasks worth telling someone else about. Custom tasks are always kept. */
+export function openTasksForOthers(disruption: Disruption): Task[] {
+  return disruption.tasks.filter(
+    (t) => !t.done && !(t.source === "generated" && PERSONAL_TASKS.some((key) => t.id.split(":")[1] === key)),
+  );
+}
 
 const route = (f: Flight) => `${cityName(f.from)} to ${cityName(f.to)}`;
 
@@ -115,7 +126,7 @@ export function buildSummary(trip: Trip, disruptionId: string, options: SummaryO
   }
 
   if (options.includeOpenTasks) {
-    const open = disruption.tasks.filter((t) => !t.done);
+    const open = openTasksForOthers(disruption);
     lines.push("", "Still to sort out:");
     if (open.length === 0) lines.push("Nothing. Everything on my list is done.");
     for (const t of open) lines.push(`- ${t.title}`);

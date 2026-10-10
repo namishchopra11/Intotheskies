@@ -1,6 +1,6 @@
 import { cityName } from "@/lib/domain/airports";
 import { computeImpact, isArrivalUnknown } from "@/lib/domain/impact";
-import type { SummaryOptions } from "@/lib/domain/summary";
+import { openTasksForOthers, type SummaryOptions } from "@/lib/domain/summary";
 import { formatDate, formatDuration, timePart } from "@/lib/domain/time";
 import type { Trip } from "@/lib/types";
 
@@ -66,7 +66,7 @@ export function buildMessage(trip: Trip, disruptionId: string, options: SummaryO
   const hotel = stay
     ? `Hotel: ${stay.name}.${stay.latestCheckIn ? ` Front desk is open until ${stay.latestCheckIn}.` : ` Check-in ${formatDate(stay.checkIn)}.`}${options.includeBookingRefs && stay.confirmation ? ` Confirmation ${stay.confirmation}.` : ""}`
     : "";
-  const open = d.tasks.filter((t) => !t.done).map((t) => lowerFirst(t.title));
+  const open = openTasksForOthers(d).map((t) => lowerFirst(t.title));
   const unresolved = open.length > 0 ? `Still sorting: ${open.join(", ")}.` : "Everything else is sorted.";
 
   const lines: MessageLine[] = [
