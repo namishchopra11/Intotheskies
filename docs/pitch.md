@@ -7,8 +7,8 @@ Written to be said out loud. Short sentences. Read it aloud, not in your head, a
 where you run out of breath.
 
 **Judging criteria:** innovativeness, functionality, creativity, theme ("Into the Skies").
-**Tracks entered:** Solana, ElevenLabs, best use of GenAI (see "Tracks" near the end before
-you say anything about them).
+**Tracks entered:** Solana and ElevenLabs (see "Tracks" near the end before you say anything
+about them).
 
 ---
 
@@ -114,22 +114,16 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 
 ## Tracks (read this before you say a word about them)
 
-I cannot see any generative AI, voice or Solana code in the app as it stands today. The
-checklist is built by fixed rules, not by a language model. So:
+I cannot see any voice or Solana code in the app as it stands today. So:
 
 | Track | What must be true before you mention it | Who to ask |
 | --- | --- | --- |
-| **Solana** | The "Send help" button on the shared link works end to end on your phone. | Whoever owns it |
-| **ElevenLabs** | The "Listen" button reads the next steps aloud, with the ElevenLabs voice, on your phone. | Whoever owns it |
-| **Best use of GenAI** | A teammate can name exactly where generative AI is used in the product, and it works. | Ask the team today |
+| **Solana** | The "Send help" button on the shared link works end to end on your phone. | Sebastian |
+| **ElevenLabs** | The "Listen" button reads the next steps aloud, with the ElevenLabs voice, on your phone. | Sebastian |
 
 If a track's feature is not working by tomorrow morning, say nothing about it at the table.
 A judge who sees a broken promise scores the whole project down. Tell me when each one is
 confirmed and I will add one sentence to this pitch and one step to the demo script.
-
-The GenAI track is the one to settle first, because the app does not use a language model
-right now. If that stays true, either drop that track or be straight about it: "the checklist
-is rules on purpose, so it is predictable and works offline."
 
 ---
 
@@ -168,8 +162,8 @@ real flight and your real hotel, and it changes when the trip changes. Then the 
 written from the list.
 
 **Is the checklist AI-generated?**
-*Today:* No. It is built from fixed rules, on purpose, so it is predictable, works offline,
-and never makes up advice. *(Update this answer if a teammate adds generative AI.)*
+No. It is built from fixed rules, on purpose, so it is predictable, works offline, and never
+makes up advice.
 
 **Do you tell people what compensation they are owed?**
 No, deliberately. Rights differ by country and airline, and a wrong answer would mislead
@@ -194,7 +188,7 @@ built the logic.)*
   hand-off.
 - If you only remember three things: **55 to 10**, **the list names Alex's real flight and
   hotel**, **ticked items vanish from the message**.
-- Do not say "AI" about anything unless a teammate has confirmed it is true.
+- Do not say "AI" about the checklist or the message. They are built from rules, not a language model.
 - Do not promise features. Say "next, we would..."
 
 ## Who to hand questions to
