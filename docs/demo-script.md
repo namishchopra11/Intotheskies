@@ -7,10 +7,9 @@ are what you will see on screen.
 **How to read this:** each step has **TAP** (what your finger does), **POINT** (what the
 judges should look at) and **SAY** (spoken words, written to be said out loud, not read).
 
-**Square brackets like `[confirm label]`** mean the screen did not exist yet when this was
-written, so I do not know the exact button text. First time you run the app, fix these to
-match the real buttons. The disruption screen (steps 3 and 4) is built on the team's
-`foundation` branch, and its wording is exact.
+**Button names are exact.** Every button and line quoted below was checked on the real app at
+phone size (390 pixels wide) on Saturday 10 October. If a teammate renames a button, fix it
+here.
 
 ---
 
@@ -24,22 +23,28 @@ risk.
 ## Before you walk on (2 minutes, do this every time)
 
 1. Charge the phone. Turn off notifications and Do Not Disturb on.
-2. Open the app in the browser you will use on stage. **Use the HTTPS address** if the team
-   has one (the Copy button can fail on a plain `http://192.168...` address).
-3. Reset the trip so you start clean: `[confirm label: Reset / Start over]`. The app
-   remembers things on the phone, so a second run will otherwise show the first run's delay.
-4. Do **not** load the sample trip yet. Step 1 is the first thing the judges see.
+2. Open the app in the browser you will use on stage. Prefer the HTTPS address if the team
+   has one. (The Copy buttons also work on plain `http://`, with a fallback, but HTTPS is
+   safer.)
+3. **Reset the trip so you start clean.** Scroll to the bottom of the home screen and tap
+   **Delete trip from this device**. The button changes to **Tap again to delete this
+   trip**: tap it again. You should now see **No trip yet** and a **Load sample trip** button.
+   **This matters.** The app remembers the trip on the phone, and a second run without a
+   reset stacks the new 45 minutes on top of the old ones. You will see **Likely missed**
+   instead of **Tight**, and the demo falls apart.
+4. Stop on the **Load sample trip** screen. Step 1 is the first thing the judges see.
 5. Open your messaging app in another tab or on a second device, with a chat ready to
    paste into (use your own number or a teammate).
 6. Have the backup video ready to play (see "If something goes wrong").
-7. Do not tap any phone number during the demo. The numbers are made up, but the Rome ones
-   might ring a stranger.
+7. Do not tap any **Call** button during the demo. The numbers are made up, but the Rome
+   ones might ring a stranger. The same goes for **Delete trip from this device**, at the
+   bottom of the home screen.
 
 ---
 
 ## Step 1. Load the trip (10 seconds)
 
-**TAP** `[confirm label: Load sample trip]` on the home screen.
+**TAP** **Load sample trip**.
 
 **POINT** at the flights, the hotel and the contacts, in that order.
 
@@ -54,16 +59,15 @@ risk.
 
 ## Step 2. Report what changed (20 seconds)
 
-**TAP** `[confirm label: Report a change / Something changed]`.
+**TAP** the green **Report a change** button at the top.
 
-**TAP** BA 286, San Francisco to London, as the flight.
+The form already has **BA 286 · San Francisco → London** and **Delayed** selected. Point at
+them, but you do not need to tap them.
 
-**TAP** **Delay**.
+**TAP** **+45 min** under **How late?**. The two time boxes fill in by themselves:
+departs **Fri 16 Oct, 17:25**, arrives **Sat 17 Oct, 11:20**.
 
-**ENTER** 45 minutes. If the form asks for times instead of minutes, use
-**departs Fri 16 Oct 17:25** and **arrives Sat 17 Oct 11:20**.
-
-**TAP** `[confirm label: Save / Continue]`.
+**TAP** **Show what's affected**.
 
 **SAY** (while you type)
 > "The airline app just told Alex the first flight is 45 minutes late. That is all Alex
@@ -129,7 +133,7 @@ The counter now reads **2 of 7 done**.
 
 ## Step 5. Tell the people waiting (20 seconds)
 
-**TAP** **Send an update** (the big blue button at the bottom).
+**TAP** **Send an update** (the big green button at the bottom).
 
 You are on the share screen.
 
@@ -143,21 +147,27 @@ instead of 10:35."*
 
 **POINT** at "Still to sort out". The two ticked items are **not** there.
 
+*Do not read this list out line by line. Until the fix in
+`docs/patches/shared-message-skip-personal-tasks.patch` is merged, it also includes personal
+items such as "Send an update to someone waiting for you" and "Keep receipts for extra costs".
+Only point at the two that are missing.*
+
 **SAY**
 > "And look. The two things Alex already did are gone from the message. The trip drives
 > the checklist, and the checklist drives the message."
 
-**POINT** at the booking-reference option, which is off.
+**POINT** at the **Booking references** switch under **Include**, which is off.
 
 **SAY**
 > "Booking numbers stay off unless Alex chooses to share them."
 
-**TAP** `[confirm label: Copy link]`.
+**TAP** **Copy link**. A small message says **Link copied. Paste it into any chat.**
 
 **OPEN** your messaging app, **paste**, **send**.
 
 **TAP** the link on the receiving end (second device, or a new tab) to show the read-only
-page.
+page. It opens with **Alex's flight is delayed** and a **Tight connection** card: *"10 min to
+make AZ 201 at 11:30."*
 
 **SAY**
 > "The person on the other end taps the link. No app, no account, nothing to install."
@@ -216,8 +226,9 @@ Then, in this order:
 
 | What you see | What to do |
 | --- | --- |
-| Old delay already on screen from the last run | Reset the trip, load the sample trip again, restart from step 1. |
-| Copy link does nothing | Long-press the message preview, select all, copy. Or read the first two lines aloud and move on. |
+| Old delay already on screen from the last run | Reset the trip (**Delete trip from this device**, tap twice), tap **Load sample trip**, restart from step 1. |
+| The badge says **Likely missed**, not **Tight** | You stacked a second delay on the first. Same fix: reset the trip and start from step 1. |
+| Copy link says **Couldn't copy** | Press and hold the message preview, select all, copy. Or read the first two lines aloud and move on. |
 | A button does something you did not expect | Say "let me go back", tap Back to trip, and repeat the step. Do not apologise twice. |
 | The numbers are not 55 and 10 | Stop. Something changed in the sample trip. Switch to the backup video. |
 

@@ -126,14 +126,6 @@ If the phone test has not been done by tomorrow morning, say nothing about Solan
 table. A judge who sees a broken promise scores the whole project down. Tell me when it is
 confirmed and I will add one sentence to this pitch and one step to the demo script.
 
---- | --- | --- |
-| **Solana** | The "Send help" button on the shared link works end to end on your phone. | Sebastian |
-| **ElevenLabs** | The "Listen" button reads the next steps aloud, with the ElevenLabs voice, on your phone. | Sebastian |
-
-If a track's feature is not working by tomorrow morning, say nothing about it at the table.
-A judge who sees a broken promise scores the whole project down. Tell me when each one is
-confirmed and I will add one sentence to this pitch and one step to the demo script.
-
 ---
 
 ## Questions judges are likely to ask
