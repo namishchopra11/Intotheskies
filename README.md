@@ -20,7 +20,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000 and tap **Load sample trip**. It is designed for a phone, so
+Open http://localhost:3000 and tap **Try the sample trip**. It is designed for a phone, so
 use a narrow window or your browser's device mode.
 
 Other commands:
@@ -33,11 +33,19 @@ pnpm build   # production build
 
 ## Try the demo
 
-1. Load the sample trip: San Francisco to Rome, changing planes in London.
-2. Tap **Report a change** and delay the first flight by 45 minutes.
-3. See the London connection drop from 55 minutes to 10, and the checklist that follows.
-4. Tick a task or two, then tap **Send an update** to preview the message and copy a link.
+1. Tap **Try the sample trip**: San Francisco to Rome, changing planes in London.
+2. Wait about 6 seconds. The airline "changes" the trip on its own and a notification
+   card appears: the first flight is over two hours late, so the London connection is
+   missed and the traveler is rebooked on AZ 207.
+3. See the new plan and the checklist that follows.
+4. Tick a task or two, then tap **Share the new plan** to preview the message and copy a link.
 5. Open the link. It is a read-only page that needs no app and no account.
+
+To replay it, open the menu (top right) and choose **Restart the demo trip**.
+
+**Live flight watching is simulated.** There is no flight-data feed and no backend: a
+scripted change is pushed a few seconds after the trip loads. Everything after the change
+(risks, checklist, shared update) is computed from the trip by the app's own logic.
 
 The full walk-through is in [docs/demo-script.md](docs/demo-script.md), and the spoken
 pitch is in [docs/pitch.md](docs/pitch.md).
@@ -46,9 +54,7 @@ pitch is in [docs/pitch.md](docs/pitch.md).
 
 | Route | What it is |
 | --- | --- |
-| `/` | The trip: flights, stays, contacts |
-| `/disruption/new` | Report what changed |
-| `/disruption/[id]` | Before and after, downstream risks, checklist |
+| `/` | The trip: on-track view, then the change, the checklist, share and listen |
 | `/share/[id]` | Build and copy the update for people waiting |
 | `/s` | Read-only shared update, with the data in the URL fragment |
 

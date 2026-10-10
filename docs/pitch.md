@@ -23,29 +23,36 @@ words, so the word count is lower than it looks. The full tap-by-tap demo is in
 > Picture Alex. Flying San Francisco to Rome, changing planes in London.
 > Two airlines. Two confirmation emails. A hotel waiting in Rome.
 >
-> At the gate, the first flight slips forty-five minutes.
+> At the gate, the first flight slips by more than two hours.
 >
 > Now Alex has to work it all out alone. The delay is in one app. The next flight is in
 > another. The hotel is in an email. And somebody is waiting in Rome, checking their phone.
 
 ### 2. The idea (about 10 seconds)
 
-> ConnectionKeeper. You tell it what changed about your flight.
-> It tells you what is now at risk, what to do next, and writes the update for the people
-> waiting on you.
+> ConnectionKeeper. It watches your flights. When one changes, it tells you what that means
+> for everything else, what to do next, and writes the update for the people waiting on you.
+> You do not enter anything.
+
+**Be plain about this, early:** the flight feed in the demo is simulated. Section 3 has the
+line to say.
 
 ### 3. The demo (about 70 seconds)
 
-*Taps are in `docs/demo-script.md`. Say these lines while you do them.*
+*Taps are in `docs/demo-script.md`. Say these lines while you do them. There is no "report
+a change" screen: the change arrives on its own, about 6 seconds after the trip loads.*
 
-> This is Alex's trip. Two flights, a hotel, the phone numbers Alex needs.
+> This is Alex's trip. Two flights, a hotel, the phone numbers Alex needs. The app is
+> watching the flights. The airline feed is simulated, so we can show you the moment it
+> changes. What it does with the change is the real part.
 >
-> *(report the delay)* The airline says forty-five minutes late. That is all Alex tells us.
+> *(the change card arrives)* The first flight is over two hours late. Alex has missed the
+> connection in London and is already rebooked. Alex did not type a thing.
 >
-> *(connection card)* Here is what the app worked out by itself. The connection in London
-> was fifty-five minutes. Now it is ten. And the hotel in Rome is at risk.
+> *(new plan)* Here is what the app worked out by itself. The old flight is struck out. The
+> new one leaves London at 14:25 and lands in Rome at 18:00, not 15:05.
 >
-> *(checklist)* And here is what to do. Rebook AZ 201. Tell Hotel Aventino Garden. Those
+> *(checklist)* And here is what to do. Check your booking for AZ 207. Ask ITA Airways. Those
 > are not generic tips. They come from Alex's own trip.
 >
 > *(tick two)* Alex does two of them and ticks them off.
@@ -67,8 +74,8 @@ words, so the word count is lower than it looks. The full tap-by-tap demo is in
 
 ### 5. What is next (about 15 seconds)
 
-> Next, we would pull trips in from confirmation emails, and connect live flight status, so
-> the app can warn you instead of waiting to be told.
+> Next, we would replace the simulated feed with a real flight-status source, and pull
+> trips in from confirmation emails. Everything after the change already works the same.
 
 ### 6. Hand-off (about 10 seconds)
 
@@ -94,10 +101,10 @@ line. Drop 5.
 ## The 60-second cut (an elevator version)
 
 > When a flight is delayed, you juggle an airline app, confirmation emails and a hotel
-> booking, while someone waits for news. ConnectionKeeper puts it in one place. You tell it
-> what changed. It shows you what is now at risk, gives you a checklist of what to do, and
+> booking, while someone waits for news. ConnectionKeeper puts it in one place. When a
+> flight changes, it shows you what is now at risk, gives you a checklist of what to do, and
 > writes the update for the people waiting. The trip drives the checklist and both drive the
-> message. Everything stays on your phone.
+> message. Everything stays on your phone. (The flight feed in our demo is simulated.)
 
 ---
 
@@ -108,31 +115,22 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 | Criterion | Our honest answer |
 | --- | --- |
 | **Innovativeness** | One change flows through three things: the risks, the checklist, then the message. Many travel apps stop at the alert. |
-| **Functionality** | It runs on a phone, with no sign-up, and works from the first tap with the sample trip. It handles four kinds of change: delay, cancellation, missed connection, and rebooked. |
-| **Creativity** | It is the opposite of a to-do app. Nothing is typed in by hand: the list writes itself from the trip. The shared update lives entirely in the link, so there is no server behind it. |
+| **Functionality** | It runs on a phone, with no sign-up, and works from the first tap with the sample trip. The logic handles four kinds of change: delay, cancellation, missed connection, and rebooked. The demo plays one of them (a missed connection) from a simulated feed. |
+| **Creativity** | It is the opposite of a to-do app. Nothing is typed in by hand: the change arrives, and the list writes itself from the trip. The shared update lives entirely in the link, so there is no server behind it. |
 | **Theme: Into the Skies** | Flights are the whole subject. We built for the hours after the sky does not go to plan. |
 
 ## Tracks (read this before you say a word about them)
 
 | Track | Where it stands | What must be true before you mention it | Who to ask |
 | --- | --- | --- | --- |
-| **Solana** | Built: a Solana address field on the trip screen, an "Ask for help" option on the share screen, and a "Send help" button on the shared link. Checked in a desktop browser only. | Someone has opened a shared link on a phone, tapped "Send help", and seen the request open in a wallet set to devnet. | Sebastian |
-| **ElevenLabs** | Dropped. There is no "Listen" button and no voice code in the app. | Nothing. Do not mention it. | |
+| **Solana** | Only the building blocks exist: address validation, a devnet USDC transfer-request builder and a field in the share link (all under `src/lib/solana/`, with tests). **No screen uses them on this branch**: there is no address field, no "request funds" option and no "Send help" button. | A screen is built and someone has opened a shared link on a phone, tapped the request, and seen it open in a wallet set to devnet. | Sebastian |
+| **ElevenLabs** | Dropped. There is no ElevenLabs code. The home screen does have a **Listen to summary** button, but it uses the phone's own built-in voice (browser speech), not ElevenLabs. | Do not claim ElevenLabs. If asked about the button, say it is the device's voice. | |
 
-The Solana request uses devnet, Solana's test network, so no real money moves. Say that
-if you show it.
-
-If the phone test has not been done by tomorrow morning, say nothing about Solana at the
-table. A judge who sees a broken promise scores the whole project down. Tell me when it is
-confirmed and I will add one sentence to this pitch and one step to the demo script.
-
---- | --- | --- |
-| **Solana** | The "Send help" button on the shared link works end to end on your phone. | Sebastian |
-| **ElevenLabs** | The "Listen" button reads the next steps aloud, with the ElevenLabs voice, on your phone. | Sebastian |
-
-If a track's feature is not working by tomorrow morning, say nothing about it at the table.
-A judge who sees a broken promise scores the whole project down. Tell me when each one is
-confirmed and I will add one sentence to this pitch and one step to the demo script.
+If the Solana screens are not built and phone-tested by tomorrow morning, say nothing about
+Solana at the table. A judge who sees a broken promise scores the whole project down. Tell
+me when it is confirmed and I will add one sentence to this pitch and one step to the demo
+script. If you do show it, say it uses devnet, Solana's test network, so no real money
+moves.
 
 ---
 
@@ -140,12 +138,23 @@ confirmed and I will add one sentence to this pitch and one step to the demo scr
 
 Short answers. Say the first sentence, then stop and let them ask more.
 
-**Why no live flight data?**
+**Is the flight watching real?**
+No, and we say so. The "airline feed" is simulated. A few seconds after the trip loads, the
+app plays one scripted change (the first flight runs over two hours late, the connection is
+missed, the traveler is rebooked) so you can see the moment it lands. There is no live
+flight data and no server. What happens after the change is real: the risks, the checklist,
+the message and the shared link are all worked out from the trip by the app's own logic. The
+part we would swap out is one function that stands in for the feed.
+
+**Why not use live flight data?**
 Because we would rather be right than fast. Reliable live flight feeds cost money and need
-accounts and keys, and a wrong guess about someone's connection is worse than none. Alex
-usually hears about a change first, from the airline's own message. We start from what Alex
-tells us and do the hard part: working out what it means for everything else. Live status is
-the first thing we would add next.
+accounts and keys, and a wrong guess about someone's connection is worse than none. We built
+the hard part first: working out what a change means for everything else. Live status is the
+first thing we would add next.
+
+**Can I try it with my own flight?**
+Not yet. The app runs on a sample trip, and the change it plays is scripted. Entering your
+own trip and connecting a real status source are both things we would build next.
 
 **Where is the data stored?**
 On your phone, in the browser. No server, no account. When you share an update, the
@@ -179,9 +188,10 @@ No, deliberately. Rights differ by country and airline, and a wrong answer would
 someone who is already stressed. The app only says "ask the airline what you're entitled to".
 
 **What if the flight is cancelled, not just late?**
-It handles four kinds of change: delay, cancellation, missed connection, and rebooked. For
-a cancellation with no new time yet, it says the connection is "at risk" rather than
-inventing a number.
+The logic handles four kinds of change: delay, cancellation, missed connection, and
+rebooked. For a cancellation with no new time yet, it says the connection is "at risk"
+rather than inventing a number. The demo plays one scripted change, a missed connection, so
+that is the one you will see on the phone.
 
 **Why does it ignore time zones?**
 Every comparison it makes happens in one place: old against new arrival at one airport,
@@ -195,8 +205,10 @@ built the logic.)*
 
 - Let a teammate take any "how does it work" question. Your job is the story and the
   hand-off.
-- If you only remember three things: **55 to 10**, **the list names Alex's real flight and
-  hotel**, **ticked items vanish from the message**.
+- If you only remember three things: **the change arrives on its own (and it is simulated)**,
+  **the list names Alex's real flight and airline**, **ticked items vanish from the message**.
+- Do not say the flight data is live, or that the app "tracks real flights". Say "the feed is
+  simulated" before a judge has to ask.
 - Do not say "AI" about the checklist or the message. They are built from rules, not a language model.
 - Do not promise features. Say "next, we would..."
 
@@ -207,11 +219,12 @@ built the logic.)*
 | Namish | Head coder | How it is built, the store, the share link |
 | Boris | Code and logic | How the connection time, checklist and message are worked out |
 | Will | Frontend design | The screens, the look, phone layout |
-| Sebastian | Presenter, Solana | The story, plus "Send help" once it works on a phone |
+| Sebastian | Presenter, Solana | The story, plus the Solana request once a screen for it exists and works on a phone |
 
 ## Open items
 
-1. Whether "Send help" works on a phone with a real wallet. Tell me and I will update this file.
+1. Whether the Solana request gets a screen, and works on a phone with a real wallet. Tell me
+   and I will update this file.
 2. Where the TripIt answer came from: public descriptions of TripIt, not the app itself.
    Sources: [TripIt Pro review](https://www.iphonejd.com/?p=1094),
    [TechCrunch on the launch of TripIt Pro](https://techcrunch.com/2009/06/23/tripit-goes-pro-launches-premium-flight-monitoring-and-alerts),

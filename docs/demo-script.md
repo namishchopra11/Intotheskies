@@ -1,173 +1,203 @@
 # Demo script
 
-Live demo, about 100 seconds (an estimate: time it in rehearsal). The numbers and wording
-quoted below were produced by running the app's real logic on the sample trip, so they
-are what you will see on screen.
+Live demo, about 90 seconds (an estimate: time it in rehearsal). The numbers and wording
+quoted below were produced by running the app's real logic on the sample trip, so they are
+what you will see on screen.
 
 **How to read this:** each step has **TAP** (what your finger does), **POINT** (what the
 judges should look at) and **SAY** (spoken words, written to be said out loud, not read).
 
-**Square brackets like `[confirm label]`** mean the screen did not exist yet when this was
-written, so I do not know the exact button text. First time you run the app, fix these to
-match the real buttons. The disruption screen (steps 3 and 4) is built on the team's
-`foundation` branch, and its wording is exact.
+## Say this first, and say it plainly
+
+**The flight change in this demo is simulated.** There is no live flight data. About 6
+seconds after the trip loads, the app plays the part of the airline's feed and pushes one
+scripted change. Everything after that moment is real: the risks, the checklist, the update
+for the people waiting and the shared link are all worked out from the trip by the app's own
+logic. If a judge asks, the answer is in `docs/pitch.md` ("Is the flight watching real?").
+
+Say it in your own words, early. Suggested line for step 1:
+> "The airline feed here is simulated, so we can show you the moment it changes. What the
+> app does with the change is the real part."
 
 ---
 
 ## The story in one breath
 
 Alex Morgan is flying San Francisco to Rome through London. Two airlines, two booking
-confirmations, one hotel. The first flight gets delayed 45 minutes. That turns a relaxed
-55-minute connection in London into a 10-minute sprint, and it puts the hotel check-in at
-risk.
+confirmations, one hotel. The first flight (BA 286) runs 2 hours 10 minutes late. That is
+longer than the 55-minute London connection, so Alex misses AZ 201 and is rebooked on AZ 207,
+which now lands in Rome at 18:00 instead of 15:05.
+
+## How the change arrives
+
+There is no "report a change" screen. A change arrives on its own:
+
+- **Automatically:** about 6 seconds after a trip with no changes is on screen (the app must
+  be open, and not on the shared `/s` page).
+- **On demand:** menu button (top right) > **Restart the demo trip**. It puts the trip back on
+  time, and the same change arrives about 6 seconds later. Use this to replay the demo.
+
+It plays once per trip. Once the trip has a change, nothing more fires until you restart it.
 
 ## Before you walk on (2 minutes, do this every time)
 
-1. Charge the phone. Turn off notifications and Do Not Disturb on.
+1. Charge the phone. Turn off notifications and Do Not Disturb on, so nothing else buzzes.
 2. Open the app in the browser you will use on stage. **Use the HTTPS address** if the team
    has one (the Copy button can fail on a plain `http://192.168...` address).
-3. Reset the trip so you start clean: `[confirm label: Reset / Start over]`. The app
-   remembers things on the phone, so a second run will otherwise show the first run's delay.
-4. Do **not** load the sample trip yet. Step 1 is the first thing the judges see.
-5. Open your messaging app in another tab or on a second device, with a chat ready to
-   paste into (use your own number or a teammate).
-6. Have the backup video ready to play (see "If something goes wrong").
-7. Do not tap any phone number during the demo. The numbers are made up, but the Rome ones
+3. Start clean: menu button > **Clear this trip**. The app remembers things on the phone, so
+   a second run will otherwise open on the first run's change.
+4. You should now see "Flights change. Your plan keeps up." and **Try the sample trip**. Do
+   **not** tap it yet. Step 1 is the first thing the judges see.
+5. Optional: menu > **Allow phone notifications**, if you want the change to also arrive as a
+   system notification when the app is in the background. Not needed for the demo.
+6. Open your messaging app in another tab or on a second device, with a chat ready to paste
+   into (use your own number or a teammate).
+7. Have the backup video ready to play (see "If something goes wrong").
+8. Do not tap any phone number during the demo. The numbers are made up, but the Rome ones
    might ring a stranger.
+9. For the **Listen to summary** line, turn the phone volume up. The button only shows when
+   the browser has speech support. Test it once before you go up.
 
 ---
 
-## Step 1. Load the trip (10 seconds)
+## Step 1. Load the trip (15 seconds)
 
-**TAP** `[confirm label: Load sample trip]` on the home screen.
+**TAP** **Try the sample trip** on the home screen.
 
-**POINT** at the flights, the hotel and the contacts, in that order.
+You land on **Your trip is on track. Nothing to do right now.** with **All flights on time**
+and a pulsing **Watching live** in the bar at the top.
+
+**POINT** at the two flights, and at the line between them: **55 min in London**, marked
+tight.
 
 **SAY**
-> "This is Alex's trip to Rome. A flight from San Francisco to London, a flight on to
-> Rome, a hotel, and the phone numbers Alex will need. Normally that is four different
-> apps and emails. Here it is one screen."
+> "This is Alex's trip to Rome. A flight from San Francisco to London, a flight on to Rome,
+> a hotel, and the phone numbers Alex will need. Normally that is four different apps and
+> emails. Here it is one screen. The app is watching the flights. The airline feed is
+> simulated, so we can show you the moment it changes."
 
-**On screen:** two flights (BA 286 and AZ 201), Hotel Aventino Garden, three contacts.
+Keep talking. The change lands about 6 seconds after the trip appears. Do not tap anything.
 
 ---
 
-## Step 2. Report what changed (20 seconds)
+## Step 2. The change arrives (15 seconds)
 
-**TAP** `[confirm label: Report a change / Something changed]`.
+A card slides down from the top (the phone buzzes, if it can):
 
-**TAP** BA 286, San Francisco to London, as the flight.
+> **Flight change · new plan ready**
+> BA 286 is 2h 10m late, so you'll miss AZ 201 in London.
+> You're rebooked on AZ 207, 14:25 → 18:00 to Rome.
+> 6 things to sort out. Tap to see your plan.
 
-**TAP** **Delay**.
+**SAY**
+> "Here is the airline telling Alex. The first flight is over two hours late. Alex has
+> missed the connection and is already rebooked. Alex did not type a thing."
 
-**ENTER** 45 minutes. If the form asks for times instead of minutes, use
-**departs Fri 16 Oct 17:25** and **arrives Sat 17 Oct 11:20**.
-
-**TAP** `[confirm label: Save / Continue]`.
-
-**SAY** (while you type)
-> "The airline app just told Alex the first flight is 45 minutes late. That is all Alex
-> has to tell us. Just what changed."
+**TAP** the card. It disappears by itself after about 9 seconds, so be quick. If you miss
+it, nothing is lost: the home screen has already changed. Just carry on to step 3.
 
 ---
 
-## Step 3. See what is now at risk (25 seconds)
+## Step 3. See the new plan (25 seconds)
 
-You land on the **Flight delayed** screen.
+The bar at the top now reads **New plan ready**, with the time it was updated. The headline
+reads **London connection missed. You're on the 14:25 instead.**
 
-**POINT** at the flight card: arrives **11:20**, was **10:35**.
+**POINT** at the three flight rows, top to bottom:
 
-**SAY**
-> "Here is the before and after. Landing at 11:20 instead of 10:35."
-
-**POINT** at the **Onward connection** card, the amber **Tight** badge, and the line
-**"Was 55 min, now 10 min."**
-
-**SAY**
-> "And this is the part nobody told Alex. The connection in London was 55 minutes. Now it
-> is 10. The app worked that out from the trip. It knows the next flight and when it leaves."
-
-**POINT** at the hotel card under it: *"Your connection to AZ 201 is tight. If you miss it
-you will reach Hotel Aventino Garden late."*
+- **BA 286**, San Francisco 18:50 → London 12:45, marked **Delayed 2h 10m**.
+- **AZ 201**, struck through, marked **Missed**.
+- **AZ 207**, London 14:25 → Rome 18:00, marked **Rebooked**.
 
 **SAY**
-> "It also knows there is a hotel waiting in Rome, so that is at risk too."
+> "Here is the before and after. The old flight is struck out. The new one is in bold, 14:25
+> from London, landing in Rome at 18:00 instead of 15:05. The app worked that out from the
+> trip. It knows the next flight and when it leaves."
 
-Say **"tight"** and **"at risk"**. Do not say "missed". The app says the connection is
-tight, not lost, and we should match it.
+Say **"missed"** and **"rebooked"**. Those are the app's own words for this change.
 
 ---
 
 ## Step 4. Work through the checklist (25 seconds)
 
-**SCROLL** down to the checklist. It starts at **0 of 7 done**.
+**POINT** at **Sorting it out**, **0 of 6 done**, and the six tasks under it.
 
-**POINT** at **Rebook the onward flight AZ 201** and **Tell the hotel you may arrive late:
-Hotel Aventino Garden**.
+**POINT** at **Check your new booking for AZ 207** and **Ask ITA Airways what you're entitled
+to**.
 
 **SAY**
-> "This is not a generic list. It says rebook AZ 201, because that is Alex's actual
-> flight. It says tell Hotel Aventino Garden, because that is Alex's actual hotel. The
+> "This is not a generic list. It says check your booking for AZ 207, because that is Alex's
+> actual new flight. It says ask ITA Airways, because that is Alex's actual airline. The
 > trip drives the list."
 
-**POINT** at the **Call ITA Airways** and **Call Hotel Aventino Garden** buttons.
-**Do not tap them.**
+**TAP** **Check your new booking for AZ 207**.
 
-**SAY**
-> "And the right phone number is one tap away."
+**TAP** **Ask where your checked bags are**.
 
-**TAP** the checkbox on **Rebook the onward flight AZ 201**.
-
-**TAP** the checkbox on **Tell the hotel you may arrive late**.
-
-The counter now reads **2 of 7 done**.
+The counter now reads **2 of 6 done**.
 
 **SAY**
 > "Alex does those two, ticks them off."
 
 ---
 
-## Step 5. Tell the people waiting (20 seconds)
+## Step 5. Tell the people waiting (25 seconds)
 
-**TAP** **Send an update** (the big blue button at the bottom).
+**TAP** **Share the new plan** (the big button at the bottom).
 
-You are on the share screen.
+You are on **Share the new plan**.
 
-**POINT** at the preview message and the options. Read one line out loud:
-*"BA 286 (San Francisco to London) is delayed by 45 min. It now arrives Sat 17 Oct at 11:20
-instead of 10:35."*
+**POINT** at the **Preview** message. Read one line out loud:
+*"New flight: AZ 207, London 14:25 → Rome 18:00 (Sat 17 Oct)."*
 
 **SAY**
 > "Someone is waiting in Rome. Alex is not going to type all this with tired thumbs in a
 > departure lounge. The app writes it, in plain words."
 
-**POINT** at "Still to sort out". The two ticked items are **not** there.
+**POINT** at the **Still sorting:** line. It lists four things. The two ticked items are
+**not** there.
 
 **SAY**
-> "And look. The two things Alex already did are gone from the message. The trip drives
-> the checklist, and the checklist drives the message."
+> "And look. The two things Alex already did are gone from the message. The trip drives the
+> checklist, and the checklist drives the message."
 
-**POINT** at the booking-reference option, which is off.
+**POINT** at the **Booking references** switch, which is off.
 
 **SAY**
 > "Booking numbers stay off unless Alex chooses to share them."
 
-**TAP** `[confirm label: Copy link]`.
+**TAP** **Copy link**. The button changes to **Link copied**.
 
 **OPEN** your messaging app, **paste**, **send**.
 
 **TAP** the link on the receiving end (second device, or a new tab) to show the read-only
-page.
+page: **From Alex Morgan**, the headline **Alex now lands in Rome at 18:00.**, then **Revised
+itinerary** and **Still being sorted**.
 
 **SAY**
 > "The person on the other end taps the link. No app, no account, nothing to install."
 
 ---
 
+## Optional: Listen to summary (10 seconds)
+
+Only if you have time and the room is quiet. Back on the home screen, **TAP** **Listen to
+summary**. The phone reads a short briefing in its own built-in voice. Before you tick
+anything, it reads:
+
+> "You missed your flight to Rome. You are now on a new flight arriving at 6:00 PM. Nothing
+> else on your trip is affected. First, check your new booking for AZ 207."
+
+(The "first" thing is the first task not yet ticked, so after the two ticks in step 4 it names
+the third task instead.) Tap again to stop it. The voice comes from the device, not a
+service, so it works offline.
+
+---
+
 ## Close (5 seconds)
 
 **SAY**
-> "Tell it what changed. It tells you what is at risk, what to do next, and writes the
+> "The change arrives. The app tells you what it means, what to do next, and writes the
 > update for the people waiting."
 
 **Stop talking. Smile. Hand back to your pitch.**
@@ -178,13 +208,13 @@ page.
 
 Cut in this order, last cut first. The path from 1 to 5 never changes.
 
-1. Skip reading the preview message aloud. Just point at it.
-2. Skip the "Call ITA Airways" and "Call Hotel" line in step 4.
+1. Skip the optional **Listen to summary** step.
+2. Skip reading the preview message aloud. Just point at it.
 3. Skip the booking reference line in step 5.
 4. Skip opening the link on a second device. Say what happens instead.
 
-Never cut: the 55 to 10 moment, the two ticks, or the ticked items disappearing from the
-message. That is the whole idea.
+Never cut: the change arriving by itself, the two ticks, or the ticked items disappearing
+from the message. That is the whole idea.
 
 ---
 
@@ -193,7 +223,8 @@ message. That is the whole idea.
 ### The venue wifi fails
 
 The app keeps the trip on the phone. Once it has loaded, it does not need the internet to
-work. So the best defence is to load it **before** you go up and not refresh the page.
+work, and the simulated feed runs on the phone too. So the best defence is to load it
+**before** you go up and not refresh the page.
 
 Say this, calmly, and carry on:
 > "Venue wifi has other plans. Which is a good moment to say: Alex's trip never leaves the
@@ -216,10 +247,13 @@ Then, in this order:
 
 | What you see | What to do |
 | --- | --- |
-| Old delay already on screen from the last run | Reset the trip, load the sample trip again, restart from step 1. |
-| Copy link does nothing | Long-press the message preview, select all, copy. Or read the first two lines aloud and move on. |
-| A button does something you did not expect | Say "let me go back", tap Back to trip, and repeat the step. Do not apologise twice. |
-| The numbers are not 55 and 10 | Stop. Something changed in the sample trip. Switch to the backup video. |
+| The trip already shows a change from the last run | Menu > **Restart the demo trip**. It goes back on time and the change arrives again in about 6 seconds. |
+| You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip**. |
+| You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
+| Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |
+| **Listen to summary** is missing | The browser has no speech support. Skip that step. |
+| A button does something you did not expect | Say "let me go back", tap **Back to trip**, and repeat the step. Do not apologise twice. |
+| The numbers are not 2h 10m, 14:25 and 18:00 | Stop. Something changed in the sample trip or the simulated feed. Switch to the backup video. |
 
 ### Backup video
 
@@ -228,5 +262,5 @@ present from **and** on a laptop. Play it full screen with the sound off and nar
 
 ### Last resort
 
-Four screenshots, in this order: trip, "Tight 55 to 10" screen, checklist with two ticked,
-the shared message. Same words, no taps.
+Four screenshots, in this order: the on-track trip, the new plan ("London connection
+missed"), the checklist with two ticked, the shared message. Same words, no taps.
