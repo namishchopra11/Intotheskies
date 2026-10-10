@@ -3,7 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Suspense } from "react";
 import { FlightWatcher } from "@/components/trip/FlightWatcher";
 import { THEME_COLORS, themeScript } from "@/components/ui/theme";
-import "./globals.css";
+import "../globals.css";
 
 // Wayfinding: Plex Sans for words, Plex Mono for times and flight numbers. Both themes.
 const plexSans = IBM_Plex_Sans({

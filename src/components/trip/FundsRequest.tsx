@@ -2,7 +2,7 @@
 
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
-import { copyText } from "@/app/share/[id]/copyText";
+import { copyText } from "@/app/(ck)/share/[id]/copyText";
 import { Button, buttonClasses, Card, Icon } from "@/components/ui";
 import { isDemoCluster, SOLANA_CLUSTER, type SolanaCluster } from "@/lib/solana/config";
 import { buildTransferRequestUrl } from "@/lib/solana/pay";

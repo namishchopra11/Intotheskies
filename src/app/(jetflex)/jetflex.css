@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* JetFlex: midnight aviation palette. One dark shell, warm white type, champagne gold as the single accent. */
+@theme inline {
+  --color-midnight: #0b1320;
+  --color-deep: #0e1828;
+  --color-panel: #152337;
+  --color-panel-2: #1b2d46;
+  --color-line: #263a54;
+  --color-warm: #f5f4ef;
+  --color-steel: #8294a8;
+  --color-gold: #d5b779;
+  --color-teal: #80c8c1;
+  --color-ok: #79c9a6;
+  --color-warn: #e7ad64;
+  --color-bad: #e47f7f;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+:root { color-scheme: dark; }
+html { background: var(--color-midnight); }
+body { background: var(--color-midnight); color: var(--color-warm); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+::selection { background: rgb(213 183 121 / 0.35); }
+:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; border-radius: 6px; }
+input, select, textarea, button { font: inherit; }
+input[type="date"], input[type="time"] { color-scheme: dark; }
+
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.display { font-family: var(--font-display); font-optical-sizing: auto; letter-spacing: -0.02em; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes flight { to { stroke-dashoffset: -24; } }
+.rise { animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.skeleton { background: linear-gradient(100deg, rgb(255 255 255 / 0.03) 30%, rgb(255 255 255 / 0.09) 50%, rgb(255 255 255 / 0.03) 70%); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; }
+.route-flow { stroke-dasharray: 5 7; animation: flight 1.2s linear infinite; }
+
+input[type="range"] { accent-color: var(--color-gold); }
+@media (prefers-reduced-motion: reduce) { .rise, .skeleton, .route-flow { animation: none; } }

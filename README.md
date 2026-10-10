@@ -87,3 +87,8 @@ Four people in a 24-hour hackathon.
 | Boris | Code and logic: the connection, checklist and message |
 | Will Kim | Frontend design: the screens and the look |
 | Sebastian | Presenter: the pitch and the demo, and the Solana "Send help" button |
+
+
+## JetFlex prototype
+
+A second, separate prototype lives at `/jetflex` (private aviation intelligence: charter vs empty legs vs first class vs hybrid, JetShield recovery, TimeBack, operator dashboard). See [docs/jetflex.md](docs/jetflex.md).
