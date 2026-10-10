@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Badge, Button, Card, FlightStatusBadge, Icon, PageHeader, ThemeToggle } from "@/components/ui";
+import { Badge, Button, Card, Field, FlightStatusBadge, Icon, PageHeader, ThemeToggle } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { formatDate, formatDateTime, timePart } from "@/lib/domain/time";
 import { useStoreReady, useTripStore } from "@/lib/store";
@@ -141,6 +141,47 @@ function ContactCard({ contact, onEdit }: { contact: Contact; onEdit: () => void
   );
 }
 
+/** Where a "Send help" request on a shared update pays out. Optional; empty clears it. */
+function PayoutCard({ saved }: { saved?: string }) {
+  const setPayoutAddress = useTripStore((s) => s.setPayoutAddress);
+  const [value, setValue] = useState(saved ?? "");
+  const [error, setError] = useState<string>();
+  const dirty = value.trim() !== (saved ?? "");
+  return (
+    <section className="px-4">
+      <h2 className="mb-2 text-lg font-semibold">Help with costs</h2>
+      <Card>
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (setPayoutAddress(value)) setValue(value.trim());
+            else setError("That doesn't look like a Solana address. Check it and try again.");
+          }}
+        >
+          <Field
+            label="Solana address (optional)"
+            hint="Add one to let people you share an update with send you USDC. It stays on this device until you ask for help in a shared link."
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setError(undefined);
+            }}
+            error={error}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="Your wallet's public address"
+          />
+          <Button type="submit" variant="secondary" disabled={!dirty} icon={!dirty && saved ? "check" : undefined}>
+            {!dirty && saved ? "Saved" : saved && value.trim() === "" ? "Remove address" : "Save address"}
+          </Button>
+        </form>
+      </Card>
+    </section>
+  );
+}
+
 type Editing =
   | { kind: "flight"; item?: Flight }
   | { kind: "stay"; item?: Stay }
@@ -221,6 +262,8 @@ export function TripView() {
           <ContactCard key={c.id} contact={c} onEdit={() => setEditing({ kind: "contact", item: c })} />
         ))}
       </Section>
+
+      <PayoutCard key={trip.id} saved={trip.payoutAddress} />
 
       <div className="flex flex-col gap-3 px-4">
         <ThemeToggle />
