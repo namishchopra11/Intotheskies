@@ -2,6 +2,9 @@ import type { SVGProps } from "react";
 
 // A small hand-picked line-icon set (24px grid, 1.75 stroke). Use these, never emoji.
 const PATHS = {
+ route: <><path d="M5 17V8a4 4 0 0 1 8 0v8a3 3 0 0 0 6 0V5" /><path d="m16 8 3-3 3 3" /><circle cx="5" cy="18" r="1" /></>,
+ back: <path d="m10 5-7 7 7 7M3 12h18" />,
+ arrow: <path d="m14 5 7 7-7 7M3 12h18" />,
   check: <path d="M5 12l5 5L20 7" />,
   "circle-check": (
     <>
@@ -127,3 +130,5 @@ export function Icon({ name, size = 20, label, ...rest }: IconProps) {
     </svg>
   );
 }
+
+export function Brand() { return <header className="ck-brand"><span className="ck-mark"><Icon name="route" size={21} /></span><span>ConnectionKeeper</span></header>; }
