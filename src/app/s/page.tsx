@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { FundsRequest } from "@/components/trip/FundsRequest";
 import { Badge, BrandMark, Card, FLIGHT_STATUS_BADGE, Icon, type Tone } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
@@ -97,6 +98,12 @@ function Update({ s }: { s: ShareSnapshot }) {
               </li>
             ))}
           </ul>
+        </Section>
+      )}
+
+      {s.fundsRequest && (
+        <Section title={`Help ${first} with costs`} className="pt-6" style={stagger(5)}>
+          <FundsRequest {...s.fundsRequest} tripName={s.tripName} travelerName={s.travelerName} />
         </Section>
       )}
 

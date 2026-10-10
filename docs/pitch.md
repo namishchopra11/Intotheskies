@@ -123,11 +123,11 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 
 | Track | Where it stands | What must be true before you mention it | Who to ask |
 | --- | --- | --- | --- |
-| **Solana** | Only the building blocks exist: address validation, a devnet USDC transfer-request builder and a field in the share link (all under `src/lib/solana/`, with tests). **No screen uses them on this branch**: there is no address field, no "request funds" option and no "Send help" button. | A screen is built and someone has opened a shared link on a phone, tapped the request, and seen it open in a wallet set to devnet. | Sebastian |
+| **Solana** | The screens exist. The traveler adds a Solana address in the **Trip menu**; the share screen has an **Ask for help** option with an amount in USDC; the shared page shows a **Send help** button, a QR code and the address to copy. All on devnet, Solana's test network, with address validation and the transfer-request builder tested under `src/lib/solana/`. It has been checked in a browser at phone width, **not yet on a real phone with a wallet**. | Someone has opened a shared link on a phone, tapped **Send help**, and seen it open in a wallet set to devnet (or scanned the QR from a laptop). | Sebastian |
 | **ElevenLabs** | Dropped. There is no ElevenLabs code. The home screen does have a **Listen to summary** button, but it uses the phone's own built-in voice (browser speech), not ElevenLabs. | Do not claim ElevenLabs. If asked about the button, say it is the device's voice. | |
 
-If the Solana screens are not built and phone-tested by tomorrow morning, say nothing about
-Solana at the table. A judge who sees a broken promise scores the whole project down. Tell
+If the Solana request has not been phone-tested with a real wallet by tomorrow morning, say
+nothing about Solana at the table. A judge who sees a broken promise scores the whole project down. Tell
 me when it is confirmed and I will add one sentence to this pitch and one step to the demo
 script. If you do show it, say it uses devnet, Solana's test network, so no real money
 moves.
@@ -219,12 +219,12 @@ built the logic.)*
 | Namish | Head coder | How it is built, the store, the share link |
 | Boris | Code and logic | How the connection time, checklist and message are worked out |
 | Will | Frontend design | The screens, the look, phone layout |
-| Sebastian | Presenter, Solana | The story, plus the Solana request once a screen for it exists and works on a phone |
+| Sebastian | Presenter, Solana | The story, plus the Solana request once it has been tried on a phone with a real wallet |
 
 ## Open items
 
-1. Whether the Solana request gets a screen, and works on a phone with a real wallet. Tell me
-   and I will update this file.
+1. Whether the Solana request works on a phone with a real wallet. Tell me and I will add one
+   sentence to this pitch and one step to the demo script.
 2. Where the TripIt answer came from: public descriptions of TripIt, not the app itself.
    Sources: [TripIt Pro review](https://www.iphonejd.com/?p=1094),
    [TechCrunch on the launch of TripIt Pro](https://techcrunch.com/2009/06/23/tripit-goes-pro-launches-premium-flight-monitoring-and-alerts),

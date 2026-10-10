@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Button, Card, Icon, PageHeader, Toggle, cx } from "@/components/ui";
+import { Button, Card, Field, Icon, PageHeader, Toggle, cx } from "@/components/ui";
 import { sendUpdateTaskId } from "@/lib/domain/checklist";
 import { encodeShare } from "@/lib/domain/shareLink";
 import { DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
 import { useStoreReady, useTripStore } from "@/lib/store";
+import { isDemoCluster, SOLANA_CLUSTER } from "@/lib/solana/config";
+import { normalizeUsdcAmount } from "@/lib/solana/pay";
 import { ShareSkeleton } from "../ShareSkeleton";
 import { copyText } from "./copyText";
 import { buildMessage, messageText } from "./message";
@@ -34,6 +37,8 @@ export default function SharePage() {
   const toggleTask = useTripStore((s) => s.toggleTask);
   const [options, setOptions] = useState<SummaryOptions>(DEFAULT_SUMMARY_OPTIONS);
   const [done, setDone] = useState<Done | null>(null);
+  const [askFunds, setAskFunds] = useState(false);
+  const [amount, setAmount] = useState("");
   const [openedAt] = useState(clockNow);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -67,7 +72,16 @@ export default function SharePage() {
     );
   }
 
-  const link = () => `${window.location.origin}/s#${encodeShare(trip, disruption.id, options)}`;
+  // The optional "Send help" request only goes in the link when there is an address and a valid amount.
+  const fundsOn = askFunds && Boolean(trip.payoutAddress);
+  const amountOk = normalizeUsdcAmount(amount) !== null;
+  const amountError =
+    fundsOn && amount.trim() !== "" && !amountOk ? "Enter an amount like 50 or 85.50." : undefined;
+  const link = () =>
+    `${window.location.origin}/s#${encodeShare(trip, disruption.id, {
+      ...options,
+      fundsRequest: fundsOn && amountOk ? { amountUsdc: amount } : null,
+    })}`;
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   // Sharing or copying the update is the "send an update" task, so tick it off for them.
@@ -138,6 +152,62 @@ export default function SharePage() {
             label="What's still unresolved"
           />
         </Card>
+      </section>
+
+      <section aria-labelledby="funds-h" className="mx-4 mt-[22px]">
+        <h2 id="funds-h" className="ck-label mb-2 px-1">
+          Ask for help
+        </h2>
+        <Card padding="none" className="px-4">
+          <Toggle
+            checked={fundsOn}
+            onChange={(v) => {
+              setAskFunds(v);
+              setDone(null);
+            }}
+            disabled={!trip.payoutAddress}
+            label="Add a Send help button"
+            description={
+              trip.payoutAddress
+                ? "People who open the link can send you USDC from their own Solana wallet."
+                : "Add your Solana address from the trip menu first."
+            }
+          />
+          {fundsOn && (
+            <Field
+              className="pb-3"
+              label="Amount in USDC"
+              hint={
+                isDemoCluster(SOLANA_CLUSTER)
+                  ? "Demo only: this uses Solana's test network, so no real money moves."
+                  : undefined
+              }
+              inputMode="decimal"
+              placeholder="50"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setDone(null);
+              }}
+              error={amountError}
+            />
+          )}
+        </Card>
+        {!trip.payoutAddress && (
+          <Link href="/" className="mt-2 inline-flex min-h-11 items-center px-1 text-[14px] font-medium underline underline-offset-4">
+            Go to your trip to add one
+          </Link>
+        )}
+        {fundsOn && (
+          <p className="mt-2 flex items-start gap-2 px-1 text-[14px] leading-snug text-ink-2">
+            <Icon name="info" size={18} className="mt-px" />
+            <span>
+              {amountOk
+                ? "The button is on the linked page only, not in the message text. Your address is visible to anyone with the link."
+                : "Enter an amount, or the link is shared without the button."}
+            </span>
+          </p>
+        )}
       </section>
 
       <div className="mt-auto flex flex-col gap-3 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),26px)]">
