@@ -1,6 +1,7 @@
 import type { Disruption, Flight, Trip } from "@/lib/types";
 import { spokenPlace } from "./airports";
 import { computeImpact, isArrivalUnknown, type Impact } from "./impact";
+import { lowerFirst } from "./text";
 import { datePart, timePart } from "./time";
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -84,7 +85,7 @@ export function buildBriefing(trip: Trip, disruptionId: string): string {
 
   const firstOpen = disruption.tasks.find((t) => !t.done);
   const next = firstOpen
-    ? `First, ${firstOpen.title.charAt(0).toLowerCase()}${firstOpen.title.slice(1).replace(/[.\s]+$/, "")}.`
+    ? `First, ${lowerFirst(firstOpen.title).replace(/[.\s]+$/, "")}.`
     : disruption.tasks.length > 0
       ? "Everything on your list is done."
       : "";

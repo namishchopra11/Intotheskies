@@ -22,8 +22,10 @@ export function FlightWatcher() {
   const router = useRouter();
   const [alert, setAlert] = useState<FlightAlertContent | null>(null);
 
-  // The recipient's read-only page never changes anyone's trip.
-  const watching = ready && hasTrip && disruptions === 0 && !pathname.startsWith("/s");
+  // The recipient's read-only page (/s) never changes anyone's trip. "/share/..." is the
+  // traveler's own screen, so it is not matched by the prefix.
+  const onRecipientPage = pathname === "/s" || pathname.startsWith("/s/");
+  const watching = ready && hasTrip && disruptions === 0 && !onRecipientPage;
 
   useEffect(() => {
     if (!watching) return;

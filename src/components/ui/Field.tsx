@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useId,
-  type InputHTMLAttributes,
-  type ReactNode,
-  type SelectHTMLAttributes,
-  type TextareaHTMLAttributes,
-} from "react";
+import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { cx } from "./cx";
 import { Icon } from "./Icon";
 
@@ -47,7 +41,7 @@ function Shell({
       )}
       {children}
       {error && (
-        <p id={`${id}-error`} className="flex items-start gap-1.5 text-[14px] text-bad-fg">
+        <p id={`${id}-error`} role="alert" className="flex items-start gap-1.5 text-[14px] text-bad-fg">
           <Icon name="circle-x" size={16} strokeWidth={2} className="mt-0.5" />
           {error}
         </p>
@@ -88,71 +82,6 @@ export function Field({
         )}
         {...input}
       />
-    </Shell>
-  );
-}
-
-/** Label + textarea + error. */
-export function TextAreaField({
-  label,
-  hint,
-  error,
-  className,
-  id: idProp,
-  rows = 3,
-  ...textarea
-}: FieldBase & TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const auto = useId();
-  const id = idProp ?? auto;
-  return (
-    <Shell id={id} label={label} hint={hint} error={error} className={className}>
-      <textarea
-        id={id}
-        rows={rows}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-        className={cx(CONTROL, "py-3 leading-snug", error ? "border-bad" : "border-line-strong")}
-        {...textarea}
-      />
-    </Shell>
-  );
-}
-
-/** Label + select + error. options: [{ value, label }]. */
-export function SelectField({
-  label,
-  hint,
-  error,
-  className,
-  id: idProp,
-  options,
-  ...select
-}: FieldBase &
-  SelectHTMLAttributes<HTMLSelectElement> & { options: { value: string; label: string }[] }) {
-  const auto = useId();
-  const id = idProp ?? auto;
-  return (
-    <Shell id={id} label={label} hint={hint} error={error} className={className}>
-      <div className="relative">
-        <select
-          id={id}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy(id, hint, error)}
-          className={cx(CONTROL, "appearance-none pr-10", error ? "border-bad" : "border-line-strong")}
-          {...select}
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <Icon
-          name="chevron-right"
-          size={18}
-          className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 rotate-90 text-ink-3"
-        />
-      </div>
     </Shell>
   );
 }

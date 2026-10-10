@@ -2,6 +2,7 @@ import { cityName } from "@/lib/domain/airports";
 import { recipientTasks } from "@/lib/domain/checklist";
 import { computeImpact, isArrivalUnknown } from "@/lib/domain/impact";
 import type { SummaryOptions } from "@/lib/domain/summary";
+import { lowerFirst } from "@/lib/domain/text";
 import { formatDate, formatDuration, timePart } from "@/lib/domain/time";
 import type { Trip } from "@/lib/types";
 
@@ -17,8 +18,6 @@ export type MessageLine = {
   on: boolean;
   mono?: boolean;
 };
-
-const lowerFirst = (s: string) => (/^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s);
 
 export function buildMessage(trip: Trip, disruptionId: string, options: SummaryOptions): MessageLine[] {
   const d = trip.disruptions.find((x) => x.id === disruptionId);

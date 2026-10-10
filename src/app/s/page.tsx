@@ -6,6 +6,7 @@ import { Badge, BrandMark, Card, FLIGHT_STATUS_BADGE, Icon, type Tone } from "@/
 import { cityName } from "@/lib/domain/airports";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
+import { connectionState, stayRisk, storyFor, type SnapConnection, type SnapFlight, type SnapStay } from "./story";
 
 // The URL fragment never reaches a server, so it is read on the client only.
 // `null` while rendering on the server, then the hash (possibly "").
@@ -16,9 +17,9 @@ function subscribeHash(cb: () => void) {
 const getHash = () => window.location.hash;
 const getServerHash = () => null;
 
-type Flight = ShareSnapshot["flights"][number];
-type Stay = ShareSnapshot["stays"][number];
-type Connection = NonNullable<ShareSnapshot["impact"]["connection"]>;
+type Flight = SnapFlight;
+type Stay = SnapStay;
+type Connection = SnapConnection;
 
 export default function SharedUpdatePage() {
   const hash = useSyncExternalStore(subscribeHash, getHash, getServerHash);
@@ -86,9 +87,7 @@ function Update({ s }: { s: ShareSnapshot }) {
             {risks.map((stay) => (
               <li key={stay.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2 text-[15px]">
                 <Icon name="clock" size={20} strokeWidth={2.5} className="text-warn-fg" />
-                {stay.latestCheckIn
-                  ? `Hotel check-in — front desk is open until ${stay.latestCheckIn}, it's tight`
-                  : `Hotel check-in at ${stay.name} may be late`}
+                {stayRisk(first, stay, final, c)}
               </li>
             ))}
             {s.openTasks.map((t, i) => (
@@ -180,9 +179,10 @@ function ArrivalCard({ f, style }: { f: Flight; style?: CSSProperties }) {
 }
 
 function flightBadge(f: Flight, connection: Connection | null): { tone: Tone; label: string } {
-  if (connection && connection.status === "missed") return { tone: "bad", label: "Likely missed" };
-  if (connection && connection.minutesAfter === null) return { tone: "warn", label: "At risk" };
-  if (connection && connection.status === "tight") return { tone: "warn", label: "Tight" };
+  const state = connectionState(connection);
+  if (state === "unknown") return { tone: "warn", label: "At risk" };
+  if (state === "missed") return { tone: "bad", label: "Likely missed" };
+  if (state === "tight") return { tone: "warn", label: "Tight" };
   if (f.status === "rebooked") return { tone: "done", label: "Confirmed" };
   return FLIGHT_STATUS_BADGE[f.status];
 }
@@ -235,60 +235,6 @@ function HotelStay({ stay }: { stay: Stay }) {
   );
 }
 
-/** The headline and one plain sentence of why, written for the person waiting. */
-function storyFor(
-  s: ShareSnapshot,
-  first: string,
-  changed: Flight | undefined,
-  final: Flight | undefined,
-  c: Connection | null,
-): { title: string; detail: string } {
-  const detail = changed ? whyLine(s, first, changed) : "";
-  if (!final) return { title: `${first}'s plans have changed.`, detail };
-  const dest = cityName(final.to);
-  const at = timePart(final.arriveAt);
-  const via = changed ? cityName(changed.to) : dest;
-
-  if (final.status === "cancelled") return { title: `${first} doesn't have a new flight to ${dest} yet.`, detail };
-  if (c?.status === "missed") return { title: `${first} is likely to miss the connection in ${via}.`, detail };
-  if (c && c.minutesAfter === null) return { title: `${first}'s connection in ${via} is at risk.`, detail };
-  const moved = final.original && final.original.arriveAt !== final.arriveAt;
-  if (moved) return { title: `${first} now lands in ${dest} at ${at}.`, detail };
-  if (c?.status === "tight") return { title: `${first}'s connection in ${via} is now tight.`, detail };
-  return { title: `${first} still lands in ${dest} at ${at}.`, detail };
-}
-
-function whyLine(s: ShareSnapshot, first: string, f: Flight): string {
-  const from = cityName(f.from);
-  const to = cityName(f.to);
-  const rebooked = f.status === "rebooked";
-  const newFlight = f.original && f.original.flightNumber !== f.flightNumber ? ` ${f.airline} ${f.flightNumber}` : " a new flight";
-  switch (s.disruption.type) {
-    case "delay": {
-      const late = s.impact.delayMinutes && s.impact.delayMinutes > 0 ? ` ${formatDuration(s.impact.delayMinutes)}` : "";
-      return `The flight from ${from} to ${to} is running${late} late.${connectionClause(s.impact.connection)}`;
-    }
-    case "cancellation":
-      return rebooked
-        ? `The flight from ${from} to ${to} was cancelled. ${first} has been rebooked onto${newFlight}.`
-        : `The flight from ${from} to ${to} was cancelled, and a replacement isn't confirmed yet.`;
-    case "missed_connection":
-      return rebooked
-        ? `${first} missed the connection in ${from} and has been rebooked onto${newFlight}.`
-        : `${first} missed the connection in ${from} and is waiting for a new flight.`;
-    case "rebooked":
-    default:
-      return `The flight from ${from} to ${to} has changed. ${first} is now on${newFlight}.`;
-  }
-}
-
-function connectionClause(c: Connection | null): string {
-  if (!c || c.minutesAfter === null) return "";
-  if (c.status === "missed") return " That's after the onward flight leaves.";
-  if (c.status === "tight") return ` That leaves ${formatDuration(c.minutesAfter)} to change planes.`;
-  return "";
-}
-
 // createdAt is a real ISO timestamp, so it is shown in the reader's own time.
 function snapshotAt(iso: string) {
   const d = new Date(iso);
@@ -323,7 +269,8 @@ function BadLink() {
 
 function Loading() {
   return (
-    <div className="px-5 pt-7" aria-busy="true" aria-label="Loading">
+    <div className="px-5 pt-7" role="status" aria-busy="true">
+      <span className="sr-only">Loading the update</span>
       <div className="h-4 w-32 animate-pulse rounded-badge bg-sunk" />
       <div className="mt-3 h-9 w-64 animate-pulse rounded-badge bg-sunk" />
       <div className="mt-6 h-24 animate-pulse rounded-card bg-sunk" />

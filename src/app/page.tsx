@@ -22,6 +22,7 @@ import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
+import type { LoadNotice } from "@/lib/recoverTrip";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import type { Contact, Disruption, Flight, Stay, Trip } from "@/lib/types";
 
@@ -30,6 +31,8 @@ const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 export default function TripStatusPage() {
   const ready = useStoreReady();
   const trip = useTripStore((s) => s.trip);
+  const loadNotice = useTripStore((s) => s.loadNotice);
+  const dismissLoadNotice = useTripStore((s) => s.dismissLoadNotice);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const menuButton = (
@@ -46,6 +49,7 @@ export default function TripStatusPage() {
   return (
     <main className="flex flex-1 flex-col">
       <AppHeader action={menuButton} />
+      {ready && loadNotice && <LoadNoticeBar notice={loadNotice} onDismiss={dismissLoadNotice} />}
       {!ready ? <Loading /> : trip ? <Status trip={trip} /> : <NoTrip />}
       <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
     </main>
@@ -144,7 +148,8 @@ function flightRows(trip: Trip, f: Flight, impact: Impact | null) {
   } else {
     const c = impact?.connection?.flightId === f.id ? impact.connection : null;
     let badge: Row["badge"];
-    if (c?.status === "missed") badge = { tone: "bad", label: "Likely missed" };
+    if (c?.status === "missed" && c.minutesAfter === null) badge = { tone: "warn", label: "At risk" };
+    else if (c?.status === "missed") badge = { tone: "bad", label: "Likely missed" };
     else if (c?.status === "tight") badge = { tone: "warn", label: "Tight connection" };
     else if (f.status === "delayed") {
       const late = o ? minutesBetween(o.arriveAt, f.arriveAt) : 0;
@@ -244,7 +249,7 @@ function SortingItOut({
                   {t.done ? "Done" : "To do"}
                 </span>
               </button>
-              {contact?.phone && <CallLink contact={contact} />}
+              {contact?.phone && <CallLink name={contact.name} phone={contact.phone} />}
               {t.source === "custom" && (
                 <button
                   type="button"
@@ -292,12 +297,11 @@ function AddTask({ disruptionId }: { disruptionId: string }) {
   );
 }
 
-function CallLink({ contact }: { contact: Contact }) {
-  if (!contact.phone) return null;
+function CallLink({ name, phone }: { name: string; phone: string }) {
   return (
     <a
-      href={`tel:${contact.phone.replace(/\s+/g, "")}`}
-      aria-label={`Call ${contact.name}`}
+      href={`tel:${phone.replace(/\s+/g, "")}`}
+      aria-label={`Call ${name}`}
       className="ck-key ck-key-secondary inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control border-2 border-ink bg-surface text-ink"
     >
       <Icon name="phone" size={18} />
@@ -360,7 +364,7 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         aside={
           <span className="inline-flex items-center gap-2">
             <span aria-hidden="true" className="ck-pulse h-2 w-2 rounded-full bg-current" />
-            Watching live
+            Simulated feed
           </span>
         }
       >
@@ -373,7 +377,7 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
           {tight
             ? tight.gap < 0
               ? `Flights are on time, but your ${cityName(tight.airport)} connection doesn't leave enough time.`
-              : `Flights are on time, but ${formatDuration(tight.gap)} in ${cityName(tight.airport)} is tight. We're watching it.`
+              : `Flights are on time, but ${formatDuration(tight.gap)} in ${cityName(tight.airport)} is tight.`
             : "Your trip is on track. Nothing to do right now."}
         </h1>
       </section>
@@ -400,8 +404,9 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
       <div className="ck-rise mt-auto px-5 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
         <p className="flex items-start gap-2.5 border-t border-line pt-4 text-[13px] leading-snug text-ink-2">
           <span aria-hidden="true" className="ck-pulse mt-1.5 h-2 w-2 shrink-0 rounded-full bg-current text-ok" />
-          Watching {count === 1 ? "your flight" : `all ${count} flights`}. If anything changes, your plan
-          updates itself and you&apos;ll get a notification.
+          Following {count === 1 ? "your flight" : `all ${count} flights`} in a simulated airline
+          feed; this demo has no live flight data. If the feed changes anything, your plan updates
+          itself and you&apos;ll get a notification.
         </p>
       </div>
     </>
@@ -416,9 +421,12 @@ function StaysSection({ stays, delay }: { stays: Stay[]; delay: number }) {
     <Section title="Where you're staying" delay={delay}>
       {stays.map((s) => (
         <div key={s.id} className="flex flex-col gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
-          <div>
-            <p className="font-semibold">{s.name}</p>
-            <p className="text-[14px] text-ink-2">{s.address}</p>
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">{s.name}</p>
+              <p className="text-[14px] text-ink-2">{s.address}</p>
+            </div>
+            {s.phone && <CallLink name={s.name} phone={s.phone} />}
           </div>
           <dl className="grid grid-cols-2 gap-3">
             <div>
@@ -450,13 +458,34 @@ function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: numb
             <span className="min-w-0 flex-1">
               <span className="block font-num text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">{c.kind}</span>
               <span className="block truncate text-[15px] font-medium">{c.name}</span>
+              {c.notes && <span className="mt-0.5 block text-[13px] leading-snug text-ink-2">{c.notes}</span>}
+              {c.url && isWebUrl(c.url) && (
+                <a
+                  href={c.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-0.5 inline-flex min-h-8 items-center text-[13px] font-medium underline underline-offset-4"
+                >
+                  {new URL(c.url).hostname.replace(/^www\./, "")}
+                </a>
+              )}
             </span>
-            <CallLink contact={c} />
+            {c.phone && <CallLink name={c.name} phone={c.phone} />}
           </li>
         ))}
       </ul>
     </Section>
   );
+}
+
+/** Only http(s) links are rendered, so a hand-edited saved value can't smuggle in another scheme. */
+function isWebUrl(url: string): boolean {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 /** The first layover that is already short or negative as booked, measured at its one airport. */
@@ -471,14 +500,24 @@ function tightLayover(trip: Trip): { gap: number; airport: string } | null {
 /** The layover between two flights, measured at the one airport they share. */
 function ConnectionRow({ arrive, depart }: { arrive: Flight; depart: Flight }) {
   const gap = minutesBetween(arrive.arriveAt, depart.departAt);
-  const status = gap < 0 ? "missed" : gap < 60 ? "tight" : "ok";
+  const status = gap < 0 ? "missed" : gap < TIGHT_CONNECTION_MINUTES ? "tight" : "ok";
   const badge = CONNECTION_BADGE[status];
   return (
     <div className="flex items-center justify-between gap-3 bg-surface-2 px-4 py-2.5">
       <span className="flex flex-col">
         <span className="ck-label">Change planes · {depart.from}</span>
         <span className="text-[14px]">
-          <span className="font-num font-medium tabular-nums">{formatDuration(gap)}</span> in {cityName(depart.from)}
+          {gap < 0 ? (
+            <>
+              Missed by <span className="font-num font-medium tabular-nums">{formatDuration(gap)}</span> in{" "}
+              {cityName(depart.from)}
+            </>
+          ) : (
+            <>
+              <span className="font-num font-medium tabular-nums">{formatDuration(gap)}</span> in{" "}
+              {cityName(depart.from)}
+            </>
+          )}
         </span>
       </span>
       <Badge tone={badge.tone}>{badge.label}</Badge>
@@ -498,7 +537,7 @@ function Section({ title, delay, children }: { title: string; delay: number; chi
 /* ---------- No trip yet ---------- */
 
 const HOW_IT_WORKS: { n: string; icon: IconName; title: string; body: string }[] = [
-  { n: "01", icon: "plane", title: "We watch", body: "Every flight and hotel on your trip, the whole way." },
+  { n: "01", icon: "plane", title: "We watch", body: "Your flights, through a simulated airline feed in this demo." },
   { n: "02", icon: "checks", title: "Your plan rebuilds", body: "A delay or cancellation updates your plan and checklist on its own." },
   { n: "03", icon: "share", title: "Everyone hears", body: "One tap sends the new plan to whoever's waiting for you." },
 ];
@@ -551,11 +590,17 @@ function NoTrip() {
   );
 }
 
-function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => void; hasTrip: boolean }) {
+function TripMenu({ open, onClose: closeSheet, hasTrip }: { open: boolean; onClose: () => void; hasTrip: boolean }) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
   const pristine = useTripStore((s) => Boolean(s.trip && s.trip.disruptions.length === 0));
   const [alerts, setAlerts] = useState<NotificationPermission | "unsupported">("unsupported");
+  // Restarting or clearing throws the trip away, so each asks once first.
+  const [confirming, setConfirming] = useState<"restart" | "clear" | null>(null);
+  const onClose = () => {
+    setConfirming(null);
+    closeSheet();
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -593,37 +638,86 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
               Trigger the change now
             </Button>
           )}
-          <Button
-            variant="secondary"
-            block
-            onClick={() => {
-              loadSampleTrip();
-              onClose();
-            }}
-          >
-            {hasTrip ? "Restart the demo trip" : "Load the sample trip"}
-          </Button>
-          {hasTrip && (
-            <Button
-              variant="danger"
-              block
-              onClick={() => {
-                resetTrip();
+          {confirming ? (
+            <Confirm
+              title={confirming === "restart" ? "Restart the demo trip?" : "Clear this trip?"}
+              body={
+                confirming === "restart"
+                  ? "This replaces your trip with the sample trip. Ticked tasks and a saved Solana address are lost."
+                  : "This removes the trip, its checklist and a saved Solana address from this phone."
+              }
+              confirmLabel={confirming === "restart" ? "Restart" : "Clear trip"}
+              danger={confirming === "clear"}
+              onCancel={() => setConfirming(null)}
+              onConfirm={() => {
+                if (confirming === "restart") loadSampleTrip();
+                else resetTrip();
                 onClose();
               }}
-            >
-              Clear this trip
-            </Button>
+            />
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                block
+                onClick={() => {
+                  if (hasTrip) {
+                    setConfirming("restart");
+                  } else {
+                    loadSampleTrip();
+                    onClose();
+                  }
+                }}
+              >
+                {hasTrip ? "Restart the demo trip" : "Load the sample trip"}
+              </Button>
+              {hasTrip && (
+                <Button variant="danger" block onClick={() => setConfirming("clear")}>
+                  Clear this trip
+                </Button>
+              )}
+            </>
           )}
         </div>
         {hasTrip && (
           <p className="text-[13px] leading-snug text-ink-2">
-            Restarting puts the trip back on time. A few seconds later the airline changes it, and
-            you get the notification again.
+            Restarting puts the trip back on time. A few seconds later the simulated airline feed
+            changes it, and you get the notification again.
           </p>
         )}
       </div>
     </Sheet>
+  );
+}
+
+function Confirm({
+  title,
+  body,
+  confirmLabel,
+  danger,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  body: string;
+  confirmLabel: string;
+  danger: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div role="group" aria-label={title} className="flex flex-col gap-3 rounded-card border border-line-strong p-4">
+      <p className="font-semibold">{title}</p>
+      <p className="text-[14px] leading-snug text-ink-2">{body}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <Button variant="secondary" onClick={onCancel} autoFocus>
+          Keep it
+        </Button>
+        <Button variant={danger ? "danger" : "primary"} onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -645,7 +739,7 @@ function PayoutAddress() {
     >
       <Field
         label="Solana address (optional)"
-        hint="Lets people you share an update with send you USDC. It stays on this device until you add a Send help button to a shared link."
+        hint="Lets people you share an update with send you USDC on Solana's test network (devnet). It stays on this device until you add a Send help button to a shared link."
         value={value}
         onChange={(e) => {
           setValue(e.target.value);
@@ -664,9 +758,37 @@ function PayoutAddress() {
   );
 }
 
+/** Said once after a saved trip could not be fully read, instead of silently showing "no trip". */
+function LoadNoticeBar({ notice, onDismiss }: { notice: LoadNotice; onDismiss: () => void }) {
+  const text =
+    notice.kind === "recovered"
+      ? `Your saved trip came from an older version of the app. ${notice.dropped} ${
+          notice.dropped === 1 ? "item couldn't be read and was" : "items couldn't be read and were"
+        } left out. The rest is here.`
+      : "Your saved trip couldn't be read, so it was cleared. It may have come from an older version of the app. You can load the sample trip again.";
+  return (
+    <div
+      role="status"
+      className="mx-4 mt-3 flex items-start gap-2.5 rounded-card border border-line-strong bg-warn-bg py-2.5 pr-1 pl-3.5 text-[14px] leading-snug text-warn-fg"
+    >
+      <Icon name="circle-alert" size={18} className="mt-0.5 shrink-0" />
+      <span className="flex-1 py-0.5">{text}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss this message"
+        className="-my-1 inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control hover:bg-sunk"
+      >
+        <Icon name="x" size={18} />
+      </button>
+    </div>
+  );
+}
+
 function Loading() {
   return (
-    <div className="px-5 pt-6" aria-busy="true" aria-label="Loading">
+    <div className="px-5 pt-6" role="status" aria-busy="true">
+      <span className="sr-only">Loading your trip</span>
       <div className="h-4 w-52 animate-pulse rounded-badge bg-sunk" />
       <div className="mt-3 h-16 w-full animate-pulse rounded-badge bg-sunk" />
       <div className="mt-5 h-56 animate-pulse rounded-card bg-sunk" />

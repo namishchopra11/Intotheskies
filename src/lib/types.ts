@@ -1,15 +1,33 @@
 import { z } from "zod";
 import { SolanaAddressSchema } from "@/lib/solana/address";
 
+/** True for a real calendar date and clock time: rejects "2026-02-31T10:00" and "10:99". */
+function isRealLocalDateTime(t: string): boolean {
+  const [y, mo, d, h, mi] = t.split(/[-T:]/).map(Number);
+  const ms = Date.UTC(y, mo - 1, d, h, mi); // read as UTC, so no device timezone is involved
+  const back = new Date(ms);
+  return (
+    back.getUTCFullYear() === y &&
+    back.getUTCMonth() === mo - 1 &&
+    back.getUTCDate() === d &&
+    back.getUTCHours() === h &&
+    back.getUTCMinutes() === mi
+  );
+}
+
 // All times are local wall-clock strings with no timezone, e.g. "2026-10-17T10:35".
 // Only ever compare two times that are at the same airport or in the same city.
 // Use the helpers in src/lib/domain/time.ts instead of `new Date(...)`.
 export const LocalDateTimeSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Expected "YYYY-MM-DDTHH:mm"');
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Expected "YYYY-MM-DDTHH:mm"')
+  .refine(isRealLocalDateTime, "Not a real date and time");
 export type LocalDateTime = z.infer<typeof LocalDateTimeSchema>;
 
-export const ClockTimeSchema = z.string().regex(/^\d{2}:\d{2}$/, 'Expected "HH:mm"');
+export const ClockTimeSchema = z
+  .string()
+  .regex(/^\d{2}:\d{2}$/, 'Expected "HH:mm"')
+  .refine((t) => Number(t.slice(0, 2)) < 24 && Number(t.slice(3)) < 60, "Not a real time of day");
 
 export const FlightStatusSchema = z.enum(["scheduled", "delayed", "cancelled", "rebooked"]);
 export type FlightStatus = z.infer<typeof FlightStatusSchema>;
@@ -87,7 +105,6 @@ export const DisruptionSchema = z.object({
   flightId: z.string(),
   createdAt: z.string(), // ISO timestamp of when it was reported (not a trip time)
   tasks: z.array(TaskSchema),
-  notes: z.string().optional(),
 });
 export type Disruption = z.infer<typeof DisruptionSchema>;
 

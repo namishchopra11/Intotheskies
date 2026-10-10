@@ -34,8 +34,9 @@ There is no "report a change" screen. A change arrives on its own:
 
 - **Automatically:** about 6 seconds after a trip with no changes is on screen (the app must
   be open, and not on the shared `/s` page).
-- **On demand:** menu button (top right) > **Restart the demo trip**. It puts the trip back on
-  time, and the same change arrives about 6 seconds later. Use this to replay the demo.
+- **On demand:** menu button (top right) > **Restart the demo trip** > **Restart**. It puts the
+  trip back on time, and the same change arrives about 6 seconds later. Use this to replay
+  the demo.
 
 It plays once per trip. Once the trip has a change, nothing more fires until you restart it.
 
@@ -44,7 +45,7 @@ It plays once per trip. Once the trip has a change, nothing more fires until you
 1. Charge the phone. Turn off notifications and Do Not Disturb on, so nothing else buzzes.
 2. Open the app in the browser you will use on stage. **Use the HTTPS address** if the team
    has one (the Copy button can fail on a plain `http://192.168...` address).
-3. Start clean: menu button > **Clear this trip**. The app remembers things on the phone, so
+3. Start clean: menu button > **Clear this trip** > **Clear trip**. The app remembers things on the phone, so
    a second run will otherwise open on the first run's change.
 4. You should now see "Flights change. Your plan keeps up." and **Try the sample trip**. Do
    **not** tap it yet. Step 1 is the first thing the judges see.
@@ -65,7 +66,7 @@ It plays once per trip. Once the trip has a change, nothing more fires until you
 **TAP** **Try the sample trip** on the home screen.
 
 You land on **Your trip is on track. Nothing to do right now.** with **All flights on time**
-and a pulsing **Watching live** in the bar at the top.
+and a pulsing **Simulated feed** in the bar at the top. Say "simulated" when you point at it.
 
 **POINT** at the two flights, and at the line between them: **55 min in London**, marked
 tight.
@@ -84,7 +85,7 @@ Keep talking. The change lands about 6 seconds after the trip appears. Do not ta
 
 A card slides down from the top (the phone buzzes, if it can):
 
-> **Flight change · new plan ready**
+> **Simulated flight change · new plan ready**
 > BA 286 is 2h 10m late, so you'll miss AZ 201 in London.
 > You're rebooked on AZ 207, 14:25 → 18:00 to Rome.
 > 6 things to sort out. Tap to see your plan.
@@ -248,8 +249,8 @@ Then, in this order:
 
 | What you see | What to do |
 | --- | --- |
-| The trip already shows a change from the last run | Menu > **Restart the demo trip**. It goes back on time and the change arrives again in about 6 seconds. |
-| You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip**. |
+| The trip already shows a change from the last run | Menu > **Restart the demo trip** > **Restart**. It goes back on time and the change arrives again in about 6 seconds. |
+| You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip** > **Restart**. |
 | You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
 | Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |
 | **Listen to summary** is missing | The browser has no speech support. Skip that step. |

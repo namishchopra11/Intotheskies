@@ -7,9 +7,9 @@ import { generateChecklist } from "@/lib/domain/checklist";
 import { computeImpact } from "@/lib/domain/impact";
 import { newId } from "@/lib/id";
 import { normalizeSolanaAddress } from "@/lib/solana/address";
+import { migratePersisted, recoverTrip, type LoadNotice } from "@/lib/recoverTrip";
 import { sampleTrip } from "@/lib/sampleTrip";
 import {
-  TripSchema,
   type Contact,
   type Disruption,
   type DisruptionType,
@@ -27,8 +27,13 @@ export type FlightRevision = {
   arriveAt?: LocalDateTime;
 };
 
+const STORAGE_KEY = "connectionkeeper-trip";
+
 export type TripState = {
   trip: Trip | null;
+  /** Set when a saved trip was only partly readable, or not at all. Not persisted. */
+  loadNotice: LoadNotice | null;
+  dismissLoadNotice: () => void;
 
   loadSampleTrip: () => void;
   resetTrip: () => void;
@@ -49,6 +54,8 @@ export type TripState = {
   /**
    * Records what changed on a flight, updates the flight, generates the checklist
    * and returns the new disruption id. Throws if there is no trip or the flight is unknown.
+   * Reporting the same change again (same type, nothing new to apply) while the earlier
+   * one still has unfinished tasks is a no-op that returns the existing disruption's id.
    */
   reportDisruption: (flightId: string, type: DisruptionType, revised?: FlightRevision) => string;
 
@@ -90,9 +97,11 @@ export const useTripStore = create<TripState>()(
 
       return {
         trip: null,
+        loadNotice: null,
+        dismissLoadNotice: () => set({ loadNotice: null }),
 
-        loadSampleTrip: () => set({ trip: structuredClone(sampleTrip) }),
-        resetTrip: () => set({ trip: null }),
+        loadSampleTrip: () => set({ trip: structuredClone(sampleTrip), loadNotice: null }),
+        resetTrip: () => set({ trip: null, loadNotice: null }),
 
         upsertFlight: (flight) =>
           updateTrip((trip) => ({ ...trip, flights: upsert(trip.flights, flight) })),
@@ -135,7 +144,6 @@ export const useTripStore = create<TripState>()(
           const trip = get().trip;
           const flight = trip?.flights.find((f) => f.id === flightId);
           if (!trip || !flight) throw new Error(`reportDisruption: unknown flight "${flightId}"`);
-
           const updatedFlight: Flight = {
             ...flight,
             airline: revised?.airline ?? flight.airline,
@@ -150,6 +158,17 @@ export const useTripStore = create<TripState>()(
               arriveAt: flight.arriveAt,
             },
           };
+          const repeat = trip.disruptions.find(
+            (d) => d.flightId === flightId && d.type === type && d.tasks.some((t) => !t.done),
+          );
+          const unchanged =
+            updatedFlight.status === flight.status &&
+            updatedFlight.airline === flight.airline &&
+            updatedFlight.flightNumber === flight.flightNumber &&
+            updatedFlight.departAt === flight.departAt &&
+            updatedFlight.arriveAt === flight.arriveAt;
+          if (repeat && unchanged) return repeat.id;
+
           const updatedTrip: Trip = {
             ...trip,
             flights: trip.flights.map((f) => (f.id === flightId ? updatedFlight : f)),
@@ -197,8 +216,8 @@ export const useTripStore = create<TripState>()(
       };
     },
     {
-      name: "connectionkeeper-trip",
-      version: 1,
+      name: STORAGE_KEY,
+      version: 2,
       storage: createJSONStorage(() =>
         typeof window === "undefined" ? noopStorage : window.localStorage,
       ),
@@ -206,16 +225,29 @@ export const useTripStore = create<TripState>()(
       // Hydration is started by useStoreReady() after mount, so the server render and
       // the first client render both see `trip: null` and never mismatch.
       skipHydration: true,
-      // Anything in localStorage that no longer matches the schema is discarded.
+      migrate: (persisted) => migratePersisted(persisted),
+      // A saved trip that no longer matches the schema is rebuilt from the parts that do,
+      // and the screens are told (loadNotice) rather than silently showing "no trip".
       merge: (persisted, current) => {
-        const parsed = TripSchema.nullable().safeParse((persisted as { trip?: unknown })?.trip);
-        return { ...current, trip: parsed.success ? parsed.data : null };
+        const { trip, notice } = recoverTrip((persisted as { trip?: unknown } | undefined)?.trip);
+        // Keep a notice the traveler has not dismissed when another tab's save is read back.
+        return { ...current, trip, loadNotice: notice ?? current.loadNotice };
       },
     },
   ),
 );
 
 let hydrationStarted = false;
+
+// Another tab changed the saved trip: read it back, so this tab does not overwrite it later.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (hydrationStarted && (e.key === null || e.key === STORAGE_KEY)) {
+      void useTripStore.persist.rehydrate();
+    }
+  });
+}
+
 const subscribeToHydration = (onChange: () => void) =>
   useTripStore.persist.onFinishHydration(onChange);
 

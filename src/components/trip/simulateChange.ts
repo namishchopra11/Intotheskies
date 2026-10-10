@@ -31,7 +31,9 @@ export function simulateFlightChange(): FlightAlertContent | null {
   const { trip, upsertFlight, reportDisruption } = useTripStore.getState();
   if (!trip || trip.disruptions.length > 0 || trip.flights.length === 0) return null;
   // Wall-clock strings sort correctly as text; the array order is not guaranteed.
-  const [first, onward] = [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
+  const [first, second] = [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
+  // Only a flight leaving the airport the first one lands at is a connection.
+  const onward = second && second.from === first.to ? second : undefined;
 
   if (!onward) {
     const late = 90;
@@ -41,7 +43,7 @@ export function simulateFlightChange(): FlightAlertContent | null {
     });
     return {
       disruptionId: id,
-      title: `${first.flightNumber} is delayed`,
+      title: `Simulated change · ${first.flightNumber} is delayed`,
       lines: [
         `${first.flightNumber} to ${cityName(first.to)} is ${formatDuration(late)} late.`,
         `Now lands ${timePart(addMinutes(first.arriveAt, late))}. Your checklist is ready.`,
@@ -81,7 +83,7 @@ export function simulateFlightChange(): FlightAlertContent | null {
   const open = useTripStore.getState().trip?.disruptions.find((d) => d.id === id)?.tasks.filter((t) => !t.done).length ?? 0;
   return {
     disruptionId: id,
-    title: "Flight change · new plan ready",
+    title: "Simulated flight change · new plan ready",
     lines: [
       `${first.flightNumber} is ${formatDuration(late)} late, so you'll miss ${onward.flightNumber} in ${cityName(onward.from)}.`,
       `You're rebooked on ${newNumber}, ${timePart(newDepart)} → ${timePart(newArrive)} to ${cityName(onward.to)}.`,

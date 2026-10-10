@@ -52,11 +52,27 @@ describe("simulateFlightChange", () => {
     const change = simulateFlightChange();
     const [flight] = current().flights;
 
-    expect(change?.title).toBe("BA 286 is delayed");
+    expect(change?.title).toBe("Simulated change · BA 286 is delayed");
     expect(flight.status).toBe("delayed");
     expect(flight.departAt).toBe("2026-10-16T18:10");
     expect(flight.arriveAt).toBe("2026-10-17T12:05");
     expect(current().disruptions[0].type).toBe("delay");
+  });
+
+  it("does not pair a second flight that leaves from a different airport", () => {
+    const [first, second] = sampleTrip.flights;
+    load({ ...sampleTrip, flights: [first, { ...second, from: "CDG" }] });
+    const change = simulateFlightChange();
+
+    expect(change?.title).toBe("Simulated change · BA 286 is delayed");
+    expect(current().disruptions).toHaveLength(1);
+    expect(current().disruptions[0].type).toBe("delay");
+    expect(current().flights[1].status).toBe("scheduled");
+  });
+
+  it("says in the notification that the change is simulated", () => {
+    load(sampleTrip);
+    expect(simulateFlightChange()?.title).toMatch(/^Simulated/);
   });
 
   it("does nothing when the trip already has a disruption", () => {

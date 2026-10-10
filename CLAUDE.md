@@ -39,6 +39,8 @@ hotel check-in in the same city.
   Use `src/lib/domain/time.ts`: `minutesBetween(from, to)`, `addMinutes(t, n)`,
   `datePart`, `timePart`, `formatDate`, `formatDateTime`, `formatDuration`.
 - `<input type="datetime-local">` produces exactly this format.
+- `LocalDateTimeSchema` and `ClockTimeSchema` reject values that do not exist
+  (`2026-02-31T10:00`, `99:99`), not just ones with the wrong shape.
 - `Disruption.createdAt` is the one exception: an ISO timestamp of when it was reported.
 
 ## Data model: `src/lib/types.ts`
@@ -54,7 +56,7 @@ without the suffix.
 - `Contact`: id, kind (`airline | hotel | insurance | other`), name, phone?, url?, notes?
 - `Task`: id, title, detail?, done, contactId?, source (`generated | custom`)
 - `Disruption`: id, type (`delay | cancellation | missed_connection | rebooked`),
-  flightId, createdAt, tasks, notes?
+  flightId, createdAt, tasks
 - `Trip`: id, name, travelerName, flights, stays, contacts, disruptions, payoutAddress?
   (a Solana public key for the optional "request funds" add-on; set it only through
   `setPayoutAddress`, see below)
@@ -71,7 +73,10 @@ const trip = useTripStore((s) => s.trip);    // Trip | null
 if (!ready) return <Loading />;              // always gate on ready, or you flash "no trip"
 ```
 
-State is `{ trip: Trip | null }`. Actions (get them with
+State is `{ trip: Trip | null, loadNotice: LoadNotice | null }`; only `trip` is saved.
+`loadNotice` is set when a saved trip was only partly readable (`{ kind: "recovered",
+dropped }`, the rest loaded) or not at all (`{ kind: "discarded" }`); the home screen shows
+it once, with a dismiss. Actions (get them with
 `useTripStore((s) => s.actionName)`):
 
 | Action | Signature |
@@ -89,11 +94,14 @@ State is `{ trip: Trip | null }`. Actions (get them with
 | `toggleTask` | `(disruptionId: string, taskId: string) => void` |
 | `addTask` | `(disruptionId: string, title: string, detail?: string) => string` (new task id) |
 | `removeTask` | `(disruptionId: string, taskId: string) => void` |
+| `dismissLoadNotice` | `() => void` |
 
 `reportDisruption` snapshots `flight.original` on the first revision only, applies the
 revised fields, sets the status, generates the checklist, and returns the new disruption
 id. The home screen (`/`) always shows the latest disruption, and `/share/<id>` builds the
-update for it. It throws if there is no trip or the flight id is unknown.
+update for it. It throws if there is no trip or the flight id is unknown. Reporting the same
+change again (same type, nothing new to apply) while the earlier one still has unfinished
+tasks returns that disruption's id and changes nothing; a worse delay is a new disruption.
 Status it sets: `delay` gives `delayed`; `rebooked` gives `rebooked`; `cancellation` and
 `missed_connection` give `cancelled`, or `rebooked` if revised times were supplied.
 
@@ -159,12 +167,15 @@ decodeShare(fragment: string): ShareSnapshot | null   // null for anything malfo
 - `cityName("LHR")` in `airports.ts` gives `"London"` for display (falls back to the code).
 - `/share/[id]` is the screen where the traveler picks options, previews the message and
   copies the text or a link. `[id]` is a disruption id. The short preview message is built
-  by `buildMessage` in `src/app/share/[id]/message.ts`; the full `buildSummary` text travels
-  in the link and is what `/s` shows.
+  by `buildMessage` in `src/app/share/[id]/message.ts`. The link carries a snapshot of the
+  data, not the `buildSummary` text (`encodeShare` leaves it out; `buildSummary` is still
+  exported and tested).
 - `/s` is the read-only page the recipient opens. The link is `/s#<encodeShare output>`;
   read `window.location.hash` on the client and pass it to `decodeShare` (a leading `#`
   is fine). `ShareSnapshot` (see `ShareSnapshotSchema` in `shareLink.ts`) carries the
-  trip name, traveler name, flights, stays, impact, open task titles and the summary text.
+  trip name, traveler name, flights, stays, impact and open task titles; `summary` is
+  optional and only present on links made before it was dropped. `/s` words the headline and
+  the hotel-risk lines from that data in `src/app/s/story.ts`, which has tests.
 - The checklist is generated once, when the disruption is reported, and stored on the
   disruption. Render `disruption.tasks`; do not call `generateChecklist` from a screen.
 
@@ -174,9 +185,12 @@ The core flow never depends on this. With no `payoutAddress` or no `fundsRequest
 links and pages behave exactly as before, and a malformed `fundsRequest` in a link is
 dropped rather than breaking `/s`.
 
-Status: library only. `src/lib/solana/**`, `Trip.payoutAddress`, `setPayoutAddress`,
-`SummaryOptions.fundsRequest` and `ShareSnapshot.fundsRequest` exist and are tested, but no
-screen (no address field, no share option, nothing on `/s`) uses them yet.
+Status: wired in. The traveler saves an address in the home menu (`setPayoutAddress`), the
+share screen has an "Ask for help" option with an amount (`SummaryOptions.fundsRequest`),
+and `/s` shows `FundsRequest` (a button, a QR code and the address) when the link carries
+`ShareSnapshot.fundsRequest`. Every place that mentions it says it is on devnet, Solana's test
+network. The trip name goes in the payment's memo, which is public on the blockchain, and the
+share screen says so.
 
 - `src/lib/solana/config.ts`: `SOLANA_CLUSTER` (the one switch, `"devnet"`), `USDC_MINTS`.
 - `src/lib/solana/address.ts`: `isValidSolanaAddress`, `normalizeSolanaAddress`,

@@ -4,8 +4,9 @@ Built for the "Into the Skies" hackathon.
 
 When a flight is delayed or cancelled, travelers juggle an airline app, confirmation
 emails and a hotel booking, while someone waits for news. ConnectionKeeper keeps the
-trip in one place. You tell it what changed. It shows what is now at risk downstream,
-gives you a checklist of what to do, and writes an update for the people waiting on you.
+trip in one place. When a flight changes (in this demo, from a simulated airline feed), it
+shows what is now at risk downstream, gives you a checklist of what to do, and writes an
+update for the people waiting on you.
 
 The trip drives the checklist, and both drive the update. Everything stays on the
 device: there is no backend and no account. A shared update travels inside the link
@@ -41,7 +42,7 @@ pnpm build   # production build
 4. Tick a task or two, then tap **Share the new plan** to preview the message and copy a link.
 5. Open the link. It is a read-only page that needs no app and no account.
 
-To replay it, open the menu (top right) and choose **Restart the demo trip**.
+To replay it, open the menu (top right), choose **Restart the demo trip** and confirm.
 
 **Live flight watching is simulated.** There is no flight-data feed and no backend: a
 scripted change is pushed a few seconds after the trip loads. Everything after the change
