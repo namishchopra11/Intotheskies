@@ -107,7 +107,8 @@ reads **London connection missed. You're on the 14:25 instead.**
 
 - **BA 286**, San Francisco 18:50 → London 12:45, marked **Delayed 2h 10m**.
 - **AZ 201**, struck through, marked **Missed**.
-- **AZ 207 · Seat 12C**, London 14:25 → Rome 18:00, marked **Rebooked**.
+- **AZ 207**, London 14:25 → Rome 18:00, marked **Rebooked**. It has no seat yet: the seat
+  belonged to the old booking, so the app clears it. Do not mention a seat on this row.
 
 **SAY**
 > "Here is the before and after. The old flight is struck out. The new one is in bold, 14:25
