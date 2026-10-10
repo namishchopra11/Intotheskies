@@ -14,6 +14,9 @@ const CITY_BY_AIRPORT: Record<string, string> = {
   YVR: "Vancouver", YYZ: "Toronto", ZRH: "Zurich",
 };
 
+/** Every airport code with a known city, for suggestions while typing. */
+export const KNOWN_AIRPORTS: readonly string[] = Object.keys(CITY_BY_AIRPORT);
+
 /** "LHR" -> "London". Unknown codes are returned unchanged. */
 export function cityName(airportCode: string): string {
   return CITY_BY_AIRPORT[airportCode.trim().toUpperCase()] ?? airportCode;

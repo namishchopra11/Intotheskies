@@ -67,6 +67,8 @@ export type TripState = {
   removeStay: (stayId: string) => void;
   upsertRide: (ride: Ride) => void;
   removeRide: (rideId: string) => void;
+  /** Ticks or unticks a "Before you go" reminder by its key. */
+  togglePrep: (key: string) => void;
   upsertContact: (contact: Contact) => void;
   removeContact: (contactId: string) => void;
 
@@ -185,6 +187,13 @@ export const useTripStore = create<TripState>()(
           updateTrip((trip) => ({ ...trip, stays: trip.stays.filter((s) => s.id !== stayId) })),
         upsertRide: (ride) =>
           updateTrip((trip) => ({ ...trip, rides: upsert(trip.rides ?? [], ride) })),
+        togglePrep: (key) =>
+          updateTrip((trip) => {
+            const done = new Set(trip.prepDone ?? []);
+            if (done.has(key)) done.delete(key);
+            else done.add(key);
+            return { ...trip, prepDone: [...done] };
+          }),
         removeRide: (rideId) =>
           updateTrip((trip) => ({ ...trip, rides: (trip.rides ?? []).filter((r) => r.id !== rideId) })),
         upsertContact: (contact) =>

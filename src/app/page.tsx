@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { AtAGlance, BeforeYouGo, BookingCodes, WhenYouLand } from "@/components/trip/OnTrackDetails";
+import { prepItems } from "@/components/trip/prep";
 import { ProfileButton } from "@/components/trip/ProfileButton";
 import { triggerFlightChange } from "@/components/trip/simulateChange";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useSpeech } from "@/components/trip/useSpeech";
-import { DEFAULT_SPEECH_VOICE, SPEECH_VOICES, type SpeechVoice } from "@/components/trip/speechVoices";
 import {
   AppHeader,
   Badge,
@@ -35,7 +36,6 @@ export default function TripStatusPage() {
   const trip = useTripStore((s) => s.trip);
   const [menuOpen, setMenuOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
-  const [voice, setVoice] = useState<SpeechVoice>(DEFAULT_SPEECH_VOICE);
 
   const menuButton = (
     <button
@@ -66,15 +66,15 @@ export default function TripStatusPage() {
       ) : trip.flights.length === 0 ? (
         <NoFlights trip={trip} />
       ) : (
-        <Status trip={trip} voice={voice} />
+        <Status trip={trip} />
       )}
-      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} voice={voice} onVoiceChange={setVoice} />
+      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
       <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
     </main>
   );
 }
 
-function Status({ trip, voice }: { trip: Trip; voice: SpeechVoice }) {
+function Status({ trip }: { trip: Trip }) {
   const disruption = trip.disruptions[trip.disruptions.length - 1];
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
@@ -117,7 +117,7 @@ function Status({ trip, voice }: { trip: Trip; voice: SpeechVoice }) {
 
       <SortingItOut disruption={disruption} impact={impact} contacts={trip.contacts} />
 
-      <Actions key={buildBriefing(trip, disruption.id)} trip={trip} disruption={disruption} voice={voice} />
+      <Actions key={buildBriefing(trip, disruption.id)} trip={trip} disruption={disruption} />
 
       <StaysSection stays={trip.stays} delay={520} />
       <RidesSection rides={trip.rides ?? []} delay={560} />
@@ -464,7 +464,9 @@ function TaskCircle() {
 
 /* ---------- Actions ---------- */
 
-function Actions({ trip, disruption, voice }: { trip: Trip; disruption: Disruption | undefined; voice: SpeechVoice }) {
+function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | undefined }) {
+  // Chosen in Settings.
+  const voice = useTripStore((s) => s.settings.voice);
   const { speaking, loading, error, speak, stop } = useSpeech(voice);
   if (!disruption) return null;
 
@@ -499,6 +501,8 @@ function Actions({ trip, disruption, voice }: { trip: Trip; disruption: Disrupti
 function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
   const count = trip.flights.length;
   const tight = tightLayover(trip);
+  const done = new Set(trip.prepDone ?? []);
+  const toDo = prepItems(trip).filter((i) => !done.has(i.key)).length;
   return (
     <>
       <SignalBar
@@ -519,9 +523,15 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
             ? tight.gap < 0
               ? `Flights are on time, but your ${cityName(tight.airport)} connection doesn't leave enough time.`
               : `Flights are on time, but ${formatDuration(tight.gap)} in ${cityName(tight.airport)} is tight. We're watching it.`
-            : "Your trip is on track. Nothing to do right now."}
+            : "Your trip is on track."}
         </h1>
+        <p className="text-ink-2">
+          {toDo > 0 ? `${toDo} ${toDo === 1 ? "thing" : "things"} to sort before you go.` : "You're all set before you go."}
+        </p>
       </section>
+
+      <AtAGlance trip={trip} delay={160} />
+      <div className="h-4" />
 
       <section
         aria-label="Flights"
@@ -539,14 +549,17 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         })}
       </section>
 
-      <StaysSection stays={trip.stays} delay={340} />
-      <RidesSection rides={trip.rides ?? []} delay={380} />
-      <ContactsSection contacts={trip.contacts} delay={420} />
+      <BeforeYouGo trip={trip} delay={300} />
+      <WhenYouLand trip={trip} delay={360} />
+      <BookingCodes trip={trip} delay={400} />
+      <StaysSection stays={trip.stays} delay={440} />
+      <RidesSection rides={trip.rides ?? []} delay={470} />
+      <ContactsSection contacts={trip.contacts} delay={500} />
 
       <div className="ck-rise mt-auto px-5 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
         <p className="flex items-start gap-2.5 border-t border-line pt-4 text-[13px] leading-snug text-ink-2">
           <span aria-hidden="true" className="ck-pulse mt-1.5 h-2 w-2 shrink-0 rounded-full bg-current text-ok" />
-          Watching {count === 1 ? "your flight" : `all ${count} flights`}. If anything changes, your plan
+          Watching {count === 1 ? "your flight" : count === 2 ? "both flights" : `all ${count} flights`}. If anything changes, your plan
           updates itself and you&apos;ll get a notification.
         </p>
       </div>
@@ -822,13 +835,7 @@ function NoFlights({ trip }: { trip: Trip }) {
   );
 }
 
-function TripMenu({ open, onClose, hasTrip, voice, onVoiceChange }: {
-  open: boolean;
-  onClose: () => void;
-  hasTrip: boolean;
-  voice: SpeechVoice;
-  onVoiceChange: (voice: SpeechVoice) => void;
-}) {
+function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => void; hasTrip: boolean }) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
   const pristine = useTripStore((s) => Boolean(s.trip && s.trip.disruptions.length === 0));
@@ -847,19 +854,6 @@ function TripMenu({ open, onClose, hasTrip, voice, onVoiceChange }: {
           <ThemeToggle />
         </div>
         {hasTrip && <PayoutAddress />}
-        <label className="flex flex-col gap-2">
-          <span className="ck-label">Listen voice</span>
-          <select
-            value={voice}
-            onChange={(event) => onVoiceChange(event.target.value as SpeechVoice)}
-            className="min-h-11 w-full rounded-control border border-line bg-surface px-3 text-base text-ink"
-          >
-            {Object.entries(SPEECH_VOICES).map(([key, choice]) => (
-              <option key={key} value={key}>{choice.label}</option>
-            ))}
-          </select>
-          <span className="text-[13px] font-normal text-ink-2">Used when you press Listen to summary.</span>
-        </label>
         <div className="flex flex-col gap-3">
           {alerts === "default" && (
             <Button

@@ -1,5 +1,6 @@
 import { formatDate, formatDateTime, minutesBetween } from "@/lib/domain/time";
-import type { Flight, Ride, Stay } from "@/lib/types";
+import { LocalDateTimeSchema, type Flight, type Ride, type Stay } from "@/lib/types";
+import type { SuggestionSource } from "./suggestions";
 
 /**
  * The three kinds of booking the traveler can type in, described as data so one sheet
@@ -18,6 +19,8 @@ export type FieldSpec = {
   airport?: boolean;
   /** Half width, so two fields sit side by side. */
   half?: boolean;
+  /** Offer predictions while typing (see suggestions.ts). Only for obvious answers. */
+  suggest?: SuggestionSource;
 };
 
 export type EntryKind<T extends { id: string }> = {
@@ -39,10 +42,10 @@ export const FLIGHT: EntryKind<Flight> = {
   noun: "flight",
   mono: true,
   fields: [
-    { key: "airline", label: "Airline", placeholder: "British Airways" },
-    { key: "flightNumber", label: "Flight number", placeholder: "BA 286" },
-    { key: "from", label: "From", placeholder: "SFO", airport: true, half: true },
-    { key: "to", label: "To", placeholder: "LHR", airport: true, half: true },
+    { key: "airline", label: "Airline", placeholder: "British Airways", suggest: "airline" },
+    { key: "flightNumber", label: "Flight number", placeholder: "BA 286", suggest: "flightNumber" },
+    { key: "from", label: "From", placeholder: "SFO", airport: true, half: true, suggest: "airport" },
+    { key: "to", label: "To", placeholder: "LHR", airport: true, half: true, suggest: "airport" },
     { key: "departAt", label: "Departs", type: "datetime-local", hint: "Local time at the departure airport." },
     { key: "arriveAt", label: "Arrives", type: "datetime-local", hint: "Local time at the arrival airport." },
     { key: "bookingRef", label: "Booking reference", placeholder: "K7QM2X", half: true },
@@ -81,7 +84,7 @@ export const FLIGHT: EntryKind<Flight> = {
 export const STAY: EntryKind<Stay> = {
   noun: "hotel",
   fields: [
-    { key: "name", label: "Hotel name", placeholder: "Hotel Artemide" },
+    { key: "name", label: "Hotel name", placeholder: "Hotel Artemide", suggest: "hotel" },
     { key: "address", label: "Address", placeholder: "Via Nazionale 22, Rome" },
     { key: "checkIn", label: "Check-in", type: "datetime-local" },
     { key: "checkOut", label: "Check-out", type: "datetime-local" },
@@ -110,7 +113,7 @@ export const STAY: EntryKind<Stay> = {
   }),
   // Check-in and check-out are in the same city, so comparing them is safe.
   check: (d): Record<string, string> =>
-    d.checkIn && d.checkOut && minutesBetween(d.checkIn, d.checkOut) <= 0
+    isDateTime(d.checkIn) && isDateTime(d.checkOut) && minutesBetween(d.checkIn, d.checkOut) <= 0
       ? { checkOut: "Check-out needs to be after check-in." }
       : {},
   title: (s) => s.name,
@@ -120,10 +123,10 @@ export const STAY: EntryKind<Stay> = {
 export const RIDE: EntryKind<Ride> = {
   noun: "ride",
   fields: [
-    { key: "provider", label: "Who's driving", placeholder: "Uber, hotel shuttle, a driver's name" },
+    { key: "provider", label: "Who's driving", placeholder: "Uber, hotel shuttle, a driver's name", suggest: "rideProvider" },
     { key: "pickupAt", label: "Pickup", type: "datetime-local" },
-    { key: "from", label: "From", placeholder: "FCO arrivals", half: true },
-    { key: "to", label: "To", placeholder: "Hotel Artemide", half: true },
+    { key: "from", label: "From", placeholder: "FCO arrivals", half: true, suggest: "place" },
+    { key: "to", label: "To", placeholder: "Hotel Artemide", half: true, suggest: "place" },
     { key: "confirmation", label: "Confirmation", optional: true, half: true },
     { key: "phone", label: "Driver or company phone", type: "tel", optional: true, half: true },
     { key: "notes", label: "Notes", optional: true, placeholder: "Meeting point, car, sign name" },
@@ -151,13 +154,16 @@ export const RIDE: EntryKind<Ride> = {
   subtitle: (r) => formatDateTime(r.pickupAt),
 };
 
-/** Required fields filled, airport codes well formed, then the kind's own checks. */
+const isDateTime = (v: string | undefined) => LocalDateTimeSchema.safeParse(v).success;
+
+/** Required fields filled, airport codes well formed, dates read, then the kind's own checks. */
 export function validate<T extends { id: string }>(kind: EntryKind<T>, draft: Draft): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const f of kind.fields) {
     const v = draft[f.key]?.trim() ?? "";
     if (!v && !f.optional) errors[f.key] = "Required.";
     else if (v && f.airport && !/^[A-Z]{3}$/.test(v)) errors[f.key] = "Three-letter airport code.";
+    else if (v && f.type === "datetime-local" && !isDateTime(v)) errors[f.key] = "Add both a date and a time.";
   }
   return { ...kind.check?.(draft), ...errors };
 }

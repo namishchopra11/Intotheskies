@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Field, Icon, PageHeader, Sheet, cx, type IconName } from "@/components/ui";
+import { Autocomplete, Button, Card, Field, Icon, PageHeader, Sheet, cx, type IconName } from "@/components/ui";
 import { newId } from "@/lib/id";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useTripStore } from "@/lib/store";
 import type { Trip } from "@/lib/types";
 import { FLIGHT, RIDE, STAY, validate, type Draft, type EntryKind } from "./entries";
+import { DateTimeField } from "./DateTimeField";
 import { ImportSheet } from "./ImportSheet";
+import { candidates, matchSuggestions, type Suggestion } from "./suggestions";
 
 /** The "fill it in for me" entry point, at the top of the screen. */
 function ImportCard() {
@@ -234,6 +236,22 @@ function EntrySheet<T extends { id: string }>({
   const [draft, setDraft] = useState<Draft>(() => kind.toDraft(existing));
   const [tried, setTried] = useState(false);
   const errors = tried ? validate(kind, draft) : {};
+  // The open trip first, then saved ones: where "from your trips" predictions come from.
+  const trip = useTripStore((s) => s.trip);
+  const savedTrips = useTripStore((s) => s.savedTrips);
+  const trips = useMemo(() => (trip ? [trip, ...savedTrips] : savedTrips), [trip, savedTrips]);
+
+  const setField = (key: string, value: string, airport?: boolean) =>
+    setDraft((d) => ({ ...d, [key]: airport ? value.toUpperCase() : value }));
+  // A picked prediction may fill other fields too (an airline fills its flight-number
+  // prefix, a hotel from your trips fills its address), but never overwrites what's typed.
+  const applyFill = (fill: Draft | undefined) =>
+    fill &&
+    setDraft((d) => {
+      const next = { ...d };
+      for (const [k, v] of Object.entries(fill)) if (!next[k]?.trim()) next[k] = v;
+      return next;
+    });
 
   const submit = () => {
     setTried(true);
@@ -260,23 +278,50 @@ function EntrySheet<T extends { id: string }>({
           submit();
         }}
       >
-        {kind.fields.map((f) => (
-          <Field
-            key={f.key}
-            label={f.optional ? `${f.label} (optional)` : f.label}
-            type={f.type ?? "text"}
-            placeholder={f.placeholder}
-            hint={f.hint}
-            value={draft[f.key] ?? ""}
-            maxLength={f.airport ? 3 : undefined}
-            autoCapitalize={f.airport ? "characters" : undefined}
-            onChange={(e) =>
-              setDraft((d) => ({ ...d, [f.key]: f.airport ? e.target.value.toUpperCase() : e.target.value }))
-            }
-            error={errors[f.key]}
-            className={cx(f.half ? "min-w-0 flex-[1_1_calc(50%-6px)]" : "w-full")}
-          />
-        ))}
+        {kind.fields.map((f) =>
+          f.type === "datetime-local" ? (
+            <DateTimeField
+              key={f.key}
+              label={f.label}
+              hint={f.hint}
+              value={draft[f.key] ?? ""}
+              onChange={(v) => setField(f.key, v)}
+              error={errors[f.key]}
+              className="w-full"
+            />
+          ) : f.suggest ? (
+            <Autocomplete<Suggestion>
+              key={f.key}
+              label={f.optional ? `${f.label} (optional)` : f.label}
+              placeholder={f.placeholder}
+              hint={f.hint}
+              value={draft[f.key] ?? ""}
+              maxLength={f.airport ? 3 : undefined}
+              autoCapitalize={f.airport ? "characters" : undefined}
+              onChange={(v) => setField(f.key, v, f.airport)}
+              options={matchSuggestions(candidates(f.suggest, draft, trips), draft[f.key] ?? "")}
+              onPick={(o) => applyFill(o.fill)}
+              error={errors[f.key]}
+              className={cx(f.half ? "min-w-0 flex-[1_1_calc(50%-6px)]" : "w-full")}
+            />
+          ) : (
+            <Field
+              key={f.key}
+              label={f.optional ? `${f.label} (optional)` : f.label}
+              type={f.type ?? "text"}
+              placeholder={f.placeholder}
+              hint={f.hint}
+              value={draft[f.key] ?? ""}
+              maxLength={f.airport ? 3 : undefined}
+              autoCapitalize={f.airport ? "characters" : undefined}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, [f.key]: f.airport ? e.target.value.toUpperCase() : e.target.value }))
+              }
+              error={errors[f.key]}
+              className={cx(f.half ? "min-w-0 flex-[1_1_calc(50%-6px)]" : "w-full")}
+            />
+          ),
+        )}
         <button type="submit" hidden />
         {existing && (
           <Button
