@@ -13,11 +13,12 @@ itself.
 
 ## What it looks like
 
-The three screens of the demo, on a phone: the trip, what a 45-minute delay puts at risk, and the update ready to send.
+The demo on a phone: the trip is on track, the airline changes a flight, the plan rebuilds
+itself, and the update is ready to send to the person waiting.
 
-| The trip | What is at risk | The update |
-| --- | --- | --- |
-| <img src="docs/screenshots/1-trip.png" width="240" alt="The trip screen: two flights, a hotel and contacts"> | <img src="docs/screenshots/2-at-risk.png" width="240" alt="Flight delayed: the London connection drops from 55 minutes to 10 and is marked Tight"> | <img src="docs/screenshots/3-share.png" width="240" alt="The share screen with a preview of the message and a Copy link button"> |
+| On track | New plan | Share it | What they see |
+| --- | --- | --- | --- |
+| <img src="docs/screenshots/1-on-track.png" width="190" alt="The trip is on time, with a tight 55-minute connection in London flagged"> | <img src="docs/screenshots/2-new-plan.png" width="190" alt="London connection missed: rebooked on AZ 207, with a checklist of what to do"> | <img src="docs/screenshots/3-share.png" width="190" alt="The share screen with a preview of the message and a Copy link button"> | <img src="docs/screenshots/4-recipient.png" width="190" alt="The read-only page the recipient opens: Alex now lands in Rome at 18:00"> |
 
 ## Run it
 
@@ -85,4 +86,4 @@ Four people in a 24-hour hackathon.
 | Namish | Head coder |
 | Boris | Code and logic: the connection, checklist and message |
 | Will Kim | Frontend design: the screens and the look |
-| Sebastian | Presenter: the pitch and the demo |
+| Sebastian | Presenter: the pitch and the demo, and the Solana "Send help" button |
