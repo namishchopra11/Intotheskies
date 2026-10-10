@@ -112,7 +112,7 @@ function stayNode(stay: Stay, arrival: FinalArrival): TimelineNode {
     }
     return {
       ...base,
-      detail: `Front desk open until ${stay.latestCheckIn}. ${formatDuration(spare)} after you land.`,
+      detail: `Front desk open until ${stay.latestCheckIn}. ${formatDuration(spare)} to spare after you land.`,
       state: spare < TIGHT_CONNECTION_MINUTES ? "warn" : "ok",
     };
   }
@@ -134,7 +134,12 @@ export function buildTimeline(trip: Trip, disruptionId: string): TimelineNode[] 
 
   const nodes: TimelineNode[] = [];
   flights.forEach((f, i) => {
-    nodes.push(flightNode(f));
+    const node = flightNode(f);
+    // A flight that still shows its booked time, but can no longer be relied on.
+    if (arrival.unknown && f.id === arrival.flight.id && f.status === "scheduled") {
+      Object.assign(node, { detail: "Not confirmed. Depends on getting a new flight.", state: "warn", time: "–:–", was: timePart(f.arriveAt) });
+    }
+    nodes.push(node);
     const next = flights[i + 1];
     if (next && next.from === f.to) nodes.push(connectionNode(f, next));
   });
