@@ -4,13 +4,39 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Field, Icon, PageHeader, Sheet, cx, type IconName } from "@/components/ui";
 import { newId } from "@/lib/id";
-import { useStoreReady, useTripStore } from "@/lib/store";
+import { useRequireProfile } from "@/components/trip/useRequireProfile";
+import { useTripStore } from "@/lib/store";
 import type { Trip } from "@/lib/types";
 import { FLIGHT, RIDE, STAY, validate, type Draft, type EntryKind } from "./entries";
+import { ImportSheet } from "./ImportSheet";
+
+/** The "fill it in for me" entry point, at the top of the screen. */
+function ImportCard() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mx-4 flex cursor-pointer items-center gap-3.5 rounded-card bg-signal px-4 py-3.5 text-left text-on-signal"
+      >
+        <span aria-hidden="true" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-ink/10">
+          <Icon name="copy" size={20} strokeWidth={2.25} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold">Import from a confirmation</span>
+          <span className="block text-[14px] leading-snug opacity-80">Screenshot, PDF or email. We fill in the details.</span>
+        </span>
+        <Icon name="chevron-right" size={18} />
+      </button>
+      {open && <ImportSheet onClose={() => setOpen(false)} />}
+    </>
+  );
+}
 
 /** Where the traveler types in their own flights, hotels and rides. */
 export default function TripEditPage() {
-  const ready = useStoreReady();
+  const ready = useRequireProfile();
   const trip = useTripStore((s) => s.trip);
 
   return (
@@ -23,44 +49,49 @@ export default function TripEditPage() {
 
 function StartTrip() {
   const startTrip = useTripStore((s) => s.startTrip);
+  const signedInName = useTripStore((s) => s.profile?.name ?? "");
   const [name, setName] = useState("");
-  const [traveler, setTraveler] = useState("");
+  const [traveler, setTraveler] = useState(signedInName);
   const [tried, setTried] = useState(false);
 
   return (
-    <form
-      className="flex flex-1 flex-col gap-4 px-5 pt-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setTried(true);
-        if (name.trim() && traveler.trim()) startTrip({ name, travelerName: traveler });
-      }}
-    >
-      <p className="text-ink-2">
+    <div className="flex flex-1 flex-col">
+      <p className="px-5 pb-4 text-ink-2">
         Add your flights, hotel and rides. When something changes, Layover shows what it affects.
       </p>
-      <Field
-        label="Trip name"
-        placeholder="Rome via London"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        error={tried && !name.trim() ? "Required." : undefined}
-      />
-      <Field
-        label="Your name"
-        placeholder="Alex Morgan"
-        autoComplete="name"
-        value={traveler}
-        onChange={(e) => setTraveler(e.target.value)}
-        error={tried && !traveler.trim() ? "Required." : undefined}
-        hint="Used in the update you send to people waiting for you."
-      />
-      <div className="mt-auto pt-6 pb-[max(env(safe-area-inset-bottom),24px)]">
-        <Button type="submit" variant="primary" size="lg" block chip="arrow-right">
-          Start adding bookings
-        </Button>
-      </div>
-    </form>
+      <ImportCard />
+      <p className="ck-label px-5 pt-7 pb-1">Or type it in</p>
+      <form
+        className="flex flex-1 flex-col gap-4 px-5 pt-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setTried(true);
+          if (name.trim() && traveler.trim()) startTrip({ name, travelerName: traveler });
+        }}
+      >
+        <Field
+          label="Trip name"
+          placeholder="Rome via London"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          error={tried && !name.trim() ? "Required." : undefined}
+        />
+        <Field
+          label="Your name"
+          placeholder="Alex Morgan"
+          autoComplete="name"
+          value={traveler}
+          onChange={(e) => setTraveler(e.target.value)}
+          error={tried && !traveler.trim() ? "Required." : undefined}
+          hint="Used in the update you send to people waiting for you."
+        />
+        <div className="mt-auto pt-6 pb-[max(env(safe-area-inset-bottom),24px)]">
+          <Button type="submit" variant="primary" size="lg" block chip="arrow-right">
+            Start adding bookings
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -80,10 +111,11 @@ function Bookings({ trip }: { trip: Trip }) {
 
   return (
     <div className="flex flex-1 flex-col">
+      <ImportCard />
       <button
         type="button"
         onClick={() => setEditing({ kind: "details" })}
-        className="mx-4 flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left hover:bg-sunk"
+        className="mx-4 mt-3 flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left hover:bg-sunk"
       >
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] font-semibold">{trip.name || "Untitled trip"}</span>

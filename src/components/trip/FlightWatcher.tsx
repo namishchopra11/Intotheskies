@@ -17,13 +17,16 @@ const WATCH_DELAY_MS = 6000;
 export function FlightWatcher() {
   const ready = useStoreReady();
   const hasTrip = useTripStore((s) => Boolean(s.trip));
+  const signedIn = useTripStore((s) => s.profile !== null);
   const disruptions = useTripStore((s) => s.trip?.disruptions.length ?? 0);
   const pathname = usePathname();
   const router = useRouter();
   const [alert, setAlert] = useState<FlightAlertContent | null>(null);
 
-  // The recipient's read-only page never changes anyone's trip.
-  const watching = ready && hasTrip && disruptions === 0 && !pathname.startsWith("/s");
+  // The recipient's read-only page never changes anyone's trip, and nothing happens before
+  // the traveler has signed in.
+  const recipientPage = pathname === "/s" || pathname.startsWith("/s/");
+  const watching = ready && signedIn && hasTrip && disruptions === 0 && !recipientPage && pathname !== "/login";
 
   useEffect(() => {
     if (!watching) return;
@@ -34,6 +37,8 @@ export function FlightWatcher() {
   // Both the timer and the trip menu's "Trigger the change now" arrive here.
   useEffect(() => {
     const onChange = (e: Event) => {
+      // Switched off in Settings: the trip still updates, there's just no alert.
+      if (!useTripStore.getState().settings.notifications) return;
       const change = (e as CustomEvent<FlightAlertContent>).detail;
       setAlert(change);
       notifyDevice(change);

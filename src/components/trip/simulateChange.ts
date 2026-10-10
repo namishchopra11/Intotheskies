@@ -1,6 +1,7 @@
 import { useTripStore } from "@/lib/store";
 import { cityName } from "@/lib/domain/airports";
 import { addMinutes, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
+import type { AutoAction } from "@/lib/types";
 
 /**
  * There is no backend: this plays the part of the airline's live feed. It delays the first
@@ -78,16 +79,28 @@ export function simulateFlightChange(): FlightAlertContent | null {
   const rebooked = useTripStore.getState().trip?.flights.find((f) => f.id === onward.id);
   if (rebooked) upsertFlight({ ...rebooked, seat: undefined });
 
-  const open = useTripStore.getState().trip?.disruptions.find((d) => d.id === id)?.tasks.filter((t) => !t.done).length ?? 0;
+  const disruption = useTripStore.getState().trip?.disruptions.find((d) => d.id === id);
+  const open = disruption?.tasks.filter((t) => !t.done).length ?? 0;
+  const handled = handledLine(disruption?.actions ?? []);
   return {
     disruptionId: id,
     title: "Flight change · new plan ready",
     lines: [
       `${first.flightNumber} is ${formatDuration(late)} late, so you'll miss ${onward.flightNumber} in ${cityName(onward.from)}.`,
       `You're rebooked on ${newNumber}, ${timePart(newDepart)} → ${timePart(newArrive)} to ${cityName(onward.to)}.`,
+      ...(handled ? [handled] : []),
       open > 0 ? `${open} ${open === 1 ? "thing" : "things"} to sort out. Tap to see your plan.` : "Tap to see your plan.",
     ],
   };
+}
+
+/** "Told Hotel X your new arrival and moved your Y pickup to 18:40." from the automatic updates. */
+function handledLine(actions: AutoAction[]): string | null {
+  const titles = actions.filter((a) => a.kind !== "flight" && a.status === "done").map((a) => a.title);
+  if (titles.length === 0) return null;
+  const parts = titles.map((t, i) => (i === 0 ? t : t.charAt(0).toLowerCase() + t.slice(1)));
+  const joined = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+  return `${joined}.`;
 }
 
 /** Fired on window when a change lands, so the watcher can show the notification. */

@@ -3,13 +3,19 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
+import { planAutoUpdates } from "@/lib/domain/autoUpdates";
 import { generateChecklist } from "@/lib/domain/checklist";
 import { computeImpact } from "@/lib/domain/impact";
 import { newId } from "@/lib/id";
 import { normalizeSolanaAddress } from "@/lib/solana/address";
 import { sampleTrip } from "@/lib/sampleTrip";
 import {
+  DEFAULT_SETTINGS,
+  ProfileSchema,
+  SettingsSchema,
   TripSchema,
+  type Profile,
+  type Settings,
   type Contact,
   type Disruption,
   type DisruptionType,
@@ -32,6 +38,16 @@ export type TripState = {
   trip: Trip | null;
   /** Trips put aside with saveAndCloseTrip, most recent first. */
   savedTrips: Trip[];
+  /** Who is signed in on this phone; null = nobody yet (show /login). */
+  profile: Profile | null;
+  settings: Settings;
+
+  /** Demo sign-in: keeps the name and email on this phone. Never pass a password here. */
+  signIn: (profile: Profile) => void;
+  /** Signs out. With `erase`, also deletes the trip and saved trips from this phone. */
+  signOut: (options?: { erase?: boolean }) => void;
+  updateProfile: (changes: Partial<Pick<Profile, "name" | "email">>) => void;
+  updateSettings: (changes: Partial<Settings>) => void;
 
   loadSampleTrip: () => void;
   resetTrip: () => void;
@@ -108,6 +124,20 @@ export const useTripStore = create<TripState>()(
       return {
         trip: null,
         savedTrips: [],
+        profile: null,
+        settings: DEFAULT_SETTINGS,
+
+        signIn: (profile) =>
+          set({ profile: { name: profile.name.trim(), email: profile.email.trim(), guest: profile.guest } }),
+        signOut: ({ erase = false } = {}) =>
+          set(erase ? { profile: null, trip: null, savedTrips: [], settings: DEFAULT_SETTINGS } : { profile: null }),
+        updateProfile: (changes) =>
+          set((state) =>
+            state.profile
+              ? { profile: { ...state.profile, ...changes, guest: false } }
+              : state,
+          ),
+        updateSettings: (changes) => set((state) => ({ settings: { ...state.settings, ...changes } })),
 
         loadSampleTrip: () => set({ trip: structuredClone(sampleTrip) }),
         resetTrip: () => set({ trip: null }),
@@ -202,7 +232,7 @@ export const useTripStore = create<TripState>()(
               arriveAt: flight.arriveAt,
             },
           };
-          const updatedTrip: Trip = {
+          const withFlight: Trip = {
             ...trip,
             flights: trip.flights.map((f) => (f.id === flightId ? updatedFlight : f)),
           };
@@ -213,6 +243,14 @@ export const useTripStore = create<TripState>()(
             flightId,
             createdAt: new Date().toISOString(),
             tasks: [],
+          };
+          // What Layover handles by itself (hotel, pickups) happens first, so the checklist
+          // only lists what is left for the traveler.
+          const plan = planAutoUpdates(withFlight, flightId, disruption.id, get().settings);
+          disruption.actions = plan.actions;
+          const updatedTrip: Trip = {
+            ...withFlight,
+            rides: (withFlight.rides ?? []).map((r) => plan.rides.find((m) => m.id === r.id) ?? r),
           };
           disruption.tasks = generateChecklist(
             updatedTrip,
@@ -254,20 +292,35 @@ export const useTripStore = create<TripState>()(
       storage: createJSONStorage(() =>
         typeof window === "undefined" ? noopStorage : window.localStorage,
       ),
-      partialize: (state) => ({ trip: state.trip, savedTrips: state.savedTrips }),
+      partialize: (state) => ({
+        trip: state.trip,
+        savedTrips: state.savedTrips,
+        profile: state.profile,
+        settings: state.settings,
+      }),
       // Hydration is started by useStoreReady() after mount, so the server render and
       // the first client render both see `trip: null` and never mismatch.
       skipHydration: true,
       // Anything in localStorage that no longer matches the schema is discarded.
       merge: (persisted, current) => {
-        const p = persisted as { trip?: unknown; savedTrips?: unknown } | undefined;
+        const p = persisted as
+          | { trip?: unknown; savedTrips?: unknown; profile?: unknown; settings?: unknown }
+          | undefined;
+        const profile = ProfileSchema.safeParse(p?.profile);
+        const settings = SettingsSchema.safeParse({ ...DEFAULT_SETTINGS, ...(p?.settings as object) });
         const parsed = TripSchema.nullable().safeParse(p?.trip);
         const saved = Array.isArray(p?.savedTrips) ? p.savedTrips : [];
         const savedTrips = saved.flatMap((t) => {
           const r = TripSchema.safeParse(t);
           return r.success ? [r.data] : [];
         });
-        return { ...current, trip: parsed.success ? parsed.data : null, savedTrips };
+        return {
+          ...current,
+          trip: parsed.success ? parsed.data : null,
+          savedTrips,
+          profile: profile.success ? profile.data : null,
+          settings: settings.success ? settings.data : DEFAULT_SETTINGS,
+        };
       },
     },
   ),
