@@ -7,6 +7,10 @@ export type SummaryOptions = {
   includeBookingRefs: boolean; // booking references and hotel confirmation numbers
   includeStays: boolean;
   includeOpenTasks: boolean;
+  // Optional "request funds" add-on. Omitted or null means no request in the link.
+  // amountUsdc is what the traveler typed, e.g. "120" or "85.50"; see normalizeUsdcAmount.
+  // Only takes effect when the trip has a payoutAddress. buildSummary ignores it.
+  fundsRequest?: { amountUsdc: string } | null;
 };
 
 export const DEFAULT_SUMMARY_OPTIONS: SummaryOptions = {

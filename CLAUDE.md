@@ -55,7 +55,8 @@ without the suffix.
 - `Disruption`: id, type (`delay | cancellation | missed_connection | rebooked`),
   flightId, createdAt, tasks, notes?
 - `Trip`: id, name, travelerName, flights, stays, contacts, disruptions, payoutAddress?
-  (a Solana address, unused until a later add-on)
+  (a Solana public key for the optional "request funds" add-on; set it only through
+  `setPayoutAddress`, see below)
 
 Use `newId()` from `src/lib/id.ts` for new ids (works on non-HTTPS phone testing too).
 
@@ -82,6 +83,7 @@ State is `{ trip: Trip | null }`. Actions (get them with
 | `removeStay` | `(stayId: string) => void` |
 | `upsertContact` | `(contact: Contact) => void` |
 | `removeContact` | `(contactId: string) => void` |
+| `setPayoutAddress` | `(address: string) => boolean` (trims; `""` clears; `false` and no change if not a Solana address) |
 | `reportDisruption` | `(flightId, type: DisruptionType, revised?: { airline?, flightNumber?, departAt?, arriveAt? }) => string` |
 | `toggleTask` | `(disruptionId: string, taskId: string) => void` |
 | `addTask` | `(disruptionId: string, title: string, detail?: string) => string` (new task id) |
@@ -136,6 +138,8 @@ buildBriefing(trip: Trip, disruptionId: string): string
 // Two or three short sentences written to be spoken aloud (text-to-speech): what
 // changed, what is at risk, and the first unfinished task. "" if the id is unknown.
 
+// summary.ts also: SummaryOptions.fundsRequest?: { amountUsdc: string } | null  (optional, off by default)
+
 // shareLink.ts
 encodeShare(trip: Trip, disruptionId: string, options: SummaryOptions): string  // URL fragment
 decodeShare(fragment: string): ShareSnapshot | null   // null for anything malformed
@@ -156,6 +160,20 @@ decodeShare(fragment: string): ShareSnapshot | null   // null for anything malfo
   trip name, traveler name, flights, stays, impact, open task titles and the summary text.
 - The checklist is generated once, when the disruption is reported, and stored on the
   disruption. Render `disruption.tasks`; do not call `generateChecklist` from a screen.
+
+## Optional add-on: request funds (Solana Pay, devnet)
+
+The core flow never depends on this. With no `payoutAddress` or no `fundsRequest` option,
+links and pages behave exactly as before, and a malformed `fundsRequest` in a link is
+dropped rather than breaking `/s`.
+
+- `src/lib/solana/config.ts`: `SOLANA_CLUSTER` (the one switch, `"devnet"`), `USDC_MINTS`.
+- `src/lib/solana/address.ts`: `isValidSolanaAddress`, `normalizeSolanaAddress`,
+  `SolanaAddressSchema`. Use these anywhere an address is entered.
+- `src/lib/solana/pay.ts`: `normalizeUsdcAmount`, `buildTransferRequestUrl` (returns a
+  `solana:` transfer request or `null`; never throws).
+- `ShareSnapshot.fundsRequest?: { recipient, amountUsdc, cluster }`.
+- The app only generates a request. No wallet adapter, no keys, no signing, ever.
 
 ## Checklist wording: `src/lib/content/checklistCopy.ts`
 
