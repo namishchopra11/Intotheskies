@@ -30,7 +30,8 @@ function laterFlightNumber(n: string): string {
 export function simulateFlightChange(): FlightAlertContent | null {
   const { trip, upsertFlight, reportDisruption } = useTripStore.getState();
   if (!trip || trip.disruptions.length > 0 || trip.flights.length === 0) return null;
-  const [first, onward] = trip.flights;
+  // Wall-clock strings sort correctly as text; the array order is not guaranteed.
+  const [first, onward] = [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
 
   if (!onward) {
     const late = 90;
@@ -73,6 +74,10 @@ export function simulateFlightChange(): FlightAlertContent | null {
     arriveAt: newArrive,
   });
 
+  // The seat belongs to the booking that was replaced; the new flight has none yet.
+  const rebooked = useTripStore.getState().trip?.flights.find((f) => f.id === onward.id);
+  if (rebooked) upsertFlight({ ...rebooked, seat: undefined });
+
   const open = useTripStore.getState().trip?.disruptions.find((d) => d.id === id)?.tasks.filter((t) => !t.done).length ?? 0;
   return {
     disruptionId: id,
@@ -83,4 +88,16 @@ export function simulateFlightChange(): FlightAlertContent | null {
       open > 0 ? `${open} ${open === 1 ? "thing" : "things"} to sort out. Tap to see your plan.` : "Tap to see your plan.",
     ],
   };
+}
+
+/** Fired on window when a change lands, so the watcher can show the notification. */
+export const FLIGHT_CHANGE_EVENT = "ck:flight-change";
+
+/** Runs the simulation now and tells the watcher. Used by the timer and the trip menu. */
+export function triggerFlightChange(): FlightAlertContent | null {
+  const change = simulateFlightChange();
+  if (change && typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<FlightAlertContent>(FLIGHT_CHANGE_EVENT, { detail: change }));
+  }
+  return change;
 }

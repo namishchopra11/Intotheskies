@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBanner } from "@/components/ui";
 import { useStoreReady, useTripStore } from "@/lib/store";
-import { simulateFlightChange, type FlightAlertContent } from "./simulateChange";
+import { FLIGHT_CHANGE_EVENT, triggerFlightChange, type FlightAlertContent } from "./simulateChange";
 
 // How long after a trip appears before the "airline" pushes the change.
 const WATCH_DELAY_MS = 6000;
@@ -27,14 +27,20 @@ export function FlightWatcher() {
 
   useEffect(() => {
     if (!watching) return;
-    const t = setTimeout(() => {
-      const change = simulateFlightChange();
-      if (!change) return;
-      setAlert(change);
-      notifyDevice(change);
-    }, WATCH_DELAY_MS);
+    const t = setTimeout(triggerFlightChange, WATCH_DELAY_MS);
     return () => clearTimeout(t);
   }, [watching]);
+
+  // Both the timer and the trip menu's "Trigger the change now" arrive here.
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const change = (e as CustomEvent<FlightAlertContent>).detail;
+      setAlert(change);
+      notifyDevice(change);
+    };
+    window.addEventListener(FLIGHT_CHANGE_EVENT, onChange);
+    return () => window.removeEventListener(FLIGHT_CHANGE_EVENT, onChange);
+  }, []);
 
   const dismiss = useCallback(() => setAlert(null), []);
   const open = useCallback(() => {

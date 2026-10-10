@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { triggerFlightChange } from "@/components/trip/simulateChange";
 import { useSpeech } from "@/components/trip/useSpeech";
 import {
   AppHeader,
@@ -18,10 +19,10 @@ import {
 } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
-import { computeImpact, type Impact } from "@/lib/domain/impact";
+import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import { useStoreReady, useTripStore } from "@/lib/store";
-import type { Disruption, Flight, Trip } from "@/lib/types";
+import type { Contact, Disruption, Flight, Stay, Trip } from "@/lib/types";
 
 const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 
@@ -89,9 +90,13 @@ function Status({ trip }: { trip: Trip }) {
         </section>
       )}
 
-      {disruption && impact && <SortingItOut disruption={disruption} impact={impact} />}
+      <SortingItOut disruption={disruption} impact={impact} contacts={trip.contacts} />
 
       <Actions trip={trip} disruption={disruption} />
+
+      <StaysSection stays={trip.stays} delay={520} />
+      <ContactsSection contacts={trip.contacts} delay={600} />
+      <div className="pb-[max(env(safe-area-inset-bottom),26px)]" />
     </>
   );
 }
@@ -189,10 +194,21 @@ function FlightRow({ r }: { r: Row }) {
 
 /* ---------- Checklist ---------- */
 
-function SortingItOut({ disruption, impact }: { disruption: Disruption; impact: Impact }) {
+function SortingItOut({
+  disruption,
+  impact,
+  contacts,
+}: {
+  disruption: Disruption;
+  impact: Impact;
+  contacts: Contact[];
+}) {
   const toggleTask = useTripStore((s) => s.toggleTask);
+  const removeTask = useTripStore((s) => s.removeTask);
   const total = disruption.tasks.length;
   const done = disruption.tasks.filter((t) => t.done).length;
+  // Only a tight connection is "Tight"; a missed or unknown one is simply at risk.
+  const riskLabel = impact.connection?.status === "tight" ? "Tight" : "At risk";
   const risks = impact.affectedStays.map((a) => ({ id: a.stayId, text: a.reason }));
 
   return (
@@ -203,31 +219,88 @@ function SortingItOut({ disruption, impact }: { disruption: Disruption; impact: 
           <li key={r.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2">
             <Icon name="clock" size={20} strokeWidth={2.5} className="text-warn-fg" />
             <span className="flex-1 text-[15px]">{r.text}</span>
-            <span className="text-[13px] font-semibold text-warn-fg">Tight</span>
+            <span className="text-[13px] font-semibold text-warn-fg">{riskLabel}</span>
           </li>
         ))}
-        {disruption.tasks.map((t) => (
-          <li key={t.id} className="border-b border-line">
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={t.done}
-              onClick={() => toggleTask(disruption.id, t.id)}
-              data-done={t.done}
-              className="flex min-h-13 w-full cursor-pointer items-center gap-3 py-2 text-left"
-            >
-              <TaskCircle />
-              <span className="flex-1 text-[15px]">
-                <span className="ck-task-text">{t.title}</span>
-              </span>
-              <span className={cx("ck-task-state text-[13px] font-semibold", t.done ? "text-ok-fg" : "text-ink-2")}>
-                {t.done ? "Done" : "To do"}
-              </span>
-            </button>
-          </li>
-        ))}
+        {disruption.tasks.map((t) => {
+          const contact = t.contactId ? contacts.find((c) => c.id === t.contactId) : undefined;
+          return (
+            <li key={t.id} className="flex items-center gap-1 border-b border-line">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={t.done}
+                onClick={() => toggleTask(disruption.id, t.id)}
+                data-done={t.done}
+                className="flex min-h-13 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left"
+              >
+                <TaskCircle />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
+                  <span className="ck-task-text">{t.title}</span>
+                  {t.detail && <span className="text-[14px] leading-snug text-ink-2">{t.detail}</span>}
+                </span>
+                <span className={cx("ck-task-state text-[13px] font-semibold", t.done ? "text-ok-fg" : "text-ink-2")}>
+                  {t.done ? "Done" : "To do"}
+                </span>
+              </button>
+              {contact?.phone && <CallLink contact={contact} />}
+              {t.source === "custom" && (
+                <button
+                  type="button"
+                  aria-label={`Remove task: ${t.title}`}
+                  onClick={() => removeTask(disruption.id, t.id)}
+                  className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
+                >
+                  <Icon name="x" size={18} />
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ul>
+      <AddTask disruptionId={disruption.id} />
     </section>
+  );
+}
+
+function AddTask({ disruptionId }: { disruptionId: string }) {
+  const addTask = useTripStore((s) => s.addTask);
+  const [title, setTitle] = useState("");
+
+  return (
+    <form
+      className="mt-3 flex gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const text = title.trim();
+        if (!text) return;
+        addTask(disruptionId, text);
+        setTitle("");
+      }}
+    >
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        aria-label="Add your own task"
+        placeholder="Add your own task"
+        enterKeyHint="done"
+        className="min-h-12 min-w-0 flex-1 rounded-control border border-line bg-surface px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-accent focus:ring-2 focus:ring-accent/25"
+      />
+      <Button type="submit" variant="secondary" size="md" icon="plus" disabled={!title.trim()} aria-label="Add task" />
+    </form>
+  );
+}
+
+function CallLink({ contact }: { contact: Contact }) {
+  if (!contact.phone) return null;
+  return (
+    <a
+      href={`tel:${contact.phone.replace(/\s+/g, "")}`}
+      aria-label={`Call ${contact.name}`}
+      className="ck-key ck-key-secondary inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control border-2 border-ink bg-surface text-ink"
+    >
+      <Icon name="phone" size={18} />
+    </a>
   );
 }
 
@@ -254,7 +327,7 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
 
   return (
     <div
-      className="ck-rise mt-auto flex flex-col gap-3.5 px-4 pt-6 pb-[max(env(safe-area-inset-bottom),26px)]"
+      className="ck-rise flex flex-col gap-3.5 px-4 pt-6"
       style={rise(460)}
     >
       <Button href={`/share/${disruption.id}`} variant="primary" size="lg" block chip="arrow-right">
@@ -279,6 +352,7 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
 
 function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
   const count = trip.flights.length;
+  const tight = tightLayover(trip);
   return (
     <>
       <SignalBar
@@ -289,13 +363,17 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
           </span>
         }
       >
-        All flights on time
+        {tight ? "On time · tight connection" : "All flights on time"}
       </SignalBar>
 
       <section className="ck-rise flex flex-col gap-2 px-5 pt-[22px] pb-[18px]" style={rise(100)}>
         <p className="text-[14px] text-ink-2">{eyebrow}</p>
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
-          Your trip is on track. Nothing to do right now.
+          {tight
+            ? tight.gap < 0
+              ? `Flights are on time, but your ${cityName(tight.airport)} connection doesn't leave enough time.`
+              : `Flights are on time, but ${formatDuration(tight.gap)} in ${cityName(tight.airport)} is tight. We're watching it.`
+            : "Your trip is on track. Nothing to do right now."}
         </h1>
       </section>
 
@@ -315,56 +393,8 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         })}
       </section>
 
-      {trip.stays.length > 0 && (
-        <Section title="Where you're staying" delay={340}>
-          {trip.stays.map((s) => (
-            <div key={s.id} className="flex flex-col gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
-              <div>
-                <p className="font-semibold">{s.name}</p>
-                <p className="text-[14px] text-ink-2">{s.address}</p>
-              </div>
-              <dl className="grid grid-cols-2 gap-3">
-                <div>
-                  <dt className="ck-label">Check-in</dt>
-                  <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">
-                    {timePart(s.checkIn)} <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(s.checkIn)}</span>
-                  </dd>
-                </div>
-                {s.latestCheckIn && (
-                  <div>
-                    <dt className="ck-label">Front desk until</dt>
-                    <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">{s.latestCheckIn}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-          ))}
-        </Section>
-      )}
-
-      {trip.contacts.length > 0 && (
-        <Section title="If you need them" delay={420}>
-          <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
-            {trip.contacts.map((c) => (
-              <li key={c.id} className="flex items-center gap-3 py-2 pr-2 pl-4">
-                <span className="min-w-0 flex-1">
-                  <span className="block font-num text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">{c.kind}</span>
-                  <span className="block truncate text-[15px] font-medium">{c.name}</span>
-                </span>
-                {c.phone && (
-                  <a
-                    href={`tel:${c.phone.replace(/\s+/g, "")}`}
-                    aria-label={`Call ${c.name}`}
-                    className="ck-key ck-key-secondary inline-flex h-11 w-11 items-center justify-center rounded-control border-2 border-ink bg-surface text-ink"
-                  >
-                    <Icon name="phone" size={18} />
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
+      <StaysSection stays={trip.stays} delay={340} />
+      <ContactsSection contacts={trip.contacts} delay={420} />
 
       <div className="ck-rise mt-auto px-5 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
         <p className="flex items-start gap-2.5 border-t border-line pt-4 text-[13px] leading-snug text-ink-2">
@@ -375,6 +405,66 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
       </div>
     </>
   );
+}
+
+/* ---------- Stays and contacts (shown in every state) ---------- */
+
+function StaysSection({ stays, delay }: { stays: Stay[]; delay: number }) {
+  if (stays.length === 0) return null;
+  return (
+    <Section title="Where you're staying" delay={delay}>
+      {stays.map((s) => (
+        <div key={s.id} className="flex flex-col gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
+          <div>
+            <p className="font-semibold">{s.name}</p>
+            <p className="text-[14px] text-ink-2">{s.address}</p>
+          </div>
+          <dl className="grid grid-cols-2 gap-3">
+            <div>
+              <dt className="ck-label">Check-in</dt>
+              <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">
+                {timePart(s.checkIn)} <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(s.checkIn)}</span>
+              </dd>
+            </div>
+            {s.latestCheckIn && (
+              <div>
+                <dt className="ck-label">Front desk until</dt>
+                <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">{s.latestCheckIn}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      ))}
+    </Section>
+  );
+}
+
+function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: number }) {
+  if (contacts.length === 0) return null;
+  return (
+    <Section title="If you need them" delay={delay}>
+      <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
+        {contacts.map((c) => (
+          <li key={c.id} className="flex items-center gap-3 py-2 pr-2 pl-4">
+            <span className="min-w-0 flex-1">
+              <span className="block font-num text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">{c.kind}</span>
+              <span className="block truncate text-[15px] font-medium">{c.name}</span>
+            </span>
+            <CallLink contact={c} />
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+/** The first layover that is already short or negative as booked, measured at its one airport. */
+function tightLayover(trip: Trip): { gap: number; airport: string } | null {
+  for (let i = 0; i + 1 < trip.flights.length; i++) {
+    const gap = minutesBetween(trip.flights[i].arriveAt, trip.flights[i + 1].departAt);
+    if (gap < TIGHT_CONNECTION_MINUTES) return { gap, airport: trip.flights[i + 1].from };
+  }
+  return null;
 }
 
 /** The layover between two flights, measured at the one airport they share. */
@@ -463,6 +553,7 @@ function NoTrip() {
 function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => void; hasTrip: boolean }) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
+  const pristine = useTripStore((s) => Boolean(s.trip && s.trip.disruptions.length === 0));
   const [alerts, setAlerts] = useState<NotificationPermission | "unsupported">("unsupported");
 
   useEffect(() => {
@@ -486,6 +577,18 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
               onClick={async () => setAlerts(await Notification.requestPermission())}
             >
               Allow phone notifications
+            </Button>
+          )}
+          {pristine && (
+            <Button
+              variant="secondary"
+              block
+              onClick={() => {
+                triggerFlightChange();
+                onClose();
+              }}
+            >
+              Trigger the change now
             </Button>
           )}
           <Button
