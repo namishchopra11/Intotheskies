@@ -1,29 +1,16 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
+import { themeScript } from "@/components/ui/theme";
+const publicSans = localFont({ src: "../../public/fonts/PublicSans.ttf", variable: "--font-public-sans", display: "swap", weight: "100 900" });
 export const metadata: Metadata = {
-  title: "ConnectionKeeper",
-  description: "Your trip, next steps and contacts in one place when a flight changes.",
+ title: { default: "ConnectionKeeper", template: "%s · ConnectionKeeper" },
+ description: "A calmer way to keep your trip, next steps and people together when a flight changes.",
+ applicationName: "ConnectionKeeper", formatDetection: { telephone: false }, manifest: "/manifest.webmanifest",
+ appleWebApp: { capable: true, title: "ConnectionKeeper", statusBarStyle: "default" },
+ icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
 };
-
-export default function RootLayout({ children }: LayoutProps<"/">) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
-  );
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f6f5ef", colorScheme: "light" };
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+ return <html lang="en" className={publicSans.variable} suppressHydrationWarning><body><script dangerouslySetInnerHTML={{ __html: themeScript }} /><div className="mx-auto min-h-dvh w-full max-w-[440px]">{children}</div></body></html>;
 }
