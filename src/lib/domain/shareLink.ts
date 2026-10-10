@@ -8,6 +8,9 @@ import {
   ClockTimeSchema,
   type Trip,
 } from "@/lib/types";
+import { SolanaAddressSchema } from "@/lib/solana/address";
+import { SOLANA_CLUSTER, SolanaClusterSchema } from "@/lib/solana/config";
+import { normalizeUsdcAmount, UsdcAmountSchema } from "@/lib/solana/pay";
 import { computeImpact, ImpactSchema } from "./impact";
 import { buildSummary, type SummaryOptions } from "./summary";
 
@@ -51,6 +54,17 @@ export const ShareSnapshotSchema = z.object({
   impact: ImpactSchema, // affectedStays is empty unless includeStays
   openTasks: z.array(z.string()), // titles of unfinished tasks; empty unless includeOpenTasks
   summary: z.string(), // the same text buildSummary returns
+  // Present only when the traveler asked for funds and the trip has a payoutAddress.
+  // Optional, so links made without it still decode; if it is malformed it is dropped
+  // and the rest of the update still shows.
+  fundsRequest: z
+    .object({
+      recipient: SolanaAddressSchema,
+      amountUsdc: UsdcAmountSchema, // canonical, e.g. "85.5"
+      cluster: SolanaClusterSchema, // the cluster the link was made for, not the reader's
+    })
+    .optional()
+    .catch(undefined),
 });
 export type ShareSnapshot = z.infer<typeof ShareSnapshotSchema>;
 
@@ -59,6 +73,9 @@ export function encodeShare(trip: Trip, disruptionId: string, options: SummaryOp
   const disruption = trip.disruptions.find((d) => d.id === disruptionId);
   if (!disruption) return "";
   const impact = computeImpact(trip, disruption.flightId);
+  const fundsAmount = options.fundsRequest
+    ? normalizeUsdcAmount(options.fundsRequest.amountUsdc)
+    : null;
   const snapshot: ShareSnapshot = {
     v: 1,
     tripName: trip.name,
@@ -96,6 +113,15 @@ export function encodeShare(trip: Trip, disruptionId: string, options: SummaryOp
       ? disruption.tasks.filter((t) => !t.done).map((t) => t.title)
       : [],
     summary: buildSummary(trip, disruptionId, options),
+    ...(fundsAmount && trip.payoutAddress
+      ? {
+          fundsRequest: {
+            recipient: trip.payoutAddress,
+            amountUsdc: fundsAmount,
+            cluster: SOLANA_CLUSTER,
+          },
+        }
+      : {}),
   };
   // lz-string's alphabet includes "+" and "$", which some messaging apps mangle in links.
   return compressToEncodedURIComponent(JSON.stringify(snapshot))

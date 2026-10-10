@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SolanaAddressSchema } from "@/lib/solana/address";
 
 // All times are local wall-clock strings with no timezone, e.g. "2026-10-17T10:35".
 // Only ever compare two times that are at the same airport or in the same city.
@@ -98,6 +99,9 @@ export const TripSchema = z.object({
   stays: z.array(StaySchema),
   contacts: z.array(ContactSchema),
   disruptions: z.array(DisruptionSchema),
-  payoutAddress: z.string().optional(), // a Solana address; unused until a later add-on
+  // Where a "request funds" link asks contacts to send USDC. Set it with the store's
+  // setPayoutAddress, which rejects anything that is not a Solana public key. A stored
+  // value that fails validation is dropped on load rather than discarding the trip.
+  payoutAddress: SolanaAddressSchema.optional().catch(undefined),
 });
 export type Trip = z.infer<typeof TripSchema>;
