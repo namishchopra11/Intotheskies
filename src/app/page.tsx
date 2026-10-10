@@ -8,6 +8,7 @@ import {
   Badge,
   Button,
   CONNECTION_BADGE,
+  Field,
   Icon,
   ProgressBar,
   Sheet,
@@ -568,6 +569,7 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
           <span className="ck-label">Appearance</span>
           <ThemeToggle />
         </div>
+        {hasTrip && <PayoutAddress />}
         <div className="flex flex-col gap-3">
           {alerts === "default" && (
             <Button
@@ -622,6 +624,43 @@ function TripMenu({ open, onClose, hasTrip }: { open: boolean; onClose: () => vo
         )}
       </div>
     </Sheet>
+  );
+}
+
+/** Where an optional "Send help" request on a shared update pays out. Empty clears it. */
+function PayoutAddress() {
+  const saved = useTripStore((s) => s.trip?.payoutAddress);
+  const setPayoutAddress = useTripStore((s) => s.setPayoutAddress);
+  const [value, setValue] = useState(saved ?? "");
+  const [error, setError] = useState<string>();
+  const dirty = value.trim() !== (saved ?? "");
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (setPayoutAddress(value)) setValue(value.trim());
+        else setError("That doesn't look like a Solana address. Check it and try again.");
+      }}
+    >
+      <Field
+        label="Solana address (optional)"
+        hint="Lets people you share an update with send you USDC. It stays on this device until you add a Send help button to a shared link."
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value);
+          setError(undefined);
+        }}
+        error={error}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        placeholder="Your wallet's public address"
+      />
+      <Button type="submit" variant="secondary" block disabled={!dirty} icon={!dirty && saved ? "check" : undefined}>
+        {!dirty && saved ? "Saved" : saved && value.trim() === "" ? "Remove address" : "Save address"}
+      </Button>
+    </form>
   );
 }
 
