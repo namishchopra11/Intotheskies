@@ -74,5 +74,9 @@ export const sampleTrip: Trip = {
       notes: "Front desk closes at 22:00. Call ahead for a late arrival.",
     },
   ],
+  people: [
+    { id: "person-marco", name: "Marco", role: "pickup", phone: "+39 06 5550 0199" },
+    { id: "person-mum", name: "Mum", role: "family", phone: "+44 20 7946 0456" },
+  ],
   disruptions: [],
 };

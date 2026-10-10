@@ -74,4 +74,33 @@ describe("simulateFlightChange", () => {
     expect(simulateFlightChange()).toBeNull();
     expect(current().disruptions).toHaveLength(0);
   });
+
+  it("45-minute delay: first flight 45 minutes late, connection tight, onward flight untouched", () => {
+    load(sampleTrip);
+    simulateFlightChange("delay45");
+    const [first, onward] = current().flights;
+    expect(first.arriveAt).toBe("2026-10-17T11:20");
+    expect(first.status).toBe("delayed");
+    expect(onward.status).toBe("scheduled");
+    expect(current().disruptions[0].type).toBe("delay");
+  });
+
+  it("3-hour delay: lands after the onward departure with no rebooking", () => {
+    load(sampleTrip);
+    simulateFlightChange("delay180");
+    const [first, onward] = current().flights;
+    expect(first.arriveAt).toBe("2026-10-17T13:35");
+    expect(onward.status).toBe("scheduled");
+    expect(current().disruptions[0].tasks.some((t) => t.id.endsWith(":rebook_onward"))).toBe(true);
+  });
+
+  it("cancelled: the first flight is cancelled with its times unchanged", () => {
+    load(sampleTrip);
+    const change = simulateFlightChange("cancelled");
+    const [first] = current().flights;
+    expect(change?.title).toBe("BA 286 is cancelled");
+    expect(first.status).toBe("cancelled");
+    expect(first.arriveAt).toBe("2026-10-17T10:35");
+    expect(current().disruptions[0].type).toBe("cancellation");
+  });
 });

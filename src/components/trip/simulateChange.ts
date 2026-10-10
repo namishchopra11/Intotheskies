@@ -27,14 +27,35 @@ function laterFlightNumber(n: string): string {
   return m ? `${m[1]}${Number(m[2]) + 6}` : `${n}A`;
 }
 
-export function simulateFlightChange(): FlightAlertContent | null {
+export type Scenario = "delay45" | "delay180" | "missed" | "cancelled";
+
+export const SCENARIOS: { id: Scenario; label: string; hint: string }[] = [
+  { id: "delay45", label: "45-minute delay", hint: "Connection gets tight" },
+  { id: "delay180", label: "3-hour delay", hint: "You'll miss your connection" },
+  { id: "missed", label: "Missed connection", hint: "Rebooked on a later flight" },
+  { id: "cancelled", label: "Cancelled flight", hint: "No new flight yet" },
+];
+
+export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlertContent | null {
   const { trip, upsertFlight, reportDisruption } = useTripStore.getState();
   if (!trip || trip.disruptions.length > 0 || trip.flights.length === 0) return null;
   // Wall-clock strings sort correctly as text; the array order is not guaranteed.
   const [first, onward] = [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
 
-  if (!onward) {
-    const late = 90;
+  if (scenario === "cancelled") {
+    const id = reportDisruption(first.id, "cancellation");
+    return {
+      disruptionId: id,
+      title: `${first.flightNumber} is cancelled`,
+      lines: [
+        `${first.flightNumber} to ${cityName(first.to)} was cancelled and there's no new flight yet.`,
+        "Your checklist is ready. Tap to see what to do first.",
+      ],
+    };
+  }
+
+  if (scenario !== "missed" || !onward) {
+    const late = scenario === "delay45" ? 45 : scenario === "delay180" ? 180 : 90;
     const id = reportDisruption(first.id, "delay", {
       departAt: addMinutes(first.departAt, late),
       arriveAt: addMinutes(first.arriveAt, late),
@@ -93,9 +114,9 @@ export function simulateFlightChange(): FlightAlertContent | null {
 /** Fired on window when a change lands, so the watcher can show the notification. */
 export const FLIGHT_CHANGE_EVENT = "ck:flight-change";
 
-/** Runs the simulation now and tells the watcher. Used by the timer and the trip menu. */
-export function triggerFlightChange(): FlightAlertContent | null {
-  const change = simulateFlightChange();
+/** Runs the simulation now and tells the watcher. Used by the timer and the scenario sheet. */
+export function triggerFlightChange(scenario?: Scenario): FlightAlertContent | null {
+  const change = simulateFlightChange(scenario);
   if (change && typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<FlightAlertContent>(FLIGHT_CHANGE_EVENT, { detail: change }));
   }

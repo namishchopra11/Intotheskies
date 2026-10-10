@@ -27,11 +27,11 @@ export function FlightWatcher() {
 
   useEffect(() => {
     if (!watching) return;
-    const t = setTimeout(triggerFlightChange, WATCH_DELAY_MS);
+    const t = setTimeout(() => triggerFlightChange(), WATCH_DELAY_MS);
     return () => clearTimeout(t);
   }, [watching]);
 
-  // Both the timer and the trip menu's "Trigger the change now" arrive here.
+  // Both the timer and the scenario sheet arrive here.
   useEffect(() => {
     const onChange = (e: Event) => {
       const change = (e as CustomEvent<FlightAlertContent>).detail;

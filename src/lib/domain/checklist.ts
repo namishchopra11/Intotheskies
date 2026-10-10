@@ -79,7 +79,7 @@ function baseVarsFor(flight: Flight | undefined, onward: Flight | undefined, ins
 }
 
 /** Generated task ids are `${disruptionId}:${copyKey}`, plus `:${stayId}` for hotel tasks. */
-const taskId = (disruptionId: string, key: ChecklistCopyKey, idSuffix = "") => `${disruptionId}:${key}${idSuffix}`;
+export const taskId = (disruptionId: string, key: ChecklistCopyKey, idSuffix = "") => `${disruptionId}:${key}${idSuffix}`;
 
 /** The id of the "send an update" task, so the share screen can tick it off. */
 export const sendUpdateTaskId = (disruptionId: string) => taskId(disruptionId, "send_update");

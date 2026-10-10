@@ -73,6 +73,14 @@ export const TaskSchema = z.object({
 });
 export type Task = z.infer<typeof TaskSchema>;
 
+export const PersonSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: z.enum(["pickup", "family", "other"]),
+  phone: z.string().optional(),
+});
+export type Person = z.infer<typeof PersonSchema>;
+
 export const DisruptionTypeSchema = z.enum([
   "delay",
   "cancellation",
@@ -99,6 +107,8 @@ export const TripSchema = z.object({
   stays: z.array(StaySchema),
   contacts: z.array(ContactSchema),
   disruptions: z.array(DisruptionSchema),
+  // People waiting on the traveler. Optional so trips saved before this existed still load.
+  people: z.array(PersonSchema).optional().catch(undefined),
   // Where a "request funds" link asks contacts to send USDC. Set it with the store's
   // setPayoutAddress, which rejects anything that is not a Solana public key. A stored
   // value that fails validation is dropped on load rather than discarding the trip.
