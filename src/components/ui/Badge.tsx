@@ -4,7 +4,7 @@ import { cx } from "./cx";
 import { Icon, type IconName } from "./Icon";
 
 /**
- * ok = on time · warn = delayed or tight · bad = cancelled or missed · done = resolved.
+ * ok = on time · warn = delayed or tight · bad = cancelled or missed · done = rebooked or sorted.
  * Each tone has its own icon so the state reads without colour.
  */
 export type Tone = "ok" | "warn" | "bad" | "done" | "neutral";
@@ -12,8 +12,8 @@ export type Tone = "ok" | "warn" | "bad" | "done" | "neutral";
 const TONES: Record<Tone, { className: string; icon: IconName | null }> = {
   ok: { className: "bg-ok-bg text-ok-fg", icon: "circle-check" },
   warn: { className: "bg-warn-bg text-warn-fg", icon: "clock" },
-  bad: { className: "bg-bad-bg text-bad-fg", icon: "circle-x" },
-  done: { className: "bg-done-bg text-done-fg", icon: "checks" },
+  bad: { className: "bg-bad-bg text-bad-fg", icon: "x" },
+  done: { className: "bg-done-bg text-done-fg", icon: "check" },
   neutral: { className: "bg-sunk text-ink-2", icon: null },
 };
 
@@ -40,13 +40,13 @@ export function Badge({ tone = "neutral", children, icon, size = "sm", className
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-lg font-semibold",
-        size === "sm" ? "px-2 py-0.5 text-[13px]" : "px-2.5 py-1 text-[15px]",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-badge font-semibold",
+        size === "sm" ? "h-[26px] pr-2.5 pl-2 text-[13px]" : "h-8 pr-3 pl-2.5 text-[15px]",
         t.className,
         className,
       )}
     >
-      {iconName && <Icon name={iconName} size={size === "sm" ? 15 : 17} strokeWidth={2} />}
+      {iconName && <Icon name={iconName} size={size === "sm" ? 14 : 16} strokeWidth={2.5} />}
       {children}
     </span>
   );

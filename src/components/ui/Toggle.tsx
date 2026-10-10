@@ -35,24 +35,17 @@ export function Toggle({ checked, onChange, label, description, disabled, classN
           {label}
         </span>
         {description && (
-          <span id={`${id}-d`} className="mt-0.5 block text-[14px] leading-snug text-ink-3">
+          <span id={`${id}-d`} className="mt-0.5 block text-[13px] leading-snug text-ink-2">
             {description}
           </span>
         )}
       </span>
       <span
         aria-hidden="true"
-        className={cx(
-          "relative inline-flex h-8 w-[52px] shrink-0 items-center rounded-full border transition-colors",
-          checked ? "border-accent bg-accent" : "border-line-strong bg-sunk",
-        )}
+        data-on={checked}
+        className="ck-switch inline-flex h-8 w-[52px] shrink-0 items-center rounded-full p-[3px]"
       >
-        <span
-          className={cx(
-            "absolute h-6 w-6 rounded-full shadow-sm transition-[left] duration-150",
-            checked ? "left-[23px] bg-on-accent" : "left-[3px] bg-surface",
-          )}
-        />
+        <span className="h-[26px] w-[26px] rounded-full" />
       </span>
     </button>
   );

@@ -1,4 +1,4 @@
-// Theme preference: "light" (Wayfinding), "dark" (Night terminal), or "system" (follow the phone).
+// Theme preference: "light", "dark" (both Wayfinding), or "system" (follow the phone).
 // The resolved theme lives on <html data-theme="light|dark">; globals.css reads it.
 
 export type ThemePreference = "light" | "dark" | "system";
@@ -6,7 +6,7 @@ export type ThemePreference = "light" | "dark" | "system";
 export const THEME_STORAGE_KEY = "ck-theme";
 
 // Browser status-bar colour per theme; matches --bg in globals.css.
-export const THEME_COLORS = { light: "#f4f2ed", dark: "#0f1318" } as const;
+export const THEME_COLORS = { light: "#f0f0ec", dark: "#121311" } as const;
 
 // Runs before first paint (inlined in layout.tsx) so a dark phone never flashes light.
 // Also exposes window.__ckApplyTheme for ThemeToggle, and follows the phone while on "system".

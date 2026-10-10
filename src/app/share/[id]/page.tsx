@@ -4,19 +4,27 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { Button, Card, Icon, PageHeader, Toggle, cx } from "@/components/ui";
 import { encodeShare } from "@/lib/domain/shareLink";
-import { buildSummary, DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
+import { DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import { ShareSkeleton } from "../ShareSkeleton";
 import { copyText } from "./copyText";
+import { buildMessage, messageText } from "./message";
 
-type Done = "shared" | "text" | "link" | "error";
+type Done = "shared" | "both" | "text" | "link" | "error";
 
-const CONFIRM: Record<Done, string> = {
-  shared: "Update shared",
+// Read out by screen readers; the buttons themselves show the confirmation.
+const ANNOUNCE: Record<Done, string> = {
+  shared: "Update shared.",
+  both: "Message and link copied. Paste them into any chat.",
   text: "Message copied. Paste it into any chat.",
   link: "Link copied. Paste it into any chat.",
   error: "Couldn't copy on this device. Press and hold the message to copy it.",
 };
+
+function clockNow() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 export default function SharePage() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +32,7 @@ export default function SharePage() {
   const trip = useTripStore((s) => s.trip);
   const [options, setOptions] = useState<SummaryOptions>(DEFAULT_SUMMARY_OPTIONS);
   const [done, setDone] = useState<Done | null>(null);
+  const [openedAt] = useState(clockNow);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -31,22 +40,23 @@ export default function SharePage() {
   }, []);
 
   const disruption = trip?.disruptions.find((d) => d.id === id);
-  const summary = useMemo(
-    () => (trip && disruption ? buildSummary(trip, disruption.id, options) : ""),
+  const lines = useMemo(
+    () => (trip && disruption ? buildMessage(trip, disruption.id, options) : []),
     [trip, disruption, options],
   );
+  const message = messageText(lines);
 
   if (!ready) return <ShareSkeleton />;
 
   if (!trip || !disruption) {
     return (
       <main className="flex flex-1 flex-col">
-        <PageHeader title="Nothing to share yet" back={{ href: "/", label: "Your trip" }} />
-        <div className="px-4">
+        <PageHeader variant="bar" title="Nothing to share yet" back={{ href: "/", label: "Back to trip" }} />
+        <div className="px-4 pt-2">
           <Card className="text-ink-2">
             This update isn&apos;t on this phone. Report what changed on your trip first, then
             share it from there.
-            <Button href="/" variant="primary" block className="mt-4">
+            <Button href="/" variant="primary" block chip="arrow-right" className="mt-4">
               Go to your trip
             </Button>
           </Card>
@@ -61,130 +71,97 @@ export default function SharePage() {
   const confirm = (d: Done) => {
     setDone(d);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setDone(null), 2600);
+    timer.current = setTimeout(() => setDone(null), 1800);
   };
-  const set = (key: keyof SummaryOptions) => (value: boolean) => {
-    setOptions((o) => ({ ...o, [key]: value }));
-    setDone(null);
-  };
+  const set = (key: keyof SummaryOptions) => (value: boolean) => setOptions((o) => ({ ...o, [key]: value }));
 
   const onShare = async () => {
+    if (!canShare) {
+      confirm((await copyText(`${message}\n\n${link()}`)) ? "both" : "error");
+      return;
+    }
     try {
-      await navigator.share({ title: `Update from ${trip.travelerName}`, text: summary, url: link() });
+      await navigator.share({ title: `Update from ${trip.travelerName}`, text: message, url: link() });
       confirm("shared");
     } catch (e) {
       // Closing the share sheet is not an error.
-      if ((e as Error)?.name !== "AbortError") confirm((await copyText(summary)) ? "text" : "error");
+      if ((e as Error)?.name !== "AbortError") confirm((await copyText(message)) ? "text" : "error");
     }
   };
-  const onCopyText = async () => confirm((await copyText(summary)) ? "text" : "error");
+  const onCopyText = async () => confirm((await copyText(message)) ? "text" : "error");
   const onCopyLink = async () => confirm((await copyText(link())) ? "link" : "error");
 
+  const mainDone = done === "shared" || done === "both";
+
   return (
-    <main className="flex flex-1 flex-col">
-      <PageHeader
-        eyebrow={trip.name}
-        title="Share an update"
-        back={{ href: `/disruption/${disruption.id}`, label: "Back" }}
-      >
-        Let the people waiting for you know what changed.
-      </PageHeader>
+    <main className="ck-screen-in flex flex-1 flex-col">
+      <PageHeader variant="bar" title="Share the new plan" back={{ href: "/", label: "Back to trip" }} />
 
-      <div className="flex flex-1 flex-col gap-5 px-4 pb-6">
-        <section aria-labelledby="preview-h">
-          <h2 id="preview-h" className="mb-2 text-[14px] font-semibold text-ink-3">
-            Preview
-          </h2>
-          <div className="rounded-card bg-sunk px-3 py-4">
-            <div className="ml-auto w-fit max-w-[92%] rounded-[20px] rounded-br-md border border-line bg-surface px-4 py-3 shadow-sm">
-              <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap text-ink">
-                {summary}
-              </p>
-            </div>
-            <p className="mt-2 flex items-center justify-end gap-1 pr-1 text-[13px] text-ink-3">
-              <Icon name="link" size={14} />
-              Share also adds a link to the full update
-            </p>
-          </div>
-        </section>
-
-        <section aria-labelledby="include-h">
-          <h2 id="include-h" className="mb-2 text-[14px] font-semibold text-ink-3">
-            Include
-          </h2>
-          <Card className="divide-y divide-line py-1">
-            <Toggle
-              checked={options.includeBookingRefs}
-              onChange={set("includeBookingRefs")}
-              label="Booking references"
-              description="Off is safer. Anyone with these can change or cancel your booking."
-            />
-            <Toggle
-              checked={options.includeStays}
-              onChange={set("includeStays")}
-              label="Hotel details"
-              description="Where you're staying and when you'll check in."
-            />
-            <Toggle
-              checked={options.includeOpenTasks}
-              onChange={set("includeOpenTasks")}
-              label="What's still unresolved"
-              description="Things on your checklist you haven't sorted yet."
-            />
-          </Card>
-          {options.includeBookingRefs && (
-            <p className="mt-2 flex items-start gap-2 rounded-control bg-warn-bg px-3 py-2.5 text-[14px] text-warn-fg">
-              <Icon name="lock" size={18} className="mt-px" />
-              Only send booking references to people you trust.
-            </p>
-          )}
-        </section>
-
-        <p className="flex items-start gap-2.5 text-[14px] leading-snug text-ink-2">
-          <Icon name="clock" size={18} className="mt-px text-ink-3" />
-          <span>
-            The link is a snapshot of right now. It won&apos;t update on its own, so share a new
-            one if your plans change again.
-          </span>
-        </p>
-      </div>
-
-      <div className="sticky bottom-0 z-10 border-t border-line bg-bg px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)]">
-        <p
-          role="status"
+      <section aria-label="Message preview" className="flex flex-col gap-2 px-4 pt-2">
+        <span className="ck-label px-1">Preview</span>
+        <div
           aria-live="polite"
-          className={cx(
-            "pointer-events-none absolute inset-x-4 bottom-full mb-2 flex justify-center transition-[opacity,transform] duration-200",
-            done ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-          )}
+          className="ck-rise flex max-w-[320px] flex-col gap-2 self-end rounded-[16px] rounded-br-[4px] bg-bubble px-4 py-3.5 text-[15px] leading-[1.45] text-on-bubble"
+          style={{ animationDelay: "80ms" }}
         >
-          {done && (
-            <span
-              className={cx(
-                "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[14px] font-medium shadow-md",
-                done === "error" ? "bg-bad-bg text-bad-fg" : "bg-ok-bg text-ok-fg",
-              )}
-            >
-              <Icon name={done === "error" ? "circle-x" : "circle-check"} size={16} strokeWidth={2} />
-              {CONFIRM[done]}
-            </span>
-          )}
+          {lines.map((line) => (
+            <div key={line.key} className="ck-line" data-off={!line.on} aria-hidden={!line.on || undefined}>
+              <p className={cx("break-words", line.mono && "font-num text-[14px]")}>{line.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-label="What to include" className="mx-4 mt-[22px]">
+        <Card padding="none" className="divide-y divide-line-soft px-4">
+          <Toggle
+            checked={options.includeBookingRefs}
+            onChange={set("includeBookingRefs")}
+            label="Booking references"
+            description="Off by default. Anyone with these can change your booking."
+          />
+          <Toggle checked={options.includeStays} onChange={set("includeStays")} label="Hotel details" />
+          <Toggle
+            checked={options.includeOpenTasks}
+            onChange={set("includeOpenTasks")}
+            label="What's still unresolved"
+          />
+        </Card>
+      </section>
+
+      <div className="mt-auto flex flex-col gap-3 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),26px)]">
+        <p className="mx-1 mb-1.5 flex items-start gap-2 text-[13px] leading-[1.4] text-ink-2">
+          <Icon name="circle-alert" size={16} className="mt-px" />
+          The link is a snapshot from {openedAt}. It won&apos;t update on its own.
         </p>
-        {canShare && (
-          <Button variant="primary" block icon={done === "shared" ? "check" : "share"} onClick={onShare}>
-            {done === "shared" ? "Shared" : "Share"}
-          </Button>
+        <p role="status" aria-live="polite" className="sr-only">
+          {done ? ANNOUNCE[done] : ""}
+        </p>
+        {done === "error" && (
+          <p className="ck-rise flex items-start gap-2 rounded-card bg-bad-bg px-3 py-2.5 text-[14px] text-bad-fg">
+            <Icon name="circle-x" size={18} className="mt-px" />
+            {ANNOUNCE.error}
+          </p>
         )}
-        <div className={cx("grid grid-cols-2 gap-2", canShare && "mt-2")}>
+        <Button variant="primary" size="lg" block chip={mainDone ? "check" : "share"} onClick={onShare}>
+          {done === "shared" ? "Shared" : done === "both" ? "Copied" : "Share"}
+        </Button>
+        <div className="grid grid-cols-2 gap-3 pt-1">
           <Button
-            variant={canShare ? "secondary" : "primary"}
+            variant={done === "text" ? "success" : "secondary"}
             icon={done === "text" ? "check" : "copy"}
+            drawIcon={done === "text"}
             onClick={onCopyText}
           >
-            {done === "text" ? "Copied" : "Copy text"}
+            {done === "text" ? "Text copied" : "Copy text"}
           </Button>
-          <Button icon={done === "link" ? "check" : "link"} onClick={onCopyLink}>
-            {done === "link" ? "Copied" : "Copy link"}
+          <Button
+            variant={done === "link" ? "success" : "secondary"}
+            icon={done === "link" ? "check" : "link"}
+            drawIcon={done === "link"}
+            onClick={onCopyLink}
+          >
+            {done === "link" ? "Link copied" : "Copy link"}
           </Button>
         </div>
       </div>

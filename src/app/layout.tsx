@@ -1,22 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Suspense } from "react";
+import { FlightWatcher } from "@/components/trip/FlightWatcher";
 import { THEME_COLORS, themeScript } from "@/components/ui/theme";
 import "./globals.css";
 
-// Light theme (Wayfinding)
-const plexSans = IBM_Plex_Sans({ variable: "--font-plex-sans", subsets: ["latin"] });
+// Wayfinding: Plex Sans for words, Plex Mono for times and flight numbers. Both themes.
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   subsets: ["latin"],
-  weight: ["500", "600"],
-  preload: false,
-});
-
-// Dark theme (Night terminal)
-const atkinson = Atkinson_Hyperlegible_Next({
-  variable: "--font-atkinson",
-  subsets: ["latin"],
-  adjustFontFallback: false,
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -45,7 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${plexSans.variable} ${plexMono.variable} ${atkinson.variable} h-full antialiased`}
+      className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
@@ -55,6 +53,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col pb-[env(safe-area-inset-bottom)]">
           {children}
         </div>
+        {/* Reads the URL, so it streams in after the static shell. */}
+        <Suspense fallback={null}>
+          <FlightWatcher />
+        </Suspense>
       </body>
     </html>
   );

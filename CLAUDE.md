@@ -167,8 +167,7 @@ Make no claims about legal rights or compensation amounts anywhere in the app.
 
 | Route | What it is |
 | --- | --- |
-| `/` | The trip: flights, stays, contacts |
-| `/disruption/new` | Report what changed |
+| `/` | Trip status: flights, what changed, the checklist, share and listen |
 | `/disruption/[id]` | Before/after, downstream risks, checklist |
 | `/share/[id]` | Build and copy the update for people waiting |
 | `/s` | Read-only shared update, data in the URL fragment |
@@ -178,7 +177,12 @@ Make no claims about legal rights or compensation amounts anywhere in the app.
 | Area | Files |
 | --- | --- |
 | Foundation and logic | `src/lib/**` except `sampleTrip.ts` and `content/`, `src/app/disruption/[id]/**` |
-| Screens | `src/app/page.tsx`, `src/app/disruption/new/**`, `src/components/trip/**` |
+| Screens | `src/app/page.tsx`, `src/components/trip/**` |
+
+There is no "report a change" screen: changes arrive on their own. With no backend,
+`src/components/trip/FlightWatcher.tsx` (mounted in the root layout) simulates the airline's
+feed a few seconds after a trip with no disruptions loads: it calls `reportDisruption` and
+shows a notification. "Restart the demo trip" in the home menu replays it.
 | Design | `src/app/layout.tsx`, `src/app/globals.css`, `src/components/ui/**`, `src/app/share/**`, `src/app/s/**`, `public/**` |
 | Content | `src/lib/sampleTrip.ts`, `src/lib/content/**`, `docs/**`, `README.md` |
 

@@ -1,51 +1,78 @@
 @import "tailwindcss";
 
 /*
-  ConnectionKeeper design tokens.
+  ConnectionKeeper design tokens: "Wayfinding".
 
-  Light = "Wayfinding": airport signage. Warm paper, black ink, sign-yellow used sparingly.
-  Dark  = "Night terminal": low glare for dim gates and OLED battery.
+  Airport signage. Light is warm grey paper, near-black ink and sign-yellow used sparingly.
+  Dark is the same system at night: charcoal ground, the yellow becomes the main action.
+  Both themes use IBM Plex Sans for words and IBM Plex Mono for times and flight numbers.
 
   The theme is chosen by data-theme on <html> ("light" | "dark"), set before first paint
   by the script in layout.tsx. Without JS it follows the phone's setting.
 
-  Status colours are from the Okabe-Ito colour-blind-safe palette, and every status is
-  always paired with its own icon and a word, so colour is never the only signal:
+  Every status is always paired with its own icon and a word, so colour is never the only
+  signal, and the tones also differ in lightness:
     ok    on time            check in a circle
     warn  delayed or tight   clock
-    bad   cancelled, missed  cross in a circle
-    done  resolved           double check
+    bad   cancelled, missed  cross
+    done  rebooked, sorted   check
 */
 
 :root {
   color-scheme: light;
 
-  --bg: #f4f2ed;
+  --bg: #f0f0ec;
   --surface: #ffffff;
-  --sunk: #ebe8e1;
-  --ink: #16181c;
-  --ink-2: #45474c;
-  --ink-3: #66686c;
-  --line: #e2dfd8;
-  --line-strong: #c4c0b6;
-  --accent: #16181c;
-  --on-accent: #ffd23f;
-  --signal: #ffd23f;
-  --focus: #16181c;
-  --scrim: rgb(22 24 28 / 0.45);
+  --surface-2: #fafaf7; /* the row that matters most inside a card, e.g. the new flight */
+  --sunk: #e6e6e1;
+  --ink: #121212;
+  --ink-body: #2e2e2b; /* longer sentences on the shared page */
+  --ink-2: #4a4a46;
+  --ink-3: #66665f;
+  --ink-faint: #8c8c86; /* arrows and struck-through times only, never body text */
+  --line: #d9d9d3;
+  --line-soft: #e6e6e1;
+  --line-strong: #8c8c86;
+  --focus: #121212;
+  --scrim: rgb(18 18 18 / 0.45);
 
-  --ok: #009e73;
-  --ok-bg: #ddf3ea;
-  --ok-fg: #00573f;
-  --warn: #e69f00;
-  --warn-bg: #fff1d6;
-  --warn-fg: #7a4100;
-  --bad: #d55e00;
-  --bad-bg: #fbe3d6;
-  --bad-fg: #8f2d00;
-  --done: #0072b2;
-  --done-bg: #dcebfa;
-  --done-fg: #0a4a8a;
+  /* The main action: a dark key with a yellow chip. */
+  --accent: #1e1e1c;
+  --on-accent: #ffffff;
+  --key-shadow: #000000;
+  --chip: #ffc82e;
+  --on-chip: #121212;
+
+  /* Sign-yellow: banners, the arrival card, the logo arrow. */
+  --signal: #ffc82e;
+  --on-signal: #121212;
+
+  /* Segmented progress, switches, the outgoing message bubble. */
+  --meter: #121212;
+  --meter-track: #d2d2cb;
+  --switch-off: #cfcfc8;
+  --knob-off: #ffffff;
+  --switch-on: #121212;
+  --knob-on: #ffc82e;
+  --bubble: #121212;
+  --on-bubble: #ffffff;
+  --band: #121212; /* the black strip on the shared page */
+  --on-band: #ffffff;
+  --mark: #121212; /* the logo square */
+  --on-mark: #ffc82e;
+
+  --ok: #0e6b50;
+  --ok-bg: #ddf2ea;
+  --ok-fg: #0e6b50;
+  --warn: #c77700;
+  --warn-bg: #fff0d6;
+  --warn-fg: #8a4b00;
+  --bad: #b0281c;
+  --bad-bg: #fbe4e1;
+  --bad-fg: #b0281c;
+  --done: #0e6b50;
+  --done-bg: #ddf2ea;
+  --done-fg: #0e6b50;
 
   --font-ui: var(--font-plex-sans), system-ui, sans-serif;
   --font-num: var(--font-plex-mono), ui-monospace, monospace;
@@ -54,35 +81,55 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #0f1318;
-  --surface: #171c23;
-  --sunk: #222932;
-  --ink: #eceae4;
-  --ink-2: #bcc1c8;
-  --ink-3: #8f96a0;
-  --line: #262d36;
-  --line-strong: #3b4450;
-  --accent: #9ccbff;
-  --on-accent: #0b1a2b;
-  --signal: #9ccbff;
-  --focus: #9ccbff;
+  --bg: #121311;
+  --surface: #1c1d1a;
+  --surface-2: #23241f;
+  --sunk: #272824;
+  --ink: #f0f0ec;
+  --ink-body: #d0d0c8;
+  --ink-2: #a8a8a0;
+  --ink-3: #8e8e86;
+  --ink-faint: #77776f;
+  --line: #2e2f2b;
+  --line-soft: #272824;
+  --line-strong: #5f605a;
+  --focus: #ffc82e;
   --scrim: rgb(0 0 0 / 0.6);
 
-  --ok: #3cc79a;
-  --ok-bg: #0e3328;
-  --ok-fg: #74e2bb;
-  --warn: #e69f00;
-  --warn-bg: #3a2a0c;
-  --warn-fg: #ffc861;
-  --bad: #ff7a45;
-  --bad-bg: #3d1a0c;
-  --bad-fg: #ffa07a;
-  --done: #5aa9f0;
-  --done-bg: #10284a;
-  --done-fg: #9ccbff;
+  --accent: #ffc82e;
+  --on-accent: #0a0a09;
+  --key-shadow: #9c7a12;
+  --chip: #0a0a09;
+  --on-chip: #ffc82e;
 
-  --font-ui: var(--font-atkinson), system-ui, sans-serif;
-  --font-num: var(--font-atkinson), system-ui, sans-serif;
+  --signal: #ffc82e;
+  --on-signal: #0a0a09;
+
+  --meter: #ffc82e;
+  --meter-track: #33342f;
+  --switch-off: #3a3b37;
+  --knob-off: #a8a8a0;
+  --switch-on: #ffc82e;
+  --knob-on: #0a0a09;
+  --bubble: #2e2f2b;
+  --on-bubble: #f0f0ec;
+  --band: #000000;
+  --on-band: #f0f0ec;
+  --mark: #ffc82e;
+  --on-mark: #0a0a09;
+
+  --ok: #5fd3a8;
+  --ok-bg: #13332a;
+  --ok-fg: #5fd3a8;
+  --warn: #ffb547;
+  --warn-bg: #3a2a0e;
+  --warn-fg: #ffb547;
+  --bad: #ff8a7a;
+  --bad-bg: #3d1a16;
+  --bad-fg: #ff8a7a;
+  --done: #5fd3a8;
+  --done-bg: #13332a;
+  --done-fg: #5fd3a8;
 }
 
 /* No JS yet (or it failed): follow the phone. Same values as [data-theme="dark"]. */
@@ -90,35 +137,55 @@
   :root:not([data-theme]) {
     color-scheme: dark;
 
-    --bg: #0f1318;
-    --surface: #171c23;
-    --sunk: #222932;
-    --ink: #eceae4;
-    --ink-2: #bcc1c8;
-    --ink-3: #8f96a0;
-    --line: #262d36;
-    --line-strong: #3b4450;
-    --accent: #9ccbff;
-    --on-accent: #0b1a2b;
-    --signal: #9ccbff;
-    --focus: #9ccbff;
+    --bg: #121311;
+    --surface: #1c1d1a;
+    --surface-2: #23241f;
+    --sunk: #272824;
+    --ink: #f0f0ec;
+    --ink-body: #d0d0c8;
+  --ink-2: #a8a8a0;
+    --ink-3: #8e8e86;
+    --ink-faint: #77776f;
+    --line: #2e2f2b;
+    --line-soft: #272824;
+    --line-strong: #5f605a;
+    --focus: #ffc82e;
     --scrim: rgb(0 0 0 / 0.6);
 
-    --ok: #3cc79a;
-    --ok-bg: #0e3328;
-    --ok-fg: #74e2bb;
-    --warn: #e69f00;
-    --warn-bg: #3a2a0c;
-    --warn-fg: #ffc861;
-    --bad: #ff7a45;
-    --bad-bg: #3d1a0c;
-    --bad-fg: #ffa07a;
-    --done: #5aa9f0;
-    --done-bg: #10284a;
-    --done-fg: #9ccbff;
+    --accent: #ffc82e;
+    --on-accent: #0a0a09;
+    --key-shadow: #9c7a12;
+    --chip: #0a0a09;
+    --on-chip: #ffc82e;
 
-    --font-ui: var(--font-atkinson), system-ui, sans-serif;
-    --font-num: var(--font-atkinson), system-ui, sans-serif;
+    --signal: #ffc82e;
+    --on-signal: #0a0a09;
+
+    --meter: #ffc82e;
+    --meter-track: #33342f;
+    --switch-off: #3a3b37;
+    --knob-off: #a8a8a0;
+    --switch-on: #ffc82e;
+    --knob-on: #0a0a09;
+    --bubble: #2e2f2b;
+    --on-bubble: #f0f0ec;
+    --band: #000000;
+    --on-band: #f0f0ec;
+    --mark: #ffc82e;
+    --on-mark: #0a0a09;
+
+    --ok: #5fd3a8;
+    --ok-bg: #13332a;
+    --ok-fg: #5fd3a8;
+    --warn: #ffb547;
+    --warn-bg: #3a2a0e;
+    --warn-fg: #ffb547;
+    --bad: #ff8a7a;
+    --bad-bg: #3d1a16;
+    --bad-fg: #ff8a7a;
+    --done: #5fd3a8;
+    --done-bg: #13332a;
+    --done-fg: #5fd3a8;
   }
 }
 
@@ -126,16 +193,31 @@
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-sunk: var(--sunk);
   --color-ink: var(--ink);
+  --color-ink-body: var(--ink-body);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
+  --color-ink-faint: var(--ink-faint);
   --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
   --color-line-strong: var(--line-strong);
+  --color-focus: var(--focus);
   --color-accent: var(--accent);
   --color-on-accent: var(--on-accent);
+  --color-chip: var(--chip);
+  --color-on-chip: var(--on-chip);
   --color-signal: var(--signal);
-  --color-focus: var(--focus);
+  --color-on-signal: var(--on-signal);
+  --color-meter: var(--meter);
+  --color-meter-track: var(--meter-track);
+  --color-bubble: var(--bubble);
+  --color-on-bubble: var(--on-bubble);
+  --color-band: var(--band);
+  --color-on-band: var(--on-band);
+  --color-mark: var(--mark);
+  --color-on-mark: var(--on-mark);
 
   --color-ok: var(--ok);
   --color-ok-bg: var(--ok-bg);
@@ -153,9 +235,10 @@
   --font-sans: var(--font-ui);
   --font-num: var(--font-num);
 
-  --radius-control: 12px;
-  --radius-card: 16px;
-  --radius-sheet: 24px;
+  --radius-badge: 4px;
+  --radius-card: 8px;
+  --radius-control: 10px;
+  --radius-sheet: 16px;
 }
 
 html {
@@ -174,12 +257,235 @@ body {
 
 :focus-visible {
   outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 ::selection {
   background: var(--signal);
-  color: #16181c;
+  color: #121212;
+}
+
+/* Small uppercase mono label: "PREVIEW", "REVISED ITINERARY". */
+.ck-label {
+  font-family: var(--font-num);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/*
+  Keys (Button.tsx). Buttons sit on a hard shadow and press down into it, like a key on
+  a departures-board console.
+*/
+.ck-key {
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background-color 300ms ease,
+    color 300ms ease,
+    border-color 300ms ease;
+}
+.ck-key-primary {
+  box-shadow: 0 4px 0 var(--key-shadow);
+}
+.ck-key-secondary {
+  box-shadow: 0 3px 0 var(--ink);
+}
+.ck-key-success {
+  box-shadow: 0 3px 0 var(--ok-fg);
+}
+@media (hover: hover) {
+  .ck-key:hover {
+    transform: translateY(-1px);
+  }
+}
+.ck-key:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
+}
+
+/* Switch (Toggle.tsx). */
+.ck-switch {
+  background: var(--switch-off);
+  transition: background-color 280ms ease;
+}
+.ck-switch > span {
+  background: var(--knob-off);
+  transition:
+    transform 280ms cubic-bezier(0.45, 0, 0.25, 1),
+    background-color 280ms ease;
+}
+.ck-switch[data-on="true"] {
+  background: var(--switch-on);
+}
+.ck-switch[data-on="true"] > span {
+  background: var(--knob-on);
+  transform: translateX(20px);
+}
+
+/*
+  Motion: "Calm". Short, eased, small distances. Things settle into place rather than
+  bounce, because the person reading is already stressed.
+*/
+@keyframes ck-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes ck-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ck-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+}
+@keyframes ck-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ck-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Entrance; stagger with style={{ animationDelay: "120ms" }}. */
+.ck-rise {
+  animation: ck-rise 520ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+.ck-fade {
+  animation: ck-fade 400ms ease both;
+}
+/* A whole screen arriving from the screen before it. */
+.ck-screen-in {
+  animation: ck-slide-in 420ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+/* A check mark that draws itself. Put it on the <svg>. */
+.ck-draw path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: ck-draw 420ms 80ms cubic-bezier(0.45, 0, 0.25, 1) forwards;
+}
+/* A segment of the progress meter filling from the left. */
+.ck-fill {
+  transform-origin: left;
+  animation: ck-fill 700ms cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+
+/* A line that folds away when its content is switched off (the share preview). */
+.ck-line {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 560ms cubic-bezier(0.45, 0, 0.25, 1),
+    opacity 420ms ease,
+    margin-top 560ms cubic-bezier(0.45, 0, 0.25, 1);
+}
+.ck-line > * {
+  min-height: 0;
+  overflow: hidden;
+}
+/* Inside a flex column with an 8px gap, a folded line also gives back its gap. */
+.ck-line[data-off="true"] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: -8px;
+}
+
+/* NotificationBanner.tsx: drops in from above the screen, lifts away when dismissed. */
+@keyframes ck-notify-in {
+  from {
+    opacity: 0;
+    transform: translateY(-110%);
+  }
+}
+@keyframes ck-notify-out {
+  to {
+    opacity: 0;
+    transform: translateY(-110%);
+  }
+}
+.ck-notify-in {
+  animation: ck-notify-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.ck-notify-out {
+  animation: ck-notify-out 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/*
+  Checklist rows (src/app/page.tsx). Both directions animate: ticking draws the check and strikes the
+  title through; unticking shrinks the check away, retracts the strike and turns the dashed
+  ring back in. Put data-done on the row.
+*/
+.ck-task-ring {
+  transition:
+    transform 420ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 220ms ease;
+}
+.ck-task-disc {
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1),
+    opacity 200ms ease;
+}
+.ck-task-disc path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  transition: stroke-dashoffset 280ms cubic-bezier(0.45, 0, 0.25, 1);
+}
+[data-done="true"] .ck-task-ring {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.6);
+}
+[data-done="true"] .ck-task-disc {
+  opacity: 1;
+  transform: none;
+}
+[data-done="true"] .ck-task-disc path {
+  stroke-dashoffset: 0;
+  transition-delay: 90ms;
+}
+/* The strike is a background line so it can grow and shrink, on every wrapped line. */
+.ck-task-text {
+  background: linear-gradient(var(--ink-faint), var(--ink-faint)) no-repeat 0 58% / 0% 1.5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition:
+    background-size 380ms cubic-bezier(0.45, 0, 0.25, 1),
+    color 300ms ease;
+}
+[data-done="true"] .ck-task-text {
+  background-size: 100% 1.5px;
+  color: var(--ink-2);
+}
+.ck-task-state {
+  transition: color 300ms ease;
+}
+
+/* "Watching your flights": a slow, steady pulse in the dot's own colour. */
+@keyframes ck-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.ck-pulse {
+  animation: ck-pulse 2s ease-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -187,6 +493,7 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }
