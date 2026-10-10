@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   },
   description: "Your trip, next steps and contacts in one place when a flight changes.",
   applicationName: "Layover",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "Layover", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };

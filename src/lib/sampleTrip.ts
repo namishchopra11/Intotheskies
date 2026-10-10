@@ -1,8 +1,14 @@
 import type { Trip } from "@/lib/types";
 
-// Demo trip. The 10:35 arrival and 11:30 onward departure (a 55-minute connection
-// at LHR) drive the demo and the tests: keep those two times.
-// Phone numbers are placeholders from reserved fictional ranges, not real lines.
+// Demo trip: Alex Morgan, San Francisco to Rome via London, one week from the hackathon.
+// The 10:35 arrival and 11:30 onward departure (a 55-minute connection at LHR) drive the
+// demo and the tests: keep those two times.
+// Alex booked the two flights separately, so they have two airlines and two booking
+// references: the "airline app, confirmation emails, hotel" juggling the pitch talks about.
+// Flight numbers are plausible examples, not checked against real schedules.
+// Phone numbers are made up. UK numbers use Ofcom's reserved drama range (020 7946 0xxx).
+// Italy has no reserved range, so the Rome numbers use a 555 pattern that reads as fake;
+// do not tap them during the demo.
 export const sampleTrip: Trip = {
   id: "trip-sample",
   name: "Rome via London",
@@ -28,7 +34,7 @@ export const sampleTrip: Trip = {
       to: "FCO",
       departAt: "2026-10-17T11:30",
       arriveAt: "2026-10-17T15:05",
-      bookingRef: "K7QM2X",
+      bookingRef: "W4HT9P",
       seat: "12C",
       status: "scheduled",
     },

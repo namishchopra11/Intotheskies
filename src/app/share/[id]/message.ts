@@ -1,4 +1,5 @@
 import { cityName } from "@/lib/domain/airports";
+import { recipientTasks } from "@/lib/domain/checklist";
 import { computeImpact, isArrivalUnknown } from "@/lib/domain/impact";
 import type { SummaryOptions } from "@/lib/domain/summary";
 import { formatDate, formatDuration, timePart } from "@/lib/domain/time";
@@ -8,7 +9,7 @@ import type { Trip } from "@/lib/types";
  * The short text message on the Share screen: four or five lines a person can read at a
  * glance in a chat. Every optional line is always returned, marked `on` or not, so the
  * preview can fold a line away when its switch is turned off. The full detail travels in
- * the link (/s), built from buildSummary.
+ * the link (/s).
  */
 export type MessageLine = {
   key: "lead" | "flight" | "refs" | "hotel" | "unresolved";
@@ -66,7 +67,7 @@ export function buildMessage(trip: Trip, disruptionId: string, options: SummaryO
   const hotel = stay
     ? `Hotel: ${stay.name}.${stay.latestCheckIn ? ` Front desk is open until ${stay.latestCheckIn}.` : ` Check-in ${formatDate(stay.checkIn)}.`}${options.includeBookingRefs && stay.confirmation ? ` Confirmation ${stay.confirmation}.` : ""}`
     : "";
-  const open = d.tasks.filter((t) => !t.done).map((t) => lowerFirst(t.title));
+  const open = recipientTasks(trip, d, options).map(lowerFirst);
   const unresolved = open.length > 0 ? `Still sorting: ${open.join(", ")}.` : "Everything else is sorted.";
 
   const lines: MessageLine[] = [

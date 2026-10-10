@@ -1,5 +1,6 @@
 import type { Disruption, Flight, Trip } from "@/lib/types";
 import { cityName } from "./airports";
+import { recipientTasks } from "./checklist";
 import { computeImpact, isArrivalUnknown, type Impact } from "./impact";
 import { datePart, formatDate, formatDateTime, formatDuration, timePart } from "./time";
 
@@ -7,6 +8,10 @@ export type SummaryOptions = {
   includeBookingRefs: boolean; // booking references and hotel confirmation numbers
   includeStays: boolean;
   includeOpenTasks: boolean;
+  // Optional "request funds" add-on. Omitted or null means no request in the link.
+  // amountUsdc is what the traveler typed, e.g. "120" or "85.50"; see normalizeUsdcAmount.
+  // Only takes effect when the trip has a payoutAddress. buildSummary ignores it.
+  fundsRequest?: { amountUsdc: string } | null;
 };
 
 export const DEFAULT_SUMMARY_OPTIONS: SummaryOptions = {
@@ -115,10 +120,10 @@ export function buildSummary(trip: Trip, disruptionId: string, options: SummaryO
   }
 
   if (options.includeOpenTasks) {
-    const open = disruption.tasks.filter((t) => !t.done);
+    const open = recipientTasks(trip, disruption, options);
     lines.push("", "Still to sort out:");
-    if (open.length === 0) lines.push("Nothing. Everything on my list is done.");
-    for (const t of open) lines.push(`- ${t.title}`);
+    if (open.length === 0) lines.push("Nothing outstanding.");
+    for (const t of open) lines.push(`- ${t}`);
   }
 
   return lines.join("\n");

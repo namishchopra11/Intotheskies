@@ -6,6 +6,7 @@ import { createJSONStorage, persist, type StateStorage } from "zustand/middlewar
 import { generateChecklist } from "@/lib/domain/checklist";
 import { computeImpact } from "@/lib/domain/impact";
 import { newId } from "@/lib/id";
+import { normalizeSolanaAddress } from "@/lib/solana/address";
 import { sampleTrip } from "@/lib/sampleTrip";
 import {
   TripSchema,
@@ -52,6 +53,12 @@ export type TripState = {
   removeRide: (rideId: string) => void;
   upsertContact: (contact: Contact) => void;
   removeContact: (contactId: string) => void;
+
+  /**
+   * Sets where "request funds" links ask contacts to send USDC. Trims the input; ""
+   * clears it. Returns false, and changes nothing, if it is not a Solana public key.
+   */
+  setPayoutAddress: (address: string) => boolean;
 
   /**
    * Records what changed on a flight, updates the flight, generates the checklist
@@ -163,6 +170,18 @@ export const useTripStore = create<TripState>()(
               ),
             })),
           })),
+
+        setPayoutAddress: (address) => {
+          if (!get().trip) return false;
+          if (address.trim() === "") {
+            updateTrip((trip) => ({ ...trip, payoutAddress: undefined }));
+            return true;
+          }
+          const valid = normalizeSolanaAddress(address);
+          if (!valid) return false;
+          updateTrip((trip) => ({ ...trip, payoutAddress: valid }));
+          return true;
+        },
 
         reportDisruption: (flightId, type, revised) => {
           const trip = get().trip;
