@@ -1,70 +1,193 @@
 "use client";
-import { Suspense, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useStoreReady, useTripStore } from "@/lib/store";
-import { buildSummary, DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
-import { encodeShare } from "@/lib/domain/shareLink";
-import { Button, Card, Sheet, Toggle } from "@/components/ui";
-import { Brand, Icon } from "@/components/ui/Icon";
 
-function Shell({ children }: { children: React.ReactNode }) { return <main className="ck-shell"><Brand />{children}</main>; }
-function ShareView() {
- const { id } = useParams<{ id: string }>();
- const ready = useStoreReady();
- const trip = useTripStore((state) => state.trip);
- const [options, setOptions] = useState<SummaryOptions>({ ...DEFAULT_SUMMARY_OPTIONS });
- const [feedback, setFeedback] = useState<{ text: string; error?: boolean } | null>(null);
- const [busy, setBusy] = useState(false);
- const [manual, setManual] = useState<{ title: string; text: string } | null>(null);
- const [completed, setCompleted] = useState<string | null>(null);
- const disruption = trip?.disruptions.find((item) => item.id === id);
- function option(key: keyof SummaryOptions, value: boolean) {
-  setOptions((previous) => ({ ...previous, [key]: value })); setFeedback(null); setCompleted(null);
- }
- if (!ready) return <Shell><p role="status" className="ck-empty">Loading your update…</p></Shell>;
- if (!trip || !disruption) return <Shell><Card className="ck-empty"><h1>Let’s find your trip</h1><p>This update isn’t saved on this device. Open your trip to choose the change you want to share.</p><Link href="/" className="ck-button ck-button-primary ck-button-wide">Back to your trip</Link></Card></Shell>;
- const summary = buildSummary(trip, id, options);
- const fragment = encodeShare(trip, id, options);
- function snapshotLink() { return `${window.location.origin}/s#${fragment}`; }
- async function copy(text: string, kind: "text" | "link") {
-  setFeedback(null); setCompleted(null); setBusy(true);
-  try {
-   if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
-   await navigator.clipboard.writeText(text);
-   setCompleted(kind); setFeedback({ text: kind === "link" ? "Link copied. It’s ready to paste." : "Update copied. It’s ready to paste." });
-  } catch {
-   setManual({ title: kind === "link" ? "Copy your link" : "Copy your update", text });
-   setFeedback({ text: "Automatic copying isn’t available here. Select and copy below.", error: true });
-  } finally { setBusy(false); }
- }
- async function share() {
-  setFeedback(null); setCompleted(null);
-  if (!navigator.share) { setFeedback({ text: "Sharing isn’t available in this browser. Use Copy text or Copy link below." }); return; }
-  setBusy(true);
-  try { await navigator.share({ title: `Travel update from ${trip!.travelerName}`, text: summary }); setCompleted("share"); setFeedback({ text: "Update shared." }); }
-  catch (error) { setFeedback({ text: error instanceof Error && error.name === "AbortError" ? "Sharing cancelled. Your update is still here." : "That didn’t share. Try again, or copy the update below.", error: !(error instanceof Error && error.name === "AbortError") }); }
-  finally { setBusy(false); }
- }
- return <Shell>
-  <Link href={`/disruption/${id}`} className="ck-back"><Icon name="back" width="16" height="16" />Back to your next steps</Link>
-  <div className="ck-heading"><p className="ck-eyebrow">Keep your people in the loop</p><h1>Send a calm update.</h1><p>Choose what to include. We’ll take care of the wording.</p></div>
-  <div className="ck-stack">
-   <Card className="ck-options"><h2 className="ck-section-title">What would you like to share?</h2>
-    <Toggle label="Booking references" description="Hidden by default. These codes can be used to change a booking." checked={options.includeBookingRefs} onChange={(checked) => option("includeBookingRefs", checked)} />
-    <Toggle label="Hotel details" description="Where you’re staying and check-in dates." checked={options.includeStays} onChange={(checked) => option("includeStays", checked)} />
-    <Toggle label="What’s still unresolved" description="The things you’re still sorting out." checked={options.includeOpenTasks} onChange={(checked) => option("includeOpenTasks", checked)} />
-   </Card>
-   <div className="ck-actions">
-    <Button variant="primary" fullWidth onClick={share} disabled={busy || !summary}><Icon name={completed === "share" ? "check" : "share"} />{completed === "share" ? "Shared" : "Share update"}</Button>
-    <div className="ck-actions-pair"><Button variant="secondary" onClick={() => copy(summary, "text")} disabled={busy || !summary}><Icon name={completed === "text" ? "check" : "copy"} />{completed === "text" ? "Text copied" : "Copy text"}</Button><Button variant="secondary" onClick={() => copy(snapshotLink(), "link")} disabled={busy || !fragment}><Icon name={completed === "link" ? "check" : "link"} />{completed === "link" ? "Link copied" : "Copy link"}</Button></div>
-    <div aria-live="polite" aria-atomic="true">{feedback && <p className={`ck-feedback ${feedback.error ? "ck-feedback-error" : ""}`}>{feedback.text}</p>}</div>
-   </div>
-   <p className="ck-notice"><Icon name="clock" width="16" height="16" /><span>A shared link is a snapshot from now. It won’t update on its own.</span></p>
-   <section aria-labelledby="preview-title"><h2 id="preview-title" className="ck-section-title" style={{ marginBottom: 12 }}>Your message</h2><div className="ck-preview"><div className="ck-preview-meta"><Icon name="check" width="16" height="16" />Ready to send · from {trip.travelerName}</div><pre>{summary || "Your update is being prepared."}</pre></div></section>
-  </div>
-  <footer className="ck-footer">Only the details you choose go into your update.</footer>
-  <Sheet open={manual !== null} title={manual?.title ?? "Copy update"} onClose={() => setManual(null)}><p className="ck-hint" style={{ marginBottom: 12 }}>Press and hold to copy, or use your keyboard’s copy shortcut.</p><textarea className="ck-input" rows={8} readOnly value={manual?.text ?? ""} aria-label={manual?.title ?? "Update to copy"} onFocus={(event) => event.currentTarget.select()} /><Button fullWidth variant="secondary" style={{ marginTop: 12 }} onClick={() => { const input = document.querySelector<HTMLTextAreaElement>(".ck-sheet textarea"); input?.focus(); input?.select(); }}>Select all</Button></Sheet>
- </Shell>;
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import { Button, Card, Icon, PageHeader, Toggle, cx } from "@/components/ui";
+import { encodeShare } from "@/lib/domain/shareLink";
+import { buildSummary, DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
+import { useStoreReady, useTripStore } from "@/lib/store";
+import { ShareSkeleton } from "../ShareSkeleton";
+import { copyText } from "./copyText";
+
+type Done = "shared" | "text" | "link" | "error";
+
+const CONFIRM: Record<Done, string> = {
+  shared: "Update shared",
+  text: "Message copied. Paste it into any chat.",
+  link: "Link copied. Paste it into any chat.",
+  error: "Couldn't copy on this device. Press and hold the message to copy it.",
+};
+
+export default function SharePage() {
+  const { id } = useParams<{ id: string }>();
+  const ready = useStoreReady();
+  const trip = useTripStore((s) => s.trip);
+  const [options, setOptions] = useState<SummaryOptions>(DEFAULT_SUMMARY_OPTIONS);
+  const [done, setDone] = useState<Done | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  const disruption = trip?.disruptions.find((d) => d.id === id);
+  const summary = useMemo(
+    () => (trip && disruption ? buildSummary(trip, disruption.id, options) : ""),
+    [trip, disruption, options],
+  );
+
+  if (!ready) return <ShareSkeleton />;
+
+  if (!trip || !disruption) {
+    return (
+      <main className="flex flex-1 flex-col">
+        <PageHeader title="Nothing to share yet" back={{ href: "/", label: "Your trip" }} />
+        <div className="px-4">
+          <Card className="text-ink-2">
+            This update isn&apos;t on this phone. Report what changed on your trip first, then
+            share it from there.
+            <Button href="/" variant="primary" block className="mt-4">
+              Go to your trip
+            </Button>
+          </Card>
+        </div>
+      </main>
+    );
+  }
+
+  const link = () => `${window.location.origin}/s#${encodeShare(trip, disruption.id, options)}`;
+  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  const confirm = (d: Done) => {
+    setDone(d);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setDone(null), 2600);
+  };
+  const set = (key: keyof SummaryOptions) => (value: boolean) => {
+    setOptions((o) => ({ ...o, [key]: value }));
+    setDone(null);
+  };
+
+  const onShare = async () => {
+    try {
+      await navigator.share({ title: `Update from ${trip.travelerName}`, text: summary, url: link() });
+      confirm("shared");
+    } catch (e) {
+      // Closing the share sheet is not an error.
+      if ((e as Error)?.name !== "AbortError") confirm((await copyText(summary)) ? "text" : "error");
+    }
+  };
+  const onCopyText = async () => confirm((await copyText(summary)) ? "text" : "error");
+  const onCopyLink = async () => confirm((await copyText(link())) ? "link" : "error");
+
+  return (
+    <main className="flex flex-1 flex-col">
+      <PageHeader
+        eyebrow={trip.name}
+        title="Share an update"
+        back={{ href: `/disruption/${disruption.id}`, label: "Back" }}
+      >
+        Let the people waiting for you know what changed.
+      </PageHeader>
+
+      <div className="flex flex-1 flex-col gap-5 px-4 pb-6">
+        <section aria-labelledby="preview-h">
+          <h2 id="preview-h" className="mb-2 text-[14px] font-semibold text-ink-3">
+            Preview
+          </h2>
+          <div className="rounded-card bg-sunk px-3 py-4">
+            <div className="ml-auto w-fit max-w-[92%] rounded-[20px] rounded-br-md border border-line bg-surface px-4 py-3 shadow-sm">
+              <p className="text-[15px] leading-relaxed break-words whitespace-pre-wrap text-ink">
+                {summary}
+              </p>
+            </div>
+            <p className="mt-2 flex items-center justify-end gap-1 pr-1 text-[13px] text-ink-3">
+              <Icon name="link" size={14} />
+              Share also adds a link to the full update
+            </p>
+          </div>
+        </section>
+
+        <section aria-labelledby="include-h">
+          <h2 id="include-h" className="mb-2 text-[14px] font-semibold text-ink-3">
+            Include
+          </h2>
+          <Card className="divide-y divide-line py-1">
+            <Toggle
+              checked={options.includeBookingRefs}
+              onChange={set("includeBookingRefs")}
+              label="Booking references"
+              description="Off is safer. Anyone with these can change or cancel your booking."
+            />
+            <Toggle
+              checked={options.includeStays}
+              onChange={set("includeStays")}
+              label="Hotel details"
+              description="Where you're staying and when you'll check in."
+            />
+            <Toggle
+              checked={options.includeOpenTasks}
+              onChange={set("includeOpenTasks")}
+              label="What's still unresolved"
+              description="Things on your checklist you haven't sorted yet."
+            />
+          </Card>
+          {options.includeBookingRefs && (
+            <p className="mt-2 flex items-start gap-2 rounded-control bg-warn-bg px-3 py-2.5 text-[14px] text-warn-fg">
+              <Icon name="lock" size={18} className="mt-px" />
+              Only send booking references to people you trust.
+            </p>
+          )}
+        </section>
+
+        <p className="flex items-start gap-2.5 text-[14px] leading-snug text-ink-2">
+          <Icon name="clock" size={18} className="mt-px text-ink-3" />
+          <span>
+            The link is a snapshot of right now. It won&apos;t update on its own, so share a new
+            one if your plans change again.
+          </span>
+        </p>
+      </div>
+
+      <div className="sticky bottom-0 z-10 border-t border-line bg-bg px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)]">
+        <p
+          role="status"
+          aria-live="polite"
+          className={cx(
+            "pointer-events-none absolute inset-x-4 bottom-full mb-2 flex justify-center transition-[opacity,transform] duration-200",
+            done ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+          )}
+        >
+          {done && (
+            <span
+              className={cx(
+                "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[14px] font-medium shadow-md",
+                done === "error" ? "bg-bad-bg text-bad-fg" : "bg-ok-bg text-ok-fg",
+              )}
+            >
+              <Icon name={done === "error" ? "circle-x" : "circle-check"} size={16} strokeWidth={2} />
+              {CONFIRM[done]}
+            </span>
+          )}
+        </p>
+        {canShare && (
+          <Button variant="primary" block icon={done === "shared" ? "check" : "share"} onClick={onShare}>
+            {done === "shared" ? "Shared" : "Share"}
+          </Button>
+        )}
+        <div className={cx("grid grid-cols-2 gap-2", canShare && "mt-2")}>
+          <Button
+            variant={canShare ? "secondary" : "primary"}
+            icon={done === "text" ? "check" : "copy"}
+            onClick={onCopyText}
+          >
+            {done === "text" ? "Copied" : "Copy text"}
+          </Button>
+          <Button icon={done === "link" ? "check" : "link"} onClick={onCopyLink}>
+            {done === "link" ? "Copied" : "Copy link"}
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
 }
-export default function SharePage() { return <Suspense fallback={<Shell><p role="status" className="ck-empty">Loading your update…</p></Shell>}><ShareView /></Suspense>; }
