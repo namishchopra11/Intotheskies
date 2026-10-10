@@ -57,11 +57,15 @@ describe("share link fundsRequest", () => {
 
   it("drops a tampered fundsRequest but still shows the update", () => {
     const options = { ...DEFAULT_SUMMARY_OPTIONS, fundsRequest: { amountUsdc: "50" } };
+    // encodeShare swaps lz-string's "+" and "$" for "_" and "~"; undo that to read the raw JSON.
+    const fragment = encodeShare(tripWithDisruption(ADDRESS), "d1", options);
     const json = JSON.parse(
-      decompressFromEncodedURIComponent(encodeShare(tripWithDisruption(ADDRESS), "d1", options)),
+      decompressFromEncodedURIComponent(fragment.replace(/_/g, "+").replace(/~/g, "$"))!,
     );
     json.fundsRequest.recipient = "0xdeadbeef";
-    const snapshot = decodeShare(compressToEncodedURIComponent(JSON.stringify(json)));
+    const snapshot = decodeShare(
+      compressToEncodedURIComponent(JSON.stringify(json)).replace(/\+/g, "_").replace(/\$/g, "~"),
+    );
     expect(snapshot?.tripName).toBe(sampleTrip.name);
     expect(snapshot?.fundsRequest).toBeUndefined();
   });
