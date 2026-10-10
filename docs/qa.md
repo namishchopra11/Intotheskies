@@ -24,7 +24,7 @@ No errors showed in the browser console.
 **What I did not test:** a real phone, iPhone Safari, Android Chrome, dark mode, opening a real
 wallet from **Send help**, or hearing **Listen to summary** out loud (I confirmed the app hands
 the right sentences to the browser's speech, not the sound itself). Those need a person with a
-phone. Sebastian has tested Send help on a phone.
+phone. Sebastian tested Send help on a real phone afterwards; see problem 5.
 
 ---
 
@@ -68,9 +68,19 @@ None blocks the demo. All of these are small.
 
 ### 5. Not verified by me
 
-- **Send help on a phone.** In the browser: the **Send help** link is a valid `solana:` payment
-  request for devnet USDC with the amount, the QR code appears, and **Copy address** is there. I
-  did not open a wallet.
+- **Send help on a phone (tested by Sebastian, Saturday evening).** On an iPhone with Phantom
+  in Testnet Mode (Solana Devnet), on the live site:
+  - Saving the wallet address, switching on **Add a Send help button**, entering **5** and
+    copying the link all work.
+  - The recipient page shows **Send help**, the QR code and the address.
+  - Scanning the QR code with Phantom opens a payment screen with the right amount (**5**) and
+    the right recipient. **This is the part that is ours, and it works.**
+  - Phantom then shows **Insufficient balance** and **Failed to generate a valid transaction**,
+    even though the sending account holds 20 devnet USDC and 1 devnet SOL (checked on the
+    blockchain). Phantom's own **Send** screen does not list devnet USDC either. This is a
+    limit of Phantom's test mode with devnet USDC, not a bug in the app.
+  - **What to do:** on stage, scan the QR code and **stop on Phantom's filled-in screen**. Do
+    not tap Send. The demo script says this.
 - **Listen to summary.** The sentences are right ("You missed your flight to Rome. You are now
   on a new flight arriving at 6:00 PM. Nothing else on your trip is affected. First, check your
   new booking for AZ 207."). It uses the phone's own voice, so volume and voice vary by phone.
