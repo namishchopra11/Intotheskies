@@ -2,6 +2,7 @@ import type { SVGProps } from "react";
 
 // A small hand-picked line-icon set (24px grid, 2px stroke). Use these, never emoji.
 const PATHS = {
+  camera: <><path d="M4 6h4l2-3h4l2 3h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" /><circle cx="12" cy="13" r="4" /></>,
   refresh: <path d="M20 7v5h-5M20 12a8 8 0 1 0-2.3 5.7M20 7l-2.3-2.3" />,
   eye: (
     <>

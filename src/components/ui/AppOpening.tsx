@@ -5,13 +5,20 @@ import { BrandMark } from "./Brand";
 
 /** A brief brand entrance on a fresh app load; the root stays mounted between pages. */
 export function AppOpening() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    // Browser refresh and pull-to-refresh should return straight to the app.
+    if (navigation?.type === "reload" || reducedMotion.matches) return;
+    const frame = window.requestAnimationFrame(() => setVisible(true));
     // A fallback also removes the overlay if an animation event is missed.
-    const timer = window.setTimeout(() => setVisible(false), reducedMotion.matches ? 0 : 3000);
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => setVisible(false), 3000);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
   }, []);
 
   if (!visible) return null;

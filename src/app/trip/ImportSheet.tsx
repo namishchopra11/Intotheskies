@@ -7,6 +7,7 @@ import { formatDateTime } from "@/lib/domain/time";
 import { newId } from "@/lib/id";
 import { useTripStore } from "@/lib/store";
 import { ImportResultSchema, existingIdFor, toImportItems, type ImportItem } from "./importSchema";
+import { BoardingPassCamera } from "./BoardingPassCamera";
 
 const ICON: Record<ImportItem["kind"], IconName> = { flight: "plane", stay: "bed", ride: "car", skipped: "circle-alert" };
 const MAX_SIDE = 2000;
@@ -42,6 +43,26 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
   const [phase, setPhase] = useState<Phase>({ step: "input" });
   const [picked, setPicked] = useState<Set<number>>(new Set());
   const input = useRef<HTMLInputElement>(null);
+  const [draggingFiles, setDraggingFiles] = useState(false);
+  const dragDepth = useRef(0);
+  const [cameraOpen, setCameraOpen] = useState(false);
+
+  const chooseFiles = (chosen: File[]) => {
+    if (phase.step !== "input") return;
+    const supported = chosen.filter((f) => f.type.startsWith("image/") || f.type === "application/pdf" || f.type.startsWith("text/") || /\.(pdf|eml|txt)$/i.test(f.name));
+    const room = Math.max(0, 6 - files.length);
+    const accepted = supported.slice(0, room).map((f) => {
+      // Some dragged files have no MIME type; infer the supported document types.
+      if (f.type) return f;
+      const type = /\.pdf$/i.test(f.name) ? "application/pdf" : /\.txt$/i.test(f.name) ? "text/plain" : "";
+      return type ? new File([f], f.name, { type, lastModified: f.lastModified }) : f;
+    });
+    setFiles((current) => [...current, ...accepted]);
+    const error = supported.length !== chosen.length
+      ? "Use screenshots, photos, PDFs or email text files."
+      : supported.length > room ? "You can add up to 6 files at a time." : undefined;
+    setPhase({ step: "input", error });
+  };
 
   const read = async () => {
     setPhase({ step: "reading" });
@@ -82,6 +103,15 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
     });
     onClose();
   };
+
+  if (cameraOpen) {
+    return <Sheet open onClose={onClose} title="Photograph your boarding pass">
+      <BoardingPassCamera onClose={() => setCameraOpen(false)} onCapture={(file) => {
+        chooseFiles([file]);
+        setCameraOpen(false);
+      }} />
+    </Sheet>;
+  }
 
   if (phase.step === "review") {
     const count = picked.size;
@@ -172,13 +202,46 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
           hidden
           onChange={(e) => {
             const chosen = Array.from(e.target.files ?? []);
-            setFiles((f) => [...f, ...chosen].slice(0, 6));
+            chooseFiles(chosen);
             e.target.value = "";
           }}
         />
-        <Button variant="secondary" block icon="plus" disabled={reading} onClick={() => input.current?.click()}>
-          Choose screenshots or PDFs
+        <Button variant="secondary" block icon="camera" disabled={reading || files.length >= 6} onClick={() => setCameraOpen(true)}>
+          Photograph a boarding pass
         </Button>
+        <div
+          onDragEnter={(e) => {
+            e.preventDefault();
+            if (reading || !e.dataTransfer.types.includes("Files")) return;
+            dragDepth.current += 1;
+            setDraggingFiles(true);
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = reading ? "none" : "copy";
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            dragDepth.current = Math.max(0, dragDepth.current - 1);
+            if (dragDepth.current === 0) setDraggingFiles(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            dragDepth.current = 0;
+            setDraggingFiles(false);
+            if (!reading) chooseFiles(Array.from(e.dataTransfer.files));
+          }}
+          className={cx("rounded-card border-2 border-dashed p-5 text-center transition-colors", draggingFiles ? "border-ink bg-sunk" : "border-line bg-surface")}
+        >
+          <span aria-hidden="true" className="mx-auto mb-3 inline-flex h-10 w-10 items-center justify-center rounded-control bg-sunk">
+            <Icon name="plus" size={22} />
+          </span>
+          <p className="mb-1 font-semibold">{draggingFiles ? "Drop your confirmations here" : "Drag and drop your confirmations"}</p>
+          <p className="mb-4 text-[13px] text-ink-2">Screenshots, photos, PDFs or email files · Up to 6 files</p>
+          <Button variant="secondary" block disabled={reading} onClick={() => input.current?.click()}>
+            Choose files
+          </Button>
+        </div>
         {files.length > 0 && (
           <ul className="flex flex-col gap-1.5">
             {files.map((f, i) => (
