@@ -24,7 +24,6 @@ import {
   type Flight,
   type FlightStatus,
   type LocalDateTime,
-  type Person,
   type Ride,
   type Stay,
   type Trip,
@@ -93,8 +92,6 @@ export type TripState = {
   removePerson: (personId: string) => void;
   /** Ticks or unticks a "Before you go" reminder by its key. */
   togglePrep: (key: string) => void;
-  /** Adds or replaces someone waiting on the traveler (their phone or email for updates). */
-  upsertPerson: (person: Person) => void;
   upsertContact: (contact: Contact) => void;
   removeContact: (contactId: string) => void;
 
@@ -258,8 +255,6 @@ export const useTripStore = create<TripState>()(
           updateTrip((trip) => ({ ...trip, stays: trip.stays.filter((s) => s.id !== stayId) })),
         upsertRide: (ride) =>
           updateTrip((trip) => ({ ...trip, rides: upsert(trip.rides ?? [], ride) })),
-        upsertPerson: (person) =>
-          updateTrip((trip) => ({ ...trip, people: upsert(trip.people ?? [], person) })),
         togglePrep: (key) =>
           updateTrip((trip) => {
             const done = new Set(trip.prepDone ?? []);
