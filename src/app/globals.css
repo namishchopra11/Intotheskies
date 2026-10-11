@@ -433,6 +433,22 @@ body {
   animation: ck-pulse 2s ease-out infinite;
 }
 
+/* Departures-board digit turning over. data-flip digits only. */
+@keyframes ck-flap {
+  0% {
+    transform: rotateX(-90deg);
+    opacity: 0.3;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+.ck-flap {
+  transform-origin: 50% 0;
+  animation: ck-flap 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

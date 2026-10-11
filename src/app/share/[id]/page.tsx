@@ -11,6 +11,7 @@ import { useStoreReady, useTripStore } from "@/lib/store";
 import { isDemoCluster, SOLANA_CLUSTER } from "@/lib/solana/config";
 import { normalizeUsdcAmount } from "@/lib/solana/pay";
 import { ShareSkeleton } from "../ShareSkeleton";
+import { SendTo } from "./SendTo";
 import { copyText } from "./copyText";
 import { buildMessage, messageText } from "./message";
 
@@ -122,7 +123,9 @@ export default function SharePage() {
     <main className="ck-screen-in flex flex-1 flex-col">
       <PageHeader title="Share the new plan" back={{ href: "/", label: "Back to trip" }} />
 
-      <section aria-label="Message preview" className="flex flex-col gap-2 px-4 pt-2">
+      <SendTo trip={trip} disruptionId={disruption.id} />
+
+      <section aria-label="Message preview" className="flex flex-col gap-2 px-4 pt-[22px]">
         <span className="ck-label px-1">Preview</span>
         <div
           aria-live="polite"

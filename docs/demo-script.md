@@ -34,9 +34,11 @@ There is no "report a change" screen. A change arrives on its own:
 
 - **Automatically:** about 6 seconds after a trip with no changes is on screen (the app must
   be open, and not on the shared `/s` page).
+- **Pick a scenario:** menu button (top right) > **Pick a scenario**: 45-minute delay, 3-hour
+  delay, missed connection or cancelled flight. It restarts the trip and plays the change
+  straight away. Let a judge choose.
 - **On demand:** menu button (top right) > **Restart the demo trip** > **Restart**. It puts the
-  trip back on time, and the same change arrives about 6 seconds later. Use this to replay
-  the demo.
+  trip back on time, and the same change arrives about 6 seconds later. Use this to replay the demo.
 
 It plays once per trip. Once the trip has a change, nothing more fires until you restart it.
 
@@ -102,87 +104,58 @@ it, nothing is lost: the home screen has already changed. Just carry on to step 
 
 ---
 
-## Step 3. See the new plan (25 seconds)
+## Step 3. The plan ripples (25 seconds)
 
-The bar at the top now reads **New plan ready**, with the time it was updated. The headline
-reads **London connection missed. You're on the 14:25 instead.**
+The bar reads **New plan ready**. Under the headline, the yellow board flips to **18:00**
+with **15:05** struck through and **2h 55m later**. Below it is the trip as a rail, each
+step appearing a beat after the one above:
 
-**POINT** at the three flight rows, top to bottom:
-
-- **BA 286**, San Francisco 18:50 → London 12:45, marked **Delayed 2h 10m**.
-- **AZ 201**, struck through, marked **Missed**.
-- **AZ 207**, London 14:25 → Rome 18:00, marked **Rebooked**. It has no seat yet: the seat
-  belonged to the old booking, so the app clears it. Do not mention a seat on this row.
+- **BA 286**, 2h 10m late, lands 12:45.
+- **Missed AZ 201**, red, with a dashed rail: the link is broken.
+- **AZ 207**, green, lands 18:00 (was 15:05).
+- **Hotel Aventino Garden**, green: 4h to spare before the front desk closes.
+- **Marco · pickup**, red: still expects the old arrival. **Mum · family**, amber.
 
 **SAY**
-> "Here is the before and after. The old flight is struck out. The new one is in bold, 14:25
-> from London, landing in Rome at 18:00 instead of 15:05. The app worked that out from the
-> trip. It knows the next flight and when it leaves."
+> "One flight ran late and everything downstream lights up: the missed connection, the new
+> flight, the hotel, and Marco, who is picking Alex up and doesn't know yet."
 
-Say **"missed"** and **"rebooked"**. Those are the app's own words for this change.
+Say **"missed"** and **"rebooked"**. Those are the app's own words.
 
 ---
 
-## Step 4. Work through the checklist (25 seconds)
+## Step 4. Do this now (15 seconds)
 
-**POINT** at **Sorting it out**, **0 of 6 done**, and the six tasks under it.
+**POINT** at **Do this now**: one task, with one button. **Mark done** (or **Call**, or
+**Send the message** for the tasks that tell people). The rest are behind **All tasks**.
 
-**POINT** at **Check your new booking for AZ 207** and **Ask ITA Airways what you're entitled
-to**.
-
-**SAY**
-> "This is not a generic list. It says check your booking for AZ 207, because that is Alex's
-> actual new flight. It says ask ITA Airways, because that is Alex's actual airline. The
-> trip drives the list."
-
-**TAP** **Check your new booking for AZ 207**.
-
-**TAP** **Ask where your checked bags are**.
-
-The counter now reads **2 of 6 done**.
+**TAP** **Mark done**. The next task takes its place.
 
 **SAY**
-> "Alex does those two, ticks them off."
+> "Alex never has to read a list. The app says what to do next."
 
 ---
 
-## Step 5. Tell the people waiting (25 seconds)
+## Step 5. Tell Marco (25 seconds)
 
-**TAP** **Share the new plan** (the big button at the bottom).
+**TAP** **Share the new plan**. Under **Send to** are ready-written messages for Marco, Mum
+and the hotel, each with the new arrival time.
 
-You are on **Share the new plan**.
+**POINT** at the hotel message (it has the booking confirmation) and Mum's (it has no
+booking numbers).
 
-**POINT** at the **Preview** message. Read one line out loud:
-*"New flight: AZ 207, London 14:25 → Rome 18:00 (Sat 17 Oct)."*
+**TAP** **WhatsApp** on Marco's message. WhatsApp opens with the text filled in (the sample
+trip has no numbers for Marco or Mum, so pick the chat yourself). **Nothing is
+sent from here.** Go back.
 
-**SAY**
-> "Someone is waiting in Rome. Alex is not going to type all this with tired thumbs in a
-> departure lounge. The app writes it, in plain words."
-
-**POINT** at the **Still sorting:** line. After the two ticks it lists just one thing:
-*"rearranging the pickup or transfer"*. The two ticked items are **not** there, and neither are
-Alex's private to-dos (receipts, "what you're entitled to"). The message only mentions what
-matters to the person waiting.
+The **Marco · pickup** node on the home screen is now green: the loop is closed.
 
 **SAY**
-> "And look. The two things Alex already did are gone from the message. The trip drives the
-> checklist, and the checklist drives the message."
+> "One tap opens the message. The app counts it as done, and Marco's step on the trip turns
+> green."
 
-**POINT** at the **Booking references** switch, which is off.
-
-**SAY**
-> "Booking numbers stay off unless Alex chooses to share them."
-
-**TAP** **Copy link**. The button changes to **Link copied**.
-
-**OPEN** your messaging app, **paste**, **send**.
-
-**TAP** the link on the receiving end (second device, or a new tab) to show the read-only
-page: **From Alex Morgan**, the headline **Alex now lands in Rome at 18:00.**, then **Revised
-itinerary** and **Still being sorted**.
-
-**SAY**
-> "The person on the other end taps the link. No app, no account, nothing to install."
+Then, if time allows, **Copy link** and open it on a second device to show the read-only
+page. No app, no account.
 
 ---
 

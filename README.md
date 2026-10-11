@@ -47,11 +47,14 @@ pnpm build   # production build
 2. Wait about 6 seconds. The airline "changes" the trip on its own and a notification
    card appears: the first flight is over two hours late, so the London connection is
    missed and the traveler is rebooked on AZ 207.
-3. See the new plan and the checklist that follows.
-4. Tick a task or two, then tap **Share the new plan** to preview the message and copy a link.
-5. Open the link. It is a read-only page that needs no app and no account.
+3. See the new arrival on the board, the trip as a rail that shows what is affected, and
+   one **Do this now** task.
+4. Tap **Share the new plan**, then **WhatsApp**, **Text** or **Email** on a person's
+   message. The app opens with the text filled in (nothing is sent from here).
+5. Open a shared link. It is a read-only page that needs no app and no account.
 
-To replay it, open the menu (top right), choose **Restart the demo trip** and confirm.
+To replay it, open the menu (top right) and choose **Restart the demo trip** (then confirm),
+or **Pick a scenario** (delay, 3-hour delay, missed connection, cancellation).
 
 **Live flight watching is simulated.** There is no flight-data feed and no backend: a
 scripted change is pushed a few seconds after the trip loads. Everything after the change

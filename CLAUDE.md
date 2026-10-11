@@ -59,9 +59,9 @@ without the suffix.
   flightId, createdAt, tasks
 - `Person`: id, name, role (`pickup | family | other`), phone? (someone waiting on the
   traveler; `Trip.people` is optional so older saved trips still load; recovery keeps the
-  readable ones). Planned: `buildTimeline(trip, disruptionId)` in `src/lib/domain/timeline.ts`
+  readable ones). `buildTimeline(trip, disruptionId)` in `src/lib/domain/timeline.ts`
   (the home screen's ripple rail) and `buildDrafts(trip, disruptionId)` in
-  `src/lib/domain/messages.ts` (per-person messages); neither exists yet.
+  `src/lib/domain/messages.ts` (per-person messages) are built from these.
 - `Trip`: id, name, travelerName, flights, stays, contacts, people?, disruptions, payoutAddress?
   (a Solana public key for the optional "request funds" add-on; set it only through
   `setPayoutAddress`, see below)
@@ -111,7 +111,7 @@ Status it sets: `delay` gives `delayed`; `rebooked` gives `rebooked`; `cancellat
 `missed_connection` give `cancelled`, or `rebooked` if revised times were supplied.
 
 Nothing in the UI calls `reportDisruption` from a form. The only caller is the simulated
-feed, `simulateFlightChange()` in `src/components/trip/simulateChange.ts` (see Routes below).
+feed, `simulateFlightChange(scenario)` in `src/components/trip/simulateChange.ts` (see Routes below).
 Example, a 45-minute delay:
 
 ```ts
@@ -157,6 +157,14 @@ buildBriefing(trip: Trip, disruptionId: string): string
 // (src/components/trip/useSpeech.ts), the browser's built-in voice; no external service.
 
 // summary.ts also: SummaryOptions.fundsRequest?: { amountUsdc: string } | null  (optional, off by default)
+
+// timeline.ts
+buildTimeline(trip, disruptionId): TimelineNode[]   // rail of flights, links, stay, people
+finalArrival(trip, disruptionId): FinalArrival | null  // where the traveler now lands (or unknown)
+// messages.ts
+buildDrafts(trip, disruptionId): Draft[]  // pickup / family / hotel messages; channelLinks(draft)
+// A person's node turns green when their task is done (pickup: rearrange_pickup, family:
+// send_update). Opening a draft on /share ticks the matching tasks.
 
 // shareLink.ts
 encodeShare(trip: Trip, disruptionId: string, options: SummaryOptions): string  // URL fragment
@@ -230,7 +238,7 @@ With no backend, the airline feed is simulated. `FlightWatcher`
 `simulateFlightChange()` (`src/components/trip/simulateChange.ts`) and shows a notification
 banner. It never runs on `/s`. On the sample trip the change is: BA 286 runs 2h 10m late,
 AZ 201 is missed, the traveler is rebooked on AZ 207 (14:25 to 18:00).
-"Restart the demo trip" in the home menu reloads the sample trip, which replays it.
+"Restart the demo trip" in the home menu reloads the sample trip, which replays it. "Pick a scenario" (`ScenarioSheet`) restarts and plays `delay45`, `delay180`, `missed` or `cancelled` at once.
 Anything that says the app watches live flights must say this is simulated.
 
 ## Ownership

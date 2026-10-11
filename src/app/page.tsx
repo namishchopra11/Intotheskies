@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { NextAction, haptic } from "@/components/trip/NextAction";
+import { ScenarioSheet } from "@/components/trip/ScenarioSheet";
 import { triggerFlightChange } from "@/components/trip/simulateChange";
 import { useSpeech } from "@/components/trip/useSpeech";
 import {
@@ -9,11 +11,13 @@ import {
   Button,
   CONNECTION_BADGE,
   Field,
+  FlapBoard,
   Icon,
   ProgressBar,
   Sheet,
   SignalBar,
   ThemeToggle,
+  Timeline,
   cx,
   type IconName,
   type Tone,
@@ -23,6 +27,7 @@ import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { LoadNotice } from "@/lib/recoverTrip";
+import { buildTimeline, finalArrival } from "@/lib/domain/timeline";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import type { Contact, Disruption, Flight, Stay, Trip } from "@/lib/types";
 
@@ -34,6 +39,7 @@ export default function TripStatusPage() {
   const loadNotice = useTripStore((s) => s.loadNotice);
   const dismissLoadNotice = useTripStore((s) => s.dismissLoadNotice);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scenarioOpen, setScenarioOpen] = useState(false);
 
   const menuButton = (
     <button
@@ -51,7 +57,16 @@ export default function TripStatusPage() {
       <AppHeader action={menuButton} />
       {ready && loadNotice && <LoadNoticeBar notice={loadNotice} onDismiss={dismissLoadNotice} />}
       {!ready ? <Loading /> : trip ? <Status trip={trip} /> : <NoTrip />}
-      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
+      <TripMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        hasTrip={Boolean(trip)}
+        onScenario={() => {
+          setMenuOpen(false);
+          setScenarioOpen(true);
+        }}
+      />
+      <ScenarioSheet open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
     </main>
   );
 }
@@ -60,6 +75,8 @@ function Status({ trip }: { trip: Trip }) {
   const disruption = trip.disruptions[trip.disruptions.length - 1];
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
+  const arrival = disruption ? finalArrival(trip, disruption.id) : null;
+  const timeline = disruption ? buildTimeline(trip, disruption.id) : [];
   const first = trip.flights[0];
   const last = trip.flights[trip.flights.length - 1];
   const eyebrow = [
@@ -85,17 +102,30 @@ function Status({ trip }: { trip: Trip }) {
         </h1>
       </section>
 
-      {trip.flights.length > 0 && (
-        <section
-          aria-label="Flights"
-          className="ck-rise mx-4 flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface"
-          style={rise(220)}
-        >
-          {trip.flights.flatMap((f) => flightRows(trip, f, impact))}
-        </section>
+      {arrival && (
+        <div key={`arrival-${disruption.id}`} className="ck-rise mx-4" style={rise(200)}>
+          <FlapBoard
+            label={`${arrival.unknown ? "Arrival" : "New arrival"} · ${cityName(arrival.flight.to)}`}
+            time={arrival.unknown ? null : timePart(arrival.arriveAt)}
+            was={timePart(arrival.was)}
+            note={
+              arrival.unknown
+                ? "No new time yet"
+                : arrival.delayMinutes
+                  ? `${formatDuration(Math.abs(arrival.delayMinutes))} ${arrival.delayMinutes > 0 ? "later" : "earlier"}`
+                  : "Unchanged"
+            }
+          />
+        </div>
       )}
 
-      <SortingItOut disruption={disruption} impact={impact} contacts={trip.contacts} />
+      <div className="pt-6" key={`timeline-${disruption.id}`}>
+        <Timeline nodes={timeline} baseDelay={300} />
+      </div>
+
+      <NextAction trip={trip} disruption={disruption} arrival={arrival}>
+        <SortingItOut disruption={disruption} contacts={trip.contacts} />
+      </NextAction>
 
       <Actions trip={trip} disruption={disruption} />
 
@@ -200,34 +230,15 @@ function FlightRow({ r }: { r: Row }) {
 
 /* ---------- Checklist ---------- */
 
-function SortingItOut({
-  disruption,
-  impact,
-  contacts,
-}: {
-  disruption: Disruption;
-  impact: Impact;
-  contacts: Contact[];
-}) {
+function SortingItOut({ disruption, contacts }: { disruption: Disruption; contacts: Contact[] }) {
   const toggleTask = useTripStore((s) => s.toggleTask);
   const removeTask = useTripStore((s) => s.removeTask);
   const total = disruption.tasks.length;
   const done = disruption.tasks.filter((t) => t.done).length;
-  // Only a tight connection is "Tight"; a missed or unknown one is simply at risk.
-  const riskLabel = impact.connection?.status === "tight" ? "Tight" : "At risk";
-  const risks = impact.affectedStays.map((a) => ({ id: a.stayId, text: a.reason }));
-
   return (
-    <section className="ck-rise flex flex-col px-5 pt-[22px]" style={rise(340)}>
+    <div className="flex flex-col px-1 pt-1">
       <ProgressBar label="Sorting it out" value={done} max={total} />
       <ul className="mt-1 flex flex-col">
-        {risks.map((r) => (
-          <li key={r.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2">
-            <Icon name="clock" size={20} strokeWidth={2.5} className="text-warn-fg" />
-            <span className="flex-1 text-[15px]">{r.text}</span>
-            <span className="text-[13px] font-semibold text-warn-fg">{riskLabel}</span>
-          </li>
-        ))}
         {disruption.tasks.map((t) => {
           const contact = t.contactId ? contacts.find((c) => c.id === t.contactId) : undefined;
           return (
@@ -236,7 +247,10 @@ function SortingItOut({
                 type="button"
                 role="checkbox"
                 aria-checked={t.done}
-                onClick={() => toggleTask(disruption.id, t.id)}
+                onClick={() => {
+                  haptic();
+                  toggleTask(disruption.id, t.id);
+                }}
                 data-done={t.done}
                 className="flex min-h-13 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left"
               >
@@ -265,7 +279,7 @@ function SortingItOut({
         })}
       </ul>
       <AddTask disruptionId={disruption.id} />
-    </section>
+    </div>
   );
 }
 
@@ -590,7 +604,17 @@ function NoTrip() {
   );
 }
 
-function TripMenu({ open, onClose: closeSheet, hasTrip }: { open: boolean; onClose: () => void; hasTrip: boolean }) {
+function TripMenu({
+  open,
+  onClose: closeSheet,
+  hasTrip,
+  onScenario,
+}: {
+  open: boolean;
+  onClose: () => void;
+  hasTrip: boolean;
+  onScenario: () => void;
+}) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
   const pristine = useTripStore((s) => Boolean(s.trip && s.trip.disruptions.length === 0));
@@ -638,12 +662,15 @@ function TripMenu({ open, onClose: closeSheet, hasTrip }: { open: boolean; onClo
               Trigger the change now
             </Button>
           )}
+          <Button variant="secondary" block icon="plane" onClick={onScenario}>
+            Pick a scenario
+          </Button>
           {confirming ? (
             <Confirm
               title={confirming === "restart" ? "Restart the demo trip?" : "Clear this trip?"}
               body={
                 confirming === "restart"
-                  ? "This replaces your trip with the sample trip. Ticked tasks and a saved Solana address are lost."
+                  ? "This replaces your trip with the sample trip. Ticked tasks are lost; a saved Solana address is kept."
                   : "This removes the trip, its checklist and a saved Solana address from this phone."
               }
               confirmLabel={confirming === "restart" ? "Restart" : "Clear trip"}
@@ -682,7 +709,7 @@ function TripMenu({ open, onClose: closeSheet, hasTrip }: { open: boolean; onClo
         {hasTrip && (
           <p className="text-[13px] leading-snug text-ink-2">
             Restarting puts the trip back on time. A few seconds later the simulated airline feed
-            changes it, and you get the notification again.
+            changes it, and you get the notification again. Or pick a scenario to play one straight away.
           </p>
         )}
       </div>
