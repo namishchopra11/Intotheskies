@@ -40,6 +40,7 @@ const baseTrip: Trip = TripSchema.parse({
     { id: "c-ita", kind: "airline", name: "ITA Airways", phone: "+39 06 5550 0177" },
     { id: "c-hotel", kind: "hotel", name: "Hotel Aventino Garden", phone: "+39 06 5550 0142" },
   ],
+  people: [{ id: "p-marco", name: "Marco", role: "pickup" }],
   disruptions: [],
 });
 
@@ -251,6 +252,20 @@ describe("generateChecklist", () => {
         if (key === "rearrange_pickup") expect(t.contactId).toBe("c-ride");
       }
     }
+  });
+
+  it("adds the pickup task only when there is a ride or someone picking the traveler up", () => {
+    const keysOf = (trip: Trip) =>
+      report(trip, FIRST, "delay", { arriveAt: "2026-10-17T11:20" }).disruption.tasks.map((t) => t.id.split(":")[1]);
+    expect(keysOf({ ...baseTrip, people: [] })).not.toContain("rearrange_pickup");
+    expect(keysOf({ ...baseTrip, people: [{ id: "p-mum", name: "Mum", role: "family" }] })).not.toContain("rearrange_pickup");
+    expect(keysOf(baseTrip)).toContain("rearrange_pickup");
+    const withRide: Trip = {
+      ...baseTrip,
+      people: [],
+      rides: [{ id: "r1", provider: "Roma Airport Transfers", pickupAt: "2026-10-17T15:45", from: "FCO", to: "Hotel" }],
+    };
+    expect(keysOf(withRide)).toContain("rearrange_pickup");
   });
 
   it("adds the insurer task only when an insurance contact is saved", () => {
