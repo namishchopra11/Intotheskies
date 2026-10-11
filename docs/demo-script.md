@@ -51,7 +51,7 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 ## Before you walk on (2 minutes, do this every time)
 
 1. Charge the phone. Turn off notifications and Do Not Disturb on, so nothing else buzzes.
-2. Open **https://connectionkeeper.vercel.app** in the browser you will use on stage. Use
+2. Open **https://layoverapp.vercel.app** in the browser you will use on stage. Use
    this HTTPS address, not a laptop's `http://192.168...` address (the Copy button can fail
    there).
 3. Start clean: menu button > **Clear this trip** > **Clear trip**. The app remembers things on the phone, so
