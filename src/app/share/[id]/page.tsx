@@ -173,7 +173,7 @@ export default function SharePage() {
             description={
               trip.payoutAddress
                 ? "USDC on devnet (test network)."
-                : "Add a Solana address in the trip menu first."
+                : "Add a Solana address in Settings first."
             }
           />
           <Collapse open={fundsOn}>

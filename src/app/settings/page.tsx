@@ -31,6 +31,7 @@ export default function SettingsPage() {
             </Group>
             <TimeDisplay />
             <ListenVoice />
+            <SendHelp />
             <Group title="Getting started">
               <Button variant="secondary" block onClick={() => {
                 useTour.getState().start(profile, true);
@@ -349,5 +350,54 @@ function TimeDisplay() {
         />
       </Card>
     </Group>
+  );
+}
+
+/** Where an optional "Send help" request on a shared update pays out. Per trip; empty clears it. */
+function SendHelp() {
+  const hasTrip = useTripStore((s) => s.trip !== null);
+  if (!hasTrip) return null;
+  return (
+    <Group title="Send help">
+      <Card>
+        <PayoutAddress />
+      </Card>
+    </Group>
+  );
+}
+
+function PayoutAddress() {
+  const saved = useTripStore((s) => s.trip?.payoutAddress);
+  const setPayoutAddress = useTripStore((s) => s.setPayoutAddress);
+  const [value, setValue] = useState(saved ?? "");
+  const [error, setError] = useState<string>();
+  const dirty = value.trim() !== (saved ?? "");
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (setPayoutAddress(value)) setValue(value.trim());
+        else setError("Not a Solana address.");
+      }}
+    >
+      <Field
+        label="Solana address (optional)"
+        hint="For this trip's Send help. Devnet (test network) only."
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value);
+          setError(undefined);
+        }}
+        error={error}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        placeholder="Your wallet's public address"
+      />
+      <Button type="submit" variant="secondary" block disabled={!dirty} icon={!dirty && saved ? "check" : undefined}>
+        {!dirty && saved ? "Saved" : saved && value.trim() === "" ? "Remove address" : "Save address"}
+      </Button>
+    </form>
   );
 }
