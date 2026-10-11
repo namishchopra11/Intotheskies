@@ -23,8 +23,8 @@ On the phone you present from:
 2. [ ] Tap **Continue as guest** if the sign-in screen shows.
 3. [ ] Menu (top right) > **Clear this trip** > **Clear trip**, so you start clean.
 4. [ ] Do one full practice run: **Try the sample trip**, wait for the change, **Mark done**,
-       **Share the new plan**, **Copy link**, open it.
-5. [ ] Tap **Listen to summary** once. Is it the voice picked in the menu (ElevenLabs) or the
+       **Share update**, **Copy link**, open it.
+5. [ ] Tap **Listen** once. Is it the voice picked in the menu (ElevenLabs) or the
        phone's own voice? Only say "ElevenLabs" if it is the picked voice.
 6. [ ] If you will show Send help: menu > paste the Traveler wallet address > **Save address**.
        Then use **Restart the demo trip** from now on, not **Clear this trip** (clearing wipes
@@ -63,7 +63,7 @@ On the second phone (for the shared link and Send help):
 1. iPhone: Settings > Control Center > add **Screen Recording**.
 2. On the stage phone: menu > **Restart the demo trip** > **Restart**.
 3. Swipe down from the top right, tap the record button, wait for the countdown.
-4. Do the whole demo: the change arriving, **Mark done**, **Share the new plan**, **Copy link**,
+4. Do the whole demo: the change arriving, **To do** > **Mark done**, **Share update**, **Copy link**,
    the shared page, and Send help if it is working.
 5. Stop the recording. It saves to Photos.
 6. AirDrop it to a laptop as a second copy.

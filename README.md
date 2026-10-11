@@ -20,7 +20,7 @@ itself, and the update is ready to send to the person waiting.
 
 | On track | New plan | Share it | What they see |
 | --- | --- | --- | --- |
-| <img src="docs/screenshots/1-on-track.png" width="190" alt="Layover: the trip is on time, with a tight 55-minute connection in London flagged"> | <img src="docs/screenshots/2-new-plan.png" width="190" alt="London connection missed: the board flips to 18:00 and the trip rail shows what is affected"> | <img src="docs/screenshots/3-share.png" width="190" alt="The share screen with ready-written messages for Marco, Mum and the hotel"> | <img src="docs/screenshots/4-recipient.png" width="190" alt="The read-only page the recipient opens: Alex now lands in Rome at 18:00"> |
+| <img src="docs/screenshots/1-on-track.png" width="190" alt="Layover: the trip is on time, with a tight 55-minute connection in London flagged"> | <img src="docs/screenshots/2-new-plan.png" width="190" alt="London connection missed: the day rebuilds itself around the new 2:25 PM flight"> | <img src="docs/screenshots/3-share.png" width="190" alt="Share update: Text Marco, Email Mum and Text the hotel, each message already written"> | <img src="docs/screenshots/4-recipient.png" width="190" alt="The read-only page the recipient opens: Alex now lands in Rome at 6:00 PM"> |
 
 ## Try it
 
@@ -37,7 +37,7 @@ pnpm dev
 ```
 
 Optional: copy `.env.example` to `.env.local` and add `ANTHROPIC_API_KEY` (import from
-text) and `ELEVENLABS_API_KEY` (Listen to summary). Without them, import says it is not
+text) and `ELEVENLABS_API_KEY` (Listen). Without them, import says it is not
 available and Listen uses the phone's built-in voice; everything else works.
 
 Open http://localhost:3000, tap **Continue as guest**, then **Try the sample trip** (or
@@ -61,8 +61,8 @@ pnpm build   # production build
    connection is missed and the traveler is rebooked on AZ 207.
 3. See the new arrival on the board, the trip as a rail that shows what is affected,
    **Handled for you** (the hotel told and the airport pickup moved, both simulated), and
-   one **Do this now** task.
-4. Tap **Share the new plan**, then the send button on a person's message. It texts them if
+   a **To do** list that opens on the one thing to do first.
+4. Tap **Share update**, then the send button on a person's message. It texts them if
    a phone number is saved for them, otherwise emails them: Messages or Mail opens with the
    update filled in (nothing is sent from here).
 5. Open a shared link. It is a read-only page that needs no app and no account.

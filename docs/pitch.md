@@ -8,7 +8,7 @@ where you run out of breath.
 
 **Judging criteria:** innovativeness, functionality, creativity, theme ("Into the Skies").
 **Tracks entered:** Solana (see "Tracks" near the end before you say anything about it).
-ElevenLabs is built in, for **Listen to summary** only, but only works once its key is added
+ElevenLabs is built in, for **Listen** only, but only works once its key is added
 on the live site (see "Tracks").
 
 ---
@@ -52,7 +52,7 @@ simulated airline change arrives.*
 > connection in London and is already rebooked. Alex did not type a thing.
 >
 > *(new plan)* Here is what the app worked out by itself. The old flight is struck out. The
-> new one leaves London at 14:25 and lands in Rome at 18:00, not 15:05.
+> new one leaves London at 2:25 PM and lands in Rome at 6:00 PM, not 3:05 PM.
 >
 > *(checklist)* And here is what to do. Check your booking for AZ 207. Ask ITA Airways. Those
 > are not generic tips. They come from Alex's own trip.
@@ -129,7 +129,7 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 | Track | Where it stands | What must be true before you mention it | Who to ask |
 | --- | --- | --- | --- |
 | **Solana** | Built and tested. The traveler adds a Solana address in the **Trip menu**; the share screen has an **Add a Send help button** option with an amount in USDC; the shared page shows **Send help**, a QR code and the address to copy. All on devnet, Solana's test network, with address validation and the transfer-request builder tested under `src/lib/solana/`. Sebastian tested it on an iPhone with Phantom on devnet: scanning the QR code fills in the right amount and address. Phantom will not complete a devnet USDC payment ("Insufficient balance"), a limit of its test mode. | Say the wallet opens with everything filled in. Do not say a payment went through. On stage, stop on Phantom's filled-in screen. | Sebastian |
-| **ElevenLabs** | Built. **Listen to summary** sends only the short spoken briefing to ElevenLabs through the app's `/api/speak` route and plays the audio; the voice is picked in the trip menu. **On Saturday night the live site had no ElevenLabs key**, so Listen used the phone's own built-in voice instead (it no longer shows an error). | The team adds `ELEVENLABS_API_KEY` in Vercel and redeploys. Then test on the stage phone: the voice should be the one picked in the menu (George, Sarah, Alice or Roger), not the phone's usual voice. If it sounds like the phone's own voice, do not mention ElevenLabs. | Boris |
+| **ElevenLabs** | Built. **Listen** sends only the short spoken briefing to ElevenLabs through the app's `/api/speak` route and plays the audio; the voice is picked in the trip menu. **On Saturday night the live site had no ElevenLabs key**, so Listen used the phone's own built-in voice instead (it no longer shows an error). | The team adds `ELEVENLABS_API_KEY` in Vercel and redeploys. Then test on the stage phone: the voice should be the one picked in the menu (George, Sarah, Alice or Roger), not the phone's usual voice. If it sounds like the phone's own voice, do not mention ElevenLabs. | Boris |
 
 If the Solana step does not work on the day, on the phone you present from, say nothing about
 Solana at the table. A judge who sees a broken promise scores the whole project down. If you
@@ -175,7 +175,7 @@ to ElevenLabs to make the audio. Neither stores it. The screens say so next to t
 **Did Layover really tell the hotel and move the pickup?**
 No. Like the airline feed, **Handled for you** is simulated in this demo: no message reaches
 a hotel or a driver. It shows what the app would do once it is connected to them. The
-messages under **Share the new plan** are real: they open your own WhatsApp, Messages or email
+messages under **Share update** are real: they open your own Messages or email
 with the text filled in.
 
 **Do you use AI?**

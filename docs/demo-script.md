@@ -26,7 +26,7 @@ Say it in your own words, early. Suggested line for step 1:
 Alex Morgan is flying San Francisco to Rome through London. Two airlines, two booking
 confirmations, one hotel. The first flight (BA 286) runs 2 hours 10 minutes late. That is
 longer than the 55-minute London connection, so Alex misses AZ 201 and is rebooked on AZ 207,
-which now lands in Rome at 18:00 instead of 15:05.
+which now lands in Rome at 6:00 PM instead of 3:05 PM.
 
 ## How the change arrives
 
@@ -66,7 +66,7 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 7. Have the backup video ready to play (see "If something goes wrong").
 8. Do not tap any phone number during the demo. The numbers are made up, but the Rome ones
    might ring a stranger.
-9. For the **Listen to summary** line, turn the phone volume up and test it once before you
+9. For the **Listen** line, turn the phone volume up and test it once before you
    go up. With the ElevenLabs key on the server you hear the voice picked in the menu. Without
    it (or with no network) you hear the phone's own voice instead: still fine to play, but then
    do not say "ElevenLabs".
@@ -75,24 +75,28 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 
 ## Step 1. Load the trip (15 seconds)
 
-**TAP** **Try the sample trip** on the home screen.
+Times show in the phone's own format: **2:25 PM** on most US phones, **14:25** on 24-hour
+phones. This script uses 12-hour times, as on the live site. Same flights either way.
 
-You land on **Flights are on time, but 55 min in London is tight.** The bar at the top reads
-**On time · tight connection**, next to a pulsing **Watching · simulated feed**. Say
-"simulated" when you point at it.
+**TAP** **Next: See your trip** (bottom right), or **Try the sample trip** on the home screen.
 
-**POINT** at the two flights, and at the line between them: **55 min in London**, marked
-tight.
+You land on **On time. 55 min to connect in London.** The bar at the top reads **Tight
+connection** next to **Simulated feed**. Say "simulated" when you point at it. Below it, the
+day as a list of times: leave San Francisco 4:40 PM, land in London 10:35 AM (**Watch this**:
+"Tight — 55 min until AZ 201"), fly to Rome 11:30 AM, land in Rome 3:05 PM, the pickup, and
+the hotel front desk closing at 10:00 PM.
+
+**POINT** at **Land in London** and its line, **Tight — 55 min until AZ 201**.
 
 **SAY**
 > "This is Alex's trip to Rome. A flight from San Francisco to London, a flight on to Rome,
-> a hotel, and the phone numbers Alex will need. Normally that is four different apps and
-> emails. Here it is one screen. The app is watching the flights. The airline feed is
-> simulated, so we can show you the moment it changes."
+> a hotel, and a pickup. Normally that is four different apps and emails. Here it is one
+> screen. The app is watching the flights. The airline feed is simulated, so we can show
+> you the moment it changes."
 
-When you finish the line, **TAP** **Next: Change the flight** (bottom right). (With Demo
-controls switched off in Settings, the change lands by itself about 6 seconds after the trip
-appears instead; then just keep talking.)
+When you finish the line, **TAP** **Next: Change the flight**. (With Demo controls switched
+off in Settings, the change lands by itself about 6 seconds after the trip appears instead;
+then just keep talking.)
 
 ---
 
@@ -101,85 +105,84 @@ appears instead; then just keep talking.)
 A card slides down from the top (the phone buzzes, if it can):
 
 > **Simulated flight change · new plan ready**
-> BA 286 is 2h 10m late, so you'll miss AZ 201 in London.
-> You're rebooked on AZ 207, 14:25 → 18:00 to Rome.
-> Told Hotel Aventino Garden your new arrival and moved your Roma Airport Transfers pickup to 18:40.
-> 5 things to sort out. Tap to see your plan.
+> Missed AZ 201. New flight AZ 207, 2:25 PM – 6:00 PM.
+> Told the hotel you land at 6:00 PM and moved your pickup to 6:40 PM.
+> 5 to do.
 
 **SAY**
 > "Here is the airline telling Alex. The first flight is over two hours late. Alex has
 > missed the connection and is already rebooked. Alex did not type a thing."
 
-**TAP** the card. It disappears by itself after about 9 seconds, so be quick. If you miss
-it, nothing is lost: the home screen has already changed. Just carry on to step 3.
+**TAP** the card, or the small **X**. If it hides itself first, nothing is lost: the home
+screen has already changed.
 
 ---
 
 ## Step 3. The plan ripples (25 seconds)
 
-The bar reads **New plan ready**. Under the headline, the yellow board flips to **18:00**
-with **15:05** struck through and **2h 55m later**. Below it is the trip as a rail, each
-step appearing a beat after the one above:
+The headline reads **London connection missed. You're on the 2:25 PM instead.** The day
+rebuilds itself, step by step:
 
-- **BA 286**, 2h 10m late, lands 12:45.
-- **Missed AZ 201**, red, with a dashed rail: the link is broken.
-- **AZ 207**, green, lands 18:00 (was 15:05).
-- **Hotel Aventino Garden**, green: 4h to spare before the front desk closes.
-- **Marco · pickup**, green: the pickup was moved to meet the new arrival.
-- **Mum · family**, amber: hasn't heard yet.
+- **Leave San Francisco · BA 286**, 6:50 PM: **2h 10m late**.
+- **Land in London**, 12:45 PM: 1h 40m until your new flight.
+- **AZ 201 to Rome**, was 11:30 AM: **Missed**, no longer happening.
+- **New flight · AZ 207**, 2:25 PM, lands 6:00 PM: **Rebooked**.
+- **Land in Rome**, 6:00 PM: Marco's picking you up, moved to match.
+- **Your pickup**, 6:40 PM: moved from 3:45 PM for you.
+- **Hotel front desk closes**, 10:00 PM: 4h to spare after landing.
 
-Under the rail, **Handled for you** lists what the app did by itself: the hotel told, the
-airport pickup moved to 18:40. Like the feed, this is simulated: no message really goes out.
+Under it, **Handled for you**: **Rebooked on AZ 207**, **Told the hotel you land at 6:00
+PM**, **Moved your pickup to 6:40 PM**, and the line **Simulated: nothing is really sent.**
 
 **SAY**
-> "One flight ran late and everything downstream lights up: the missed connection, the new
-> flight, the hotel, the pickup. The app already sorted the hotel and the transfer. Mum is
-> the one still waiting to hear."
+> "One flight ran late and everything downstream rebuilt itself: the missed connection, the
+> new flight, the pickup, the hotel. In the demo the app also handles the hotel and the
+> transfer. That part is simulated too."
 
 Say **"missed"** and **"rebooked"**. Those are the app's own words.
 
 ---
 
-## Step 4. Do this now (15 seconds)
+## Step 4. What to do (15 seconds)
 
-**POINT** at **Do this now**: one task, with one button. **Mark done** (or **Call**, or
-**Send the message** for the tasks that tell people). The rest are behind **All tasks**.
+**TAP** **To do (5)**. It opens on **Do this first**: one task with one button (**Mark
+done**, or **Call** when there is someone to call).
 
-**TAP** **Mark done**. The next task takes its place.
+**TAP** **Mark done**. The next task takes its place, and the count drops to **4**.
 
 **SAY**
-> "Alex never has to read a list. The app says what to do next."
+> "Alex never has to read a list. The app says what to do first."
 
 ---
 
-## Step 5. Tell Mum (25 seconds)
+## Step 5. Tell the people waiting (25 seconds)
 
-**TAP** **Share the new plan**. Under **Send to** are ready-written messages for Marco, Mum
-and the hotel, each with the new arrival time.
+**TAP** **Next: Share the update** (or **Share update** on the home screen). Under **Send
+to** are ready-written messages: **Text Marco** (the driver), **Email Mum**, and **Text Hotel
+Aventino Garden**, each with the new arrival time. Below them is the **Preview** of the
+update.
 
-**POINT** at the hotel message (it has the booking confirmation) and Mum's (it has no
-booking numbers).
+**POINT** at the hotel message (it has the booking confirmation) and Mum's (no booking
+numbers).
 
-**TAP** **Email Mum** on Mum's message. Mail opens addressed to her with the update filled
-in. Marco's says **Text Marco** instead: each message goes the way that person's saved
-details allow (a phone number means a text, otherwise an email). **Nothing is sent from
-here.** Go back.
+**TAP** **Email Mum**. The phone's mail app opens with the message filled in. **Nothing is
+sent from here.** Go back. The matching task is ticked off for you.
 
-The **Mum · family** node on the home screen is now green: the loop is closed.
+The numbers and the address are made up (`+39 06 0000 ...` and `mum@example.com`): do not
+actually send.
 
 **SAY**
-> "One tap opens the message. The app counts it as done, and Mum's step on the trip turns
-> green."
+> "One tap opens the message, already written. Mum hears the new plan, and the app ticks it
+> off."
 
-Then, if time allows, **Copy link** and open it on a second device to show the read-only
-page. No app, no account.
+Then, if time allows, **TAP** **Next: What they see**: the read-only page Mum would open,
+**Alex now lands in Rome at 6:00 PM.** No app, no account.
 
 ---
 
-## Optional: Listen to summary (10 seconds)
+## Optional: Listen (10 seconds)
 
-Only if you have time and the room is quiet. Back on the home screen, **TAP** **Listen to
-summary**. The phone plays a short briefing in the voice picked in the menu (made by
+Only if you have time and the room is quiet. Back on the home screen, **TAP** **Listen**. The phone plays a short briefing in the voice picked in the menu (made by
 ElevenLabs; only this text is sent). Before you tick anything, it reads:
 
 > "You missed your flight to Rome. You are now on a new flight arriving at 6:00 PM. Nothing
@@ -240,12 +243,13 @@ phone. Otherwise the phone may show an "open with" prompt.
 
 Cut in this order, last cut first. The path from 1 to 5 never changes.
 
-1. Skip the optional **Listen to summary** step.
+1. Skip the optional **Listen** step.
 2. Skip pointing at the hotel and Mum messages in step 5.
+   (Times on screen may be 12-hour or 24-hour, depending on the phone.)
 3. Skip opening the link on a second device. Say what happens instead.
 
-Never cut: the change arriving by itself, the rail lighting up, **Do this now**, or Mum's
-step turning green after the message. That is the whole idea.
+Never cut: the change arriving, the day rebuilding itself, **Do this first**, or the message
+to Mum. That is the whole idea.
 
 ---
 
@@ -283,10 +287,10 @@ Then, in this order:
 | You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip** > **Restart**. |
 | You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
 | Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |
-| **Listen to summary** sounds like the phone's own voice | The ElevenLabs key is missing or the network is down. It still works; just do not say "ElevenLabs". |
-| **Listen to summary** makes no sound | Check the phone is not on silent (the switch on the side of an iPhone). Otherwise skip that step. |
+| **Listen** sounds like the phone's own voice | The ElevenLabs key is missing or the network is down. It still works; just do not say "ElevenLabs". |
+| **Listen** makes no sound | Check the phone is not on silent (the switch on the side of an iPhone). Otherwise skip that step. |
 | A button does something you did not expect | Say "let me go back", tap **Back to trip**, and repeat the step. Do not apologise twice. |
-| The numbers are not 2h 10m, 14:25 and 18:00 | Stop. Something changed in the sample trip or the simulated feed. Switch to the backup video. |
+| The numbers are not 2h 10m, 2:25 PM (14:25) and 6:00 PM (18:00) | Stop. Something changed in the sample trip or the simulated feed. Switch to the backup video. |
 
 ### Backup video
 
