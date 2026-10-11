@@ -45,8 +45,9 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 ## Before you walk on (2 minutes, do this every time)
 
 1. Charge the phone. Turn off notifications and Do Not Disturb on, so nothing else buzzes.
-2. Open the app in the browser you will use on stage. **Use the HTTPS address** if the team
-   has one (the Copy button can fail on a plain `http://192.168...` address).
+2. Open **https://connectionkeeper.vercel.app** in the browser you will use on stage. Use
+   this HTTPS address, not a laptop's `http://192.168...` address (the Copy button can fail
+   there).
 3. Start clean: menu button > **Clear this trip** > **Clear trip**. The app remembers things on the phone, so
    a second run will otherwise open on the first run's change.
 4. You should now see "Flights change. Your plan keeps up." and **Try the sample trip**. Do
@@ -59,8 +60,10 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 7. Have the backup video ready to play (see "If something goes wrong").
 8. Do not tap any phone number during the demo. The numbers are made up, but the Rome ones
    might ring a stranger.
-9. For the **Listen to summary** line, turn the phone volume up. It needs the ElevenLabs key
-   on the server and a network connection. Test it once before you go up.
+9. For the **Listen to summary** line, turn the phone volume up and test it once before you
+   go up. With the ElevenLabs key on the server you hear the voice picked in the menu. Without
+   it (or with no network) you hear the phone's own voice instead: still fine to play, but then
+   do not say "ElevenLabs".
 
 ---
 
@@ -174,8 +177,9 @@ ElevenLabs; only this text is sent). Before you tick anything, it reads:
 > else on your trip is affected. First, check your new booking for AZ 207."
 
 (The "first" thing is the first task not yet done, so after **Mark done** in step 4 it names
-the next task instead.) Tap again to stop it. It needs a connection and the server's
-ElevenLabs key; if it shows an error, skip it.
+the next task instead.) Tap again to stop it. Without the server's ElevenLabs key or a
+connection it reads the same words in the phone's own voice; only say "ElevenLabs" if you
+tested it and heard the picked voice.
 
 ---
 
@@ -270,7 +274,8 @@ Then, in this order:
 | You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip** > **Restart**. |
 | You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
 | Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |
-| **Listen to summary** shows an error | The ElevenLabs key is missing or the network is down. Skip that step. |
+| **Listen to summary** sounds like the phone's own voice | The ElevenLabs key is missing or the network is down. It still works; just do not say "ElevenLabs". |
+| **Listen to summary** makes no sound | Check the phone is not on silent (the switch on the side of an iPhone). Otherwise skip that step. |
 | A button does something you did not expect | Say "let me go back", tap **Back to trip**, and repeat the step. Do not apologise twice. |
 | The numbers are not 2h 10m, 14:25 and 18:00 | Stop. Something changed in the sample trip or the simulated feed. Switch to the backup video. |
 

@@ -20,7 +20,12 @@ itself, and the update is ready to send to the person waiting.
 
 | On track | New plan | Share it | What they see |
 | --- | --- | --- | --- |
-| <img src="docs/screenshots/1-on-track.png" width="190" alt="The trip is on time, with a tight 55-minute connection in London flagged"> | <img src="docs/screenshots/2-new-plan.png" width="190" alt="London connection missed: rebooked on AZ 207, with a checklist of what to do"> | <img src="docs/screenshots/3-share.png" width="190" alt="The share screen with a preview of the message and a Copy link button"> | <img src="docs/screenshots/4-recipient.png" width="190" alt="The read-only page the recipient opens: Alex now lands in Rome at 18:00"> |
+| <img src="docs/screenshots/1-on-track.png" width="190" alt="Layover: the trip is on time, with a tight 55-minute connection in London flagged"> | <img src="docs/screenshots/2-new-plan.png" width="190" alt="London connection missed: the board flips to 18:00 and the trip rail shows what is affected"> | <img src="docs/screenshots/3-share.png" width="190" alt="The share screen with ready-written messages for Marco, Mum and the hotel"> | <img src="docs/screenshots/4-recipient.png" width="190" alt="The read-only page the recipient opens: Alex now lands in Rome at 18:00"> |
+
+## Try it
+
+Live: **https://connectionkeeper.vercel.app** (open it on a phone, tap **Continue as guest**,
+then **Try the sample trip**).
 
 ## Run it
 
@@ -32,8 +37,8 @@ pnpm dev
 ```
 
 Optional: copy `.env.example` to `.env.local` and add `ANTHROPIC_API_KEY` (import from
-text) and `ELEVENLABS_API_KEY` (Listen to summary). Without them those two features say
-they are not set up; everything else works.
+text) and `ELEVENLABS_API_KEY` (Listen to summary). Without them, import says it is not
+available and Listen uses the phone's built-in voice; everything else works.
 
 Open http://localhost:3000, tap **Continue as guest**, then **Try the sample trip** (or
 **Add your trip** to enter your own). It is designed for a phone, so

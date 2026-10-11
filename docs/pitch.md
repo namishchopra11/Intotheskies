@@ -8,7 +8,8 @@ where you run out of breath.
 
 **Judging criteria:** innovativeness, functionality, creativity, theme ("Into the Skies").
 **Tracks entered:** Solana (see "Tracks" near the end before you say anything about it).
-ElevenLabs is back in, for **Listen to summary** only (see "Tracks").
+ElevenLabs is built in, for **Listen to summary** only, but only works once its key is added
+on the live site (see "Tracks").
 
 ---
 
@@ -127,7 +128,7 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 | Track | Where it stands | What must be true before you mention it | Who to ask |
 | --- | --- | --- | --- |
 | **Solana** | Built and tested. The traveler adds a Solana address in the **Trip menu**; the share screen has an **Add a Send help button** option with an amount in USDC; the shared page shows **Send help**, a QR code and the address to copy. All on devnet, Solana's test network, with address validation and the transfer-request builder tested under `src/lib/solana/`. Sebastian tested it on an iPhone with Phantom on devnet: scanning the QR code fills in the right amount and address. Phantom will not complete a devnet USDC payment ("Insufficient balance"), a limit of its test mode. | Say the wallet opens with everything filled in. Do not say a payment went through. On stage, stop on Phantom's filled-in screen. | Sebastian |
-| **ElevenLabs** | Built. **Listen to summary** sends only the short spoken briefing to ElevenLabs through the app's `/api/speak` route and plays the audio; the voice is picked in the trip menu. It needs the ElevenLabs key on the server and a connection. | Test it on the stage phone first. If it shows an error, do not mention ElevenLabs. | |
+| **ElevenLabs** | Built. **Listen to summary** sends only the short spoken briefing to ElevenLabs through the app's `/api/speak` route and plays the audio; the voice is picked in the trip menu. **On Saturday night the live site had no ElevenLabs key**, so Listen used the phone's own built-in voice instead (it no longer shows an error). | The team adds `ELEVENLABS_API_KEY` in Vercel and redeploys. Then test on the stage phone: the voice should be the one picked in the menu (George, Sarah, Alice or Roger), not the phone's usual voice. If it sounds like the phone's own voice, do not mention ElevenLabs. | Boris |
 
 If the Solana step does not work on the day, on the phone you present from, say nothing about
 Solana at the table. A judge who sees a broken promise scores the whole project down. If you
@@ -156,7 +157,8 @@ first thing we would add next.
 **Can I try it with my own flight?**
 Partly. **Add your trip** lets you enter flights, hotels and rides by hand, or paste a
 confirmation email to import them. The change it plays is still simulated: connecting a real
-status source is what we would build next.
+status source is what we would build next. *(Import only works once the Anthropic key is
+added on the live site. On Saturday night it was not. Check before you offer it.)*
 
 **Where is the data stored?**
 On your phone, in the browser. No database, and no account needed (sign-in is a profile kept
@@ -164,6 +166,21 @@ on the phone, or continue as a guest). When you share an update, the
 details travel inside the link itself, and the part of a link after the `#` is never sent to
 a web server. The catch: anyone who has the link can read the update. So booking numbers
 are off by default.
+
+Two things do leave the phone, and only when you tap them: **Import** sends the confirmation
+you paste to Claude (Anthropic's AI) to be read, and **Listen** sends the short spoken summary
+to ElevenLabs to make the audio. Neither stores it. The screens say so next to the button.
+
+**Did Layover really tell the hotel and move the pickup?**
+No. Like the airline feed, **Handled for you** is simulated in this demo: no message reaches
+a hotel or a driver. It shows what the app would do once it is connected to them. The
+messages under **Share the new plan** are real: they open your own WhatsApp, Messages or email
+with the text filled in.
+
+**Do you use AI?**
+In one place: **Import** uses Claude to read a confirmation email or screenshot and fill in
+the flights and hotel. The checklist, the risks and the messages are built from fixed rules,
+not a language model, so they are predictable and work offline.
 
 **How is this different from an airline app or TripIt?**
 An airline app knows one airline's flight. It does not know your hotel or the other
@@ -219,6 +236,9 @@ built the logic.)*
 - Do not say the flight data is live, or that the app "tracks real flights". Say "the feed is
   simulated" before a judge has to ask.
 - Do not say "AI" about the checklist or the message. They are built from rules, not a language model.
+  The only AI is **Import** (Claude reads a pasted confirmation).
+- Do not say the app "told the hotel" as if it really did. Say "in the demo, it shows what it
+  would handle for you".
 - Do not promise features. Say "next, we would..."
 
 ## Who to hand questions to
@@ -231,6 +251,12 @@ built the logic.)*
 | Sebastian | Presenter, Solana | The story, plus the Solana help button |
 
 ## Open items
+
+0. **Before demo day, the team must add two keys in Vercel** (Settings > Environment Variables,
+   then redeploy): `ANTHROPIC_API_KEY` for Import and `ELEVENLABS_API_KEY` for Listen. On
+   Saturday night neither was set, so Import said "isn't available right now" and Listen used
+   the phone's own voice. If they are still missing on the day, do not mention Import or
+   ElevenLabs.
 
 1. Run the optional Send help step in `docs/demo-script.md` once on the phone you will present
    from, the morning of the demo.
