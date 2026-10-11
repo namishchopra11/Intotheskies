@@ -17,6 +17,34 @@ and no screen showed an error. What is left is small, plus two keys only the tea
 5. Rehearse the pitch twice against a 3-minute timer. `docs/pitch.md` now has answers for
    "Did it really tell the hotel?" and "Do you use AI?".
 
+## Update, early Sunday (about 2 a.m.)
+
+**Already on `main` and live:** everything from Saturday night, combined: Namish's
+`qa-final`, Will's demo **Next** button, and the `fix/logic` and `fix/screens` changes. The
+live site was clicked through end to end with the Next button, with no errors. With **Demo
+controls** on (the default), the flight only changes when you tap **Next: Change the flight**.
+
+**Waiting to be merged (checked, safe):**
+
+- **Will's `design-share`:** change boxes back, a shorter change notification, animated
+  sheets and dropdowns, a Back button, per-account trips, simulated Google and Apple sign-in,
+  one-tap send. 269 tests pass, the build is clean, it merges into `main` with no conflicts.
+- **Boris's `foundation-elevenlabs`:** opening animation, 12-hour or 24-hour times, a
+  departure countdown, pull-to-refresh, and a boarding-pass camera import. It already
+  includes Will's branch. Same checks, all pass.
+
+Merge `foundation-elevenlabs` (it contains both), or `design-share` then
+`foundation-elevenlabs`. Whoever merges: click through the Next button once on the live site
+afterwards.
+
+**After that merge, two things change for the demo:**
+
+- Times may show as **2:25 PM** and **6:00 PM** instead of 14:25 and 18:00, depending on the
+  phone's setting. Same flight, same story.
+- The boarding-pass camera import needs `ANTHROPIC_API_KEY` in Vercel, like Import.
+
+**Ask Will** what he changed in `src/lib/content/checklistCopy.ts` (Sebastian's wording file).
+
 ## For the team
 
 ### 1. Add the API keys in Vercel (needed before the demo)
