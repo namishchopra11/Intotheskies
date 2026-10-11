@@ -599,7 +599,7 @@ function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: numb
                   href={c.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-0.5 inline-flex min-h-8 items-center text-[13px] font-medium underline underline-offset-4"
+                  className="mt-0.5 inline-flex min-h-11 items-center text-[13px] font-medium underline underline-offset-4"
                 >
                   {new URL(c.url).hostname.replace(/^www\./, "")}
                 </a>
