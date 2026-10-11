@@ -2,7 +2,6 @@
 
 import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button, Card, Collapse, Field, Icon, PageHeader, Toggle, cx } from "@/components/ui";
 import { sendUpdateTaskId } from "@/lib/domain/checklist";
@@ -24,7 +23,7 @@ const ANNOUNCE: Record<Done, string> = {
   both: "Message and link copied. Paste them into any chat.",
   text: "Message copied. Paste it into any chat.",
   link: "Link copied. Paste it into any chat.",
-  error: "Couldn't copy on this device. Press and hold the message to copy it.",
+  error: "Couldn't copy. Press and hold the message instead.",
 };
 
 function clockNow() {
@@ -64,8 +63,7 @@ export default function SharePage() {
         <PageHeader title="Nothing to share yet" />
         <div className="px-4 pt-2">
           <Card className="text-ink-2">
-            This update isn&apos;t on this phone. Changes from the simulated airline feed show up on
-            your trip automatically, so open it and share from there.
+            This update isn&apos;t on this phone.
             <Button href="/" variant="primary" block chip="arrow-right" className="mt-4">
               Go to your trip
             </Button>
@@ -123,7 +121,7 @@ export default function SharePage() {
 
   return (
     <main className="ck-screen-in flex flex-1 flex-col">
-      <PageHeader title="Share the new plan" />
+      <PageHeader title="Share update" />
 
       <SendTo trip={trip} disruptionId={disruption.id} />
 
@@ -148,13 +146,13 @@ export default function SharePage() {
             checked={options.includeBookingRefs}
             onChange={set("includeBookingRefs")}
             label="Booking references"
-            description="Off by default. Anyone with these can change your booking."
+            description="Anyone with these can change your booking."
           />
           <Toggle checked={options.includeStays} onChange={set("includeStays")} label="Hotel details" />
           <Toggle
             checked={options.includeOpenTasks}
             onChange={set("includeOpenTasks")}
-            label="What's still unresolved"
+            label="Open tasks"
           />
         </Card>
       </section>
@@ -174,8 +172,8 @@ export default function SharePage() {
             label="Add a Send help button"
             description={
               trip.payoutAddress
-                ? "People who open the link can send you USDC from their own Solana wallet, on Solana's test network (devnet)."
-                : "Add your Solana address from the trip menu first."
+                ? "USDC on devnet (test network)."
+                : "Add a Solana address in the trip menu first."
             }
           />
           <Collapse open={fundsOn}>
@@ -184,7 +182,7 @@ export default function SharePage() {
               label="Amount in USDC"
               hint={
                 isDemoCluster(SOLANA_CLUSTER)
-                  ? "Demo only: this uses Solana's test network, so no real money moves."
+                  ? "Test network. No real money."
                   : undefined
               }
               inputMode="decimal"
@@ -198,28 +196,20 @@ export default function SharePage() {
             />
           </Collapse>
         </Card>
-        {!trip.payoutAddress && (
-          <Link href="/" className="mt-2 inline-flex min-h-11 items-center px-1 text-[14px] font-medium underline underline-offset-4">
-            Go to your trip to add one
-          </Link>
-        )}
         <Collapse open={fundsOn}>
           <p className="mt-2 flex items-start gap-2 px-1 text-[14px] leading-snug text-ink-2">
             <Icon name="info" size={18} className="mt-px" />
             <span>
               {amountOk
-                ? "The button is on the linked page only, not in the message text. Your address is visible to anyone with the link, and the trip name goes in the payment's note, which is public on the blockchain."
-                : "Enter an amount, or the link is shared without the button."}
+                ? "Link only. Your address and trip name are public on the blockchain."
+                : "Add an amount to show the button."}
             </span>
           </p>
         </Collapse>
       </section>
 
       <div className="mt-auto flex flex-col gap-3 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),26px)]">
-        <p className="mx-1 mb-1.5 flex items-start gap-2 text-[13px] leading-[1.4] text-ink-2">
-          <Icon name="circle-alert" size={16} className="mt-px" />
-          The link is a snapshot from {openedAt}. It won&apos;t update on its own.
-        </p>
+        <p className="mx-1 mb-1 text-[12px] text-ink-2">Link is a snapshot from {displayTime(openedAt)}.</p>
         <p role="status" aria-live="polite" className="sr-only">
           {done ? ANNOUNCE[done] : ""}
         </p>

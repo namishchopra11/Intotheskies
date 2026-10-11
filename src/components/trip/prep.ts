@@ -31,7 +31,7 @@ export function prepItems(trip: Trip): PrepItem[] {
 
   items.push({
     key: "documents",
-    title: "Check your passport and entry rules",
+    title: "Check passport and entry rules",
     detail: `Make sure your passport is valid for the whole trip, and check what you need to enter ${cityName(last.to)}.`,
   });
 
@@ -45,7 +45,7 @@ export function prepItems(trip: Trip): PrepItem[] {
 
   items.push({
     key: "boarding-passes",
-    title: "Save your boarding passes to your phone",
+    title: "Save boarding passes to your phone",
     detail: "Add them to your wallet so they open without signal.",
   });
 
@@ -63,7 +63,7 @@ export function prepItems(trip: Trip): PrepItem[] {
     if (gap >= 0 && gap < TIGHT_CONNECTION_MINUTES * 1.5) {
       items.push({
         key: `connection:${b.id}`,
-        title: `Plan your ${cityName(b.from)} connection`,
+        title: `Plan the ${cityName(b.from)} connection`,
         detail: `${formatDuration(gap)} to change planes. Look up how transfers work at ${b.from} and sit near the front if you can.`,
       });
     }
@@ -72,7 +72,7 @@ export function prepItems(trip: Trip): PrepItem[] {
   for (const r of trip.rides ?? []) {
     items.push({
       key: `ride:${r.id}`,
-      title: `Confirm your ${r.provider} pickup`,
+      title: `Confirm ${r.provider} pickup`,
       detail: `${timePart(r.pickupAt)} on ${formatDate(r.pickupAt)} at ${r.from}. Give them your flight number so they can follow it.`,
     });
   }
@@ -80,7 +80,7 @@ export function prepItems(trip: Trip): PrepItem[] {
   for (const s of trip.stays) {
     items.push({
       key: `hotel:${s.id}`,
-      title: `Tell ${s.name} when you'll arrive`,
+      title: `Tell ${s.name} your arrival time`,
       detail: s.latestCheckIn
         ? `The front desk is open until ${s.latestCheckIn}. Ask how to get in if you're late.`
         : "Ask them to note your arrival time and hold the room.",
@@ -90,14 +90,14 @@ export function prepItems(trip: Trip): PrepItem[] {
   if (!trip.contacts.some((c) => c.kind === "insurance")) {
     items.push({
       key: "insurance",
-      title: "Keep your travel insurance details handy",
+      title: "Save your insurance details",
       detail: "Save the policy number and claims phone somewhere you can reach offline.",
     });
   }
 
   items.push({
     key: "share-plans",
-    title: "Share your plans with someone at home",
+    title: "Share your plans with someone",
     detail: `Tell them you leave ${first.from} on ${formatDate(first.departAt)}. If anything changes, Layover helps you update them.`,
   });
 
@@ -148,8 +148,8 @@ export function arrivalPlan(trip: Trip): ArrivalStep[] {
       warn:
         gap < SHORT_PICKUP_MINUTES
           ? gap < 0
-            ? "This pickup is before you land. Check the time with them."
-            : "That's not long to get through passport control and collect bags. Ask if they'll wait."
+            ? "Pickup is before you land"
+            : "Tight after landing. Ask them to wait."
           : undefined,
     });
   }
@@ -167,7 +167,7 @@ export function arrivalPlan(trip: Trip): ArrivalStep[] {
       time: openOnLanding ? "Open" : timePart(s.checkIn),
       title: `Check in at ${s.name}`,
       detail: `From ${timePart(s.checkIn)}${s.latestCheckIn ? `, front desk until ${s.latestCheckIn}` : ""}`,
-      warn: lateDesk ? `You land after the front desk closes (${s.latestCheckIn}). Ask how to get in.` : undefined,
+      warn: lateDesk ? `Desk closes ${s.latestCheckIn}, before you land` : undefined,
     });
   }
   return steps;

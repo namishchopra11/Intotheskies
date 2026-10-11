@@ -38,9 +38,18 @@ function changeCountdown(departure: number | null, createdAt: string, now: numbe
   const demoRemaining = DAY_MS - elapsed;
   const realRemaining = departure === null ? Infinity : departure - now;
   return {
-    label: countdownLabel(Math.min(realRemaining, demoRemaining), 0),
+    label: shortClock(Math.min(realRemaining, demoRemaining)),
     demo: realRemaining > demoRemaining,
   };
+}
+
+/** "23h 56m 11s": short enough to read at a glance. */
+function shortClock(ms: number) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  if (s === 0) return "now";
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return `${h > 0 ? `${h}h ` : ""}${m}m ${String(s % 60).padStart(2, "0")}s`;
 }
 
 /** Live seconds during the final 24 hours; calendar fallback for unknown airport zones. */
@@ -56,27 +65,24 @@ export function TripCountdown({ trip }: { trip: Trip }) {
   const live = disruption && !cancelled ? changeCountdown(departure, disruption.createdAt, now) : null;
   const { days } = daysUntil(first.departAt, today(now));
   const label = cancelled
-    ? "Waiting for a new departure"
-    : live ? live.label
+    ? "Waiting for a new flight"
+    : live ? `${first.flightNumber} leaves in ${live.label}`
     : departure !== null ? countdownLabel(departure, now)
-    : days < 0 ? "Your trip has started"
-    : days === 0 ? "Your trip starts today"
-    : days === 1 ? "1 day to go" : `${days} days to go`;
+    : days < 0 ? "Trip started"
+    : days === 0 ? "Leaving today"
+    : days === 1 ? "Leaving tomorrow" : `${days} days to go`;
 
   return (
     <section aria-label="Trip countdown" className="mx-4 mb-4">
-      <Card className="flex items-center gap-3 py-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-sunk text-ink-2">
-          <Icon name={live ? "clock" : "calendar"} size={20} />
-        </span>
-        <div className="min-w-0">
-          {live && <p className="text-[13px] text-ink-2">{first.flightNumber} departs in</p>}
-          <p className="font-num text-[16px] font-semibold tabular-nums">{label}</p>
-          <p className="mt-0.5 text-[13px] leading-snug text-ink-2">
-            {cancelled ? "Your countdown will return when a new flight is confirmed." :
-              `${formatDate(first.departAt)} · ${displayTime(timePart(first.departAt))} · ${first.from} local time${live?.demo ? " · demo clock" : ""}`}
-          </p>
-        </div>
+      <Card className="flex items-center gap-3 py-2.5">
+        <Icon name={live ? "clock" : "calendar"} size={20} className="shrink-0 text-ink-2" />
+        <p className="min-w-0 flex-1 font-num text-[15px] font-semibold tabular-nums">{label}</p>
+        {!live && !cancelled && (
+          <span className="shrink-0 text-[13px] text-ink-2">
+            {formatDate(first.departAt)} · {displayTime(timePart(first.departAt))}
+          </span>
+        )}
+        {live?.demo && <span className="shrink-0 font-num text-[11px] tracking-[0.06em] text-ink-2 uppercase">Demo</span>}
       </Card>
     </section>
   );

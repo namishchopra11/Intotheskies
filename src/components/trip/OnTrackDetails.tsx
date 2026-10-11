@@ -44,7 +44,7 @@ export function AtAGlance({ trip, delay }: { trip: Trip; delay: number }) {
     { label: "Flights", big: `${flights.length} ${flights.length === 1 ? "flight" : "flights"}`, small: stops.length === 0 ? "Nonstop" : `Via ${stops.join(", ")}` },
     stay
       ? { label: "Stay", big: `${nights(stay)} ${nights(stay) === 1 ? "night" : "nights"}`, small: stay.name }
-      : { label: "Stay", big: "No hotel", small: "Add one in Your trip" },
+      : { label: "Stay", big: "No hotel", small: "—" },
   ];
   return (
     <section aria-label="At a glance" className="ck-rise grid grid-cols-3 gap-2 px-4 pb-1" style={rise(delay)}>
@@ -127,10 +127,7 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
                       <Icon name="check" size={14} strokeWidth={3.5} />
                     </span>
                   </span>
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                    <span className="ck-task-text">{displayTime(item.title)}</span>
-                    <span className="text-[14px] leading-snug text-ink-2">{displayTime(item.detail)}</span>
-                  </span>
+                  <span className="ck-task-text min-w-0 flex-1 text-[15px]">{displayTime(item.title)}</span>
                 </button>
               </div>
             </li>
@@ -143,11 +140,11 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
           onClick={() => setShowDone((v) => !v)}
           className="mt-2 min-h-11 cursor-pointer self-start text-[14px] font-semibold text-ink-2 hover:text-ink"
         >
-          {showDone ? "Hide done" : `Show ${doneCount} done`}
+          {showDone ? "Hide done" : `${doneCount} done`}
         </button>
       )}
       {doneCount === items.length && !showDone && (
-        <p className="ck-rise py-3 text-[15px] text-ok-fg">All set. Nothing left before you go.</p>
+        <p className="ck-rise py-3 text-[15px] text-ok-fg">All set.</p>
       )}
     </section>
   );
@@ -169,7 +166,6 @@ export function WhenYouLand({ trip, delay }: { trip: Trip; delay: number }) {
             <span className="w-[78px] shrink-0 pt-px font-num text-[15px] font-semibold tabular-nums">{displayTime(s.time)}</span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">{s.title}</span>
-              {s.detail && <span className="block text-[14px] leading-snug text-ink-2">{displayTime(s.detail)}</span>}
               {s.warn && (
                 <span className="mt-1 flex items-start gap-1.5 text-[14px] leading-snug text-warn-fg">
                   <Icon name="clock" size={16} className="mt-0.5" />
@@ -190,7 +186,7 @@ export function BookingCodes({ trip, delay }: { trip: Trip; delay: number }) {
   const [copied, setCopied] = useState<string | null>(null);
   if (codes.length === 0) return null;
   return (
-    <Section title="Your booking codes" delay={delay}>
+    <Section title="Booking codes" delay={delay}>
       <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
         {codes.map((c) => (
           <li key={c.key} className="flex items-center gap-3 py-2 pr-2 pl-4">

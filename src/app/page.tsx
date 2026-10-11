@@ -24,6 +24,7 @@ import {
   Sheet,
   SignalBar,
   ThemeToggle,
+  Collapse,
   cx,
   type IconName,
   type Tone,
@@ -120,7 +121,6 @@ function Status({ trip }: { trip: Trip }) {
       </SignalBar>
 
       <section key={`head-${disruption.id}`} className="ck-rise flex flex-col gap-2 px-5 pt-[22px] pb-[18px]" style={rise(100)}>
-        <p className="text-[14px] text-ink-2">{eyebrow}</p>
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
           {displayTime(headlineFor(disruption, changed, impact))}
         </h1>
@@ -143,9 +143,8 @@ function Status({ trip }: { trip: Trip }) {
 
       <Actions key={buildBriefing(trip, disruption.id)} trip={trip} disruption={disruption} />
 
-      <StaysSection stays={trip.stays} delay={520} />
-      <RidesSection rides={trip.rides ?? []} delay={560} />
-      <ContactsSection contacts={trip.contacts} delay={600} />
+      <ContactsSection contacts={trip.contacts} delay={520} />
+      <TripDetails trip={trip} delay={560} />
       <div className="pb-[max(env(safe-area-inset-bottom),26px)]" />
     </>
   );
@@ -270,7 +269,7 @@ function SortingItOut({ disruption, contacts }: { disruption: Disruption; contac
   const done = disruption.tasks.filter((t) => t.done).length;
   return (
     <div className="flex flex-col px-1 pt-1">
-      <ProgressBar label="Sorting it out" value={done} max={total} />
+      <ProgressBar label="Checklist" value={done} max={total} />
       <ul className="mt-1 flex flex-col">
         {disruption.tasks.map((t) => {
           const contact = t.contactId ? contacts.find((c) => c.id === t.contactId) : undefined;
@@ -296,13 +295,7 @@ function SortingItOut({ disruption, contacts }: { disruption: Disruption; contac
                   className="flex min-h-13 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left"
                 >
                   <TaskCircle />
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                    <span className="ck-task-text">{displayTime(t.title)}</span>
-                    {t.detail && <span className="text-[14px] leading-snug text-ink-2">{displayTime(t.detail)}</span>}
-                  </span>
-                  <span className={cx("ck-task-state text-[13px] font-semibold", t.done ? "text-ok-fg" : "text-ink-2")}>
-                    {t.done ? "Done" : "To do"}
-                  </span>
+                  <span className="ck-task-text min-w-0 flex-1 text-[15px]">{displayTime(t.title)}</span>
                 </button>
                 {contact?.phone && <CallLink name={contact.name} phone={contact.phone} />}
                 {t.done && (
@@ -354,10 +347,7 @@ function HandledForYou({ actions }: { actions: AutoAction[] }) {
               >
                 {!pending && <Icon name="check" size={14} strokeWidth={3.5} />}
               </span>
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                <span>{displayTime(a.title)}</span>
-                {a.detail && <span className="text-[14px] leading-snug text-ink-2">{displayTime(a.detail)}</span>}
-              </span>
+              <span className="min-w-0 flex-1 text-[15px]">{displayTime(a.title)}</span>
               <span className={cx("text-[13px] font-semibold", pending ? "text-warn-fg" : "text-ok-fg")}>
                 {pending ? "Waiting" : "Done"}
               </span>
@@ -365,9 +355,7 @@ function HandledForYou({ actions }: { actions: AutoAction[] }) {
           );
         })}
       </ul>
-      <p className="pt-2 text-[13px] leading-snug text-ink-2">
-        Simulated in this demo: no message is really sent to the airline, hotel or driver.
-      </p>
+      <p className="pt-2 text-[12px] text-ink-2">Simulated: nothing is really sent.</p>
     </div>
   );
 }
@@ -441,22 +429,19 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
       style={rise(460)}
     >
       <Button href={`/share/${disruption.id}`} variant="primary" size="lg" block chip="arrow-right">
-        Share the new plan
+        Share update
       </Button>
-      {(
-        <Button
-          variant="secondary"
-          block
-          chip={speaking ? "x" : "listen"}
-          onClick={() => (speaking ? stop() : speak(buildBriefing(trip, disruption.id)))}
-          className="text-base"
-        >
-          {loading ? "Cancel audio" : speaking ? "Stop listening" : "Listen to summary"}
-        </Button>
-      )}
-      {loading && <p role="status" className="px-1 text-[13px] text-ink-2">Preparing audio…</p>}
+      <Button
+        variant="secondary"
+        block
+        chip={speaking ? "x" : "listen"}
+        onClick={() => (speaking ? stop() : speak(buildBriefing(trip, disruption.id)))}
+        className="text-base"
+      >
+        {loading ? "Loading… tap to cancel" : speaking ? "Stop" : "Listen"}
+      </Button>
       {error && <p role="alert" className="px-1 text-[13px] text-bad-fg">{error}</p>}
-      <p className="px-1 text-[12px] text-ink-2">Listen sends only this summary to ElevenLabs to create audio.</p>
+      <p className="px-1 text-[12px] text-ink-2">Audio by ElevenLabs.</p>
     </div>
   );
 }
@@ -486,13 +471,11 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
           {tight
             ? tight.gap < 0
-              ? `Flights are on time, but your ${cityName(tight.airport)} connection doesn't leave enough time.`
-              : `Flights are on time, but ${formatDuration(tight.gap)} in ${cityName(tight.airport)} is tight.`
-            : "Your trip is on track. Nothing to do right now."}
+              ? `On time. ${cityName(tight.airport)} connection too short.`
+              : `On time. ${formatDuration(tight.gap)} to connect in ${cityName(tight.airport)}.`
+            : "On track. Nothing to do."}
         </h1>
-        <p className="text-ink-2">
-          {toDo > 0 ? `${toDo} ${toDo === 1 ? "thing" : "things"} to sort before you go.` : "You're all set before you go."}
-        </p>
+        <p className="text-ink-2">{toDo > 0 ? `${toDo} to do before you go` : "All set"}</p>
       </section>
 
       <AtAGlance trip={trip} delay={160} />
@@ -517,18 +500,16 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
       <BeforeYouGo trip={trip} delay={300} />
       <WhenYouLand trip={trip} delay={360} />
       <BookingCodes trip={trip} delay={400} />
-      <StaysSection stays={trip.stays} delay={440} />
-      <RidesSection rides={trip.rides ?? []} delay={470} />
-      <ContactsSection contacts={trip.contacts} delay={500} />
+      <ContactsSection contacts={trip.contacts} delay={440} />
+      <TripDetails trip={trip} delay={470} />
 
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(500)}>
         <Button variant="primary" size="lg" block chip="arrow-right" onClick={() => triggerFlightChange()}>
           Simulate a change
         </Button>
-        <p className="flex items-start gap-2.5 border-t border-line px-1 pt-4 text-[13px] leading-snug text-ink-2">
-          <span aria-hidden="true" className="ck-pulse mt-1.5 h-2 w-2 shrink-0 rounded-full bg-current text-ok" />
-          Watching {count === 1 ? "your flight" : `all ${count} flights`} with a simulated airline feed
-          (no live data). A change arrives on its own in a few seconds, or tap the button.
+        <p className="flex items-center gap-2 px-1 text-[12px] text-ink-2">
+          <span aria-hidden="true" className="ck-pulse h-2 w-2 shrink-0 rounded-full bg-current text-ok" />
+          Watching {count === 1 ? "1 flight" : `${count} flights`} · simulated feed
         </p>
       </div>
     </>
@@ -537,98 +518,93 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
 
 /* ---------- Stays and contacts (shown in every state) ---------- */
 
-function StaysSection({ stays, delay }: { stays: Stay[]; delay: number }) {
-  const displayTime = useTimeFormat();
-  if (stays.length === 0) return null;
+/** Hotel and rides, folded away: the day plan above already says what matters. */
+function TripDetails({ trip, delay }: { trip: Trip; delay: number }) {
+  const [open, setOpen] = useState(false);
+  const rides = trip.rides ?? [];
+  if (trip.stays.length === 0 && rides.length === 0) return null;
+  const label = [trip.stays.length > 0 && "Hotel", rides.length > 0 && "rides"].filter(Boolean).join(" & ");
   return (
-    <Section title="Where you're staying" delay={delay}>
-      {stays.map((s) => (
-        <div key={s.id} className="flex flex-col gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">{s.name}</p>
-              <p className="text-[14px] text-ink-2">{s.address}</p>
-            </div>
-            {s.phone && <CallLink name={s.name} phone={s.phone} />}
-          </div>
-          <dl className="grid grid-cols-2 gap-3">
-            <div>
-              <dt className="ck-label">Check-in</dt>
-              <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">
-                {displayTime(timePart(s.checkIn))} <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(s.checkIn)}</span>
-              </dd>
-            </div>
-            {s.latestCheckIn && (
-              <div>
-                <dt className="ck-label">Front desk until</dt>
-                <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">{displayTime(s.latestCheckIn)}</dd>
-              </div>
-            )}
-          </dl>
-        </div>
-      ))}
-    </Section>
+    <section className="ck-rise flex flex-col px-4 pt-6" style={rise(delay)}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex min-h-11 cursor-pointer items-center justify-between rounded-control px-1 text-[15px] font-semibold hover:bg-sunk"
+      >
+        {label.charAt(0).toUpperCase() + label.slice(1)}
+        <Icon name="chevron-right" size={18} className={cx("transition-transform duration-300 ease-out", open && "rotate-90")} />
+      </button>
+      <Collapse open={open} className="flex flex-col gap-2.5 pt-2.5">
+        {trip.stays.map((s) => (
+          <StayCard key={s.id} s={s} />
+        ))}
+        {rides.map((r) => (
+          <RideCard key={r.id} r={r} />
+        ))}
+      </Collapse>
+    </section>
   );
 }
 
-function RidesSection({ rides, delay }: { rides: Ride[]; delay: number }) {
+function StayCard({ s }: { s: Stay }) {
   const displayTime = useTimeFormat();
-  if (rides.length === 0) return null;
   return (
-    <Section title="Your rides" delay={delay}>
-      {rides.map((r) => (
-        <div key={r.id} className="flex flex-col gap-3 rounded-card border border-line bg-surface px-4 py-3.5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="font-semibold">{r.provider}</p>
-              <p className="text-[14px] text-ink-2">
-                {r.from} → {r.to}
-              </p>
-            </div>
-            {r.rescheduledFrom && <Badge tone="done">Moved</Badge>}
-          </div>
-          <div>
-            <p className="ck-label">Pickup</p>
-            <p className="mt-0.5 font-num text-[17px] font-medium tabular-nums">
-              {displayTime(timePart(r.pickupAt))}{" "}
-              {r.rescheduledFrom && (
-                <span className="text-[14px] font-normal text-ink-faint line-through">
-                  <span className="sr-only">was </span>
-                  {displayTime(timePart(r.rescheduledFrom))}
-                </span>
-              )}{" "}
-              <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(r.pickupAt)}</span>
-            </p>
-          </div>
-          {r.notes && <p className="text-[14px] leading-snug text-ink-2">{r.notes}</p>}
-        </div>
-      ))}
-    </Section>
+    <div className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{s.name}</p>
+        <p className="truncate text-[14px] text-ink-2">{s.address}</p>
+        <p className="mt-0.5 font-num text-[14px] tabular-nums">
+          In {displayTime(timePart(s.checkIn))} {formatDate(s.checkIn)}
+          {s.latestCheckIn && <span className="text-ink-2"> · desk until {displayTime(s.latestCheckIn)}</span>}
+        </p>
+      </div>
+      {s.phone && <CallLink name={s.name} phone={s.phone} />}
+    </div>
+  );
+}
+
+function RideCard({ r }: { r: Ride }) {
+  const displayTime = useTimeFormat();
+  return (
+    <div className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-semibold">{r.provider}</p>
+        <p className="mt-0.5 font-num text-[14px] tabular-nums">
+          Pickup {displayTime(timePart(r.pickupAt))}{" "}
+          {r.rescheduledFrom && (
+            <span className="text-ink-faint line-through">
+              <span className="sr-only">was </span>
+              {displayTime(timePart(r.rescheduledFrom))}
+            </span>
+          )}
+        </p>
+      </div>
+      {r.rescheduledFrom && <Badge tone="done">Moved</Badge>}
+      {r.phone && <CallLink name={r.provider} phone={r.phone} />}
+    </div>
   );
 }
 
 function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: number }) {
   if (contacts.length === 0) return null;
   return (
-    <Section title="If you need them" delay={delay}>
+    <Section title="Contacts" delay={delay}>
       <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
         {contacts.map((c) => (
-          <li key={c.id} className="flex items-center gap-3 py-2 pr-2 pl-4">
-            <span className="min-w-0 flex-1">
-              <span className="block font-num text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">{c.kind}</span>
-              <span className="block truncate text-[15px] font-medium">{c.name}</span>
-              {c.notes && <span className="mt-0.5 block text-[13px] leading-snug text-ink-2">{c.notes}</span>}
-              {c.url && isWebUrl(c.url) && (
-                <a
-                  href={c.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-0.5 inline-flex min-h-11 items-center text-[13px] font-medium underline underline-offset-4"
-                >
-                  {new URL(c.url).hostname.replace(/^www\./, "")}
-                </a>
-              )}
-            </span>
+          <li key={c.id} className="flex min-h-13 items-center gap-2 py-1.5 pr-2 pl-4">
+            <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{c.name}</span>
+            {c.url && isWebUrl(c.url) && (
+              <a
+                href={c.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${c.name} website`}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
+              >
+                <Icon name="link" size={18} />
+              </a>
+            )}
             {c.phone && <CallLink name={c.name} phone={c.phone} />}
           </li>
         ))}
@@ -696,9 +672,9 @@ function Section({ title, delay, children }: { title: string; delay: number; chi
 /* ---------- No trip yet ---------- */
 
 const HOW_IT_WORKS: { n: string; icon: IconName; title: string; body: string }[] = [
-  { n: "01", icon: "plane", title: "We watch", body: "Your flights, through a simulated airline feed in this demo." },
-  { n: "02", icon: "checks", title: "Your plan rebuilds", body: "A delay or cancellation updates your plan and checklist on its own." },
-  { n: "03", icon: "share", title: "Everyone hears", body: "One tap sends the new plan to whoever's waiting for you." },
+  { n: "01", icon: "plane", title: "We watch your flights", body: "Simulated feed" },
+  { n: "02", icon: "checks", title: "Your plan updates", body: "Plus a checklist" },
+  { n: "03", icon: "share", title: "One tap tells everyone", body: "Text, email or link" },
 ];
 
 function NoTrip() {
@@ -709,7 +685,6 @@ function NoTrip() {
       <SignalBar aside="Nothing to watch">No trip yet</SignalBar>
 
       <section className="ck-rise flex flex-col gap-2 px-5 pt-[22px] pb-[18px]" style={rise(100)}>
-        <p className="text-[14px] text-ink-2">Delays · Cancellations · Missed connections</p>
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
           Flights change. Your plan keeps up.
         </h1>
@@ -726,7 +701,6 @@ function NoTrip() {
               <Icon name={s.icon} size={20} strokeWidth={2.25} />
             </span>
             <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="font-num text-[13px] text-ink-2">{s.n}</span>
               <span className="text-[17px] leading-tight font-semibold">{s.title}</span>
               <span className="text-[14px] leading-snug text-ink-2">{s.body}</span>
             </span>
@@ -737,10 +711,9 @@ function NoTrip() {
       {savedTrips.length > 0 && <SavedTrips trips={savedTrips} />}
 
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(340)}>
-        <p className="mx-1 mb-1 flex items-start gap-2 text-[13px] leading-[1.4] text-ink-2">
-          <Icon name="lock" size={16} className="mt-px" />
-          Your trip is saved only on this phone. Import sends what you add to Claude to read it, and Listen sends the
-          summary to ElevenLabs for audio. No account needed.
+        <p className="mx-1 mb-1 flex items-center gap-2 text-[12px] text-ink-2">
+          <Icon name="lock" size={14} />
+          Saved on this phone only
         </p>
         <Button variant="primary" size="lg" block chip="arrow-right" href="/trip" transitionTypes={NAV_FORWARD}>
           Add your trip
@@ -748,9 +721,6 @@ function NoTrip() {
         <Button variant="secondary" block onClick={loadSampleTrip}>
           Try the sample trip
         </Button>
-        <p className="text-center font-num text-[12px] tracking-[0.04em] text-ink-2 uppercase">
-          Sample: San Francisco → London → Rome
-        </p>
       </div>
     </div>
   );
@@ -808,10 +778,6 @@ function LeaveTripSheet({ open, onClose }: { open: boolean; onClose: () => void 
   return (
     <Sheet open={open} onClose={onClose} title="Start a new trip?">
       <div className="flex flex-col gap-3 pt-1">
-        <p className="mb-2 leading-snug text-ink-2">
-          This trip will close. Save it to reopen it later from the start screen, or its flights,
-          hotels and rides will be gone for good.
-        </p>
         <Button variant="primary" block icon="check" onClick={() => leave(saveAndCloseTrip)}>
           Save it for later
         </Button>
@@ -834,9 +800,8 @@ function NoFlights({ trip }: { trip: Trip }) {
       <section className="ck-rise flex flex-col gap-2 px-5 pt-[22px]" style={rise(100)}>
         <p className="text-[14px] text-ink-2">{[trip.travelerName, trip.name].filter(Boolean).join(" · ")}</p>
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
-          Add a flight and Layover starts watching it.
+          Add a flight to start.
         </h1>
-        <p className="text-ink-2">When it changes, you will see what is affected and what to do next.</p>
       </section>
       <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(220)}>
         <Button variant="primary" size="lg" block chip="arrow-right" href="/trip" transitionTypes={NAV_FORWARD}>
@@ -911,8 +876,8 @@ function TripMenu({
               title={confirming === "restart" ? "Restart the demo trip?" : "Clear this trip?"}
               body={
                 confirming === "restart"
-                  ? "This replaces your trip with the sample trip. Ticked tasks are lost; a saved Solana address is kept."
-                  : "This removes the trip, its checklist and a saved Solana address from this phone."
+                  ? "Your ticks are lost."
+                  : "Removes it from this phone."
               }
               confirmLabel={confirming === "restart" ? "Restart" : "Clear trip"}
               danger={confirming === "clear"}
@@ -947,12 +912,6 @@ function TripMenu({
             </>
           )}
         </div>
-        {hasTrip && (
-          <p className="text-[13px] leading-snug text-ink-2">
-            Restarting loads the sample trip back on time. A few seconds later the simulated airline
-            feed changes it, and you get the notification again.
-          </p>
-        )}
       </div>
     </Sheet>
   );
@@ -1002,12 +961,12 @@ function PayoutAddress() {
       onSubmit={(e) => {
         e.preventDefault();
         if (setPayoutAddress(value)) setValue(value.trim());
-        else setError("That doesn't look like a Solana address. Check it and try again.");
+        else setError("Not a Solana address.");
       }}
     >
       <Field
         label="Solana address (optional)"
-        hint="Lets people you share an update with send you USDC on Solana's test network (devnet). It stays on this device until you add a Send help button to a shared link."
+        hint="For Send help. Devnet (test network) only."
         value={value}
         onChange={(e) => {
           setValue(e.target.value);
@@ -1030,10 +989,8 @@ function PayoutAddress() {
 function LoadNoticeBar({ notice, onDismiss }: { notice: LoadNotice; onDismiss: () => void }) {
   const text =
     notice.kind === "recovered"
-      ? `Your saved trip came from an older version of the app. ${notice.dropped} ${
-          notice.dropped === 1 ? "item couldn't be read and was" : "items couldn't be read and were"
-        } left out. The rest is here.`
-      : "Your saved trip couldn't be read, so it was cleared. It may have come from an older version of the app. You can load the sample trip again.";
+      ? `${notice.dropped} saved ${notice.dropped === 1 ? "item" : "items"} couldn't be read. The rest is here.`
+      : "Your saved trip couldn't be read and was cleared.";
   return (
     <div
       role="status"
