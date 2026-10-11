@@ -122,6 +122,24 @@ describe("cascades and lifecycle", () => {
     expect(trip().flights[0].seat).toBe("12C");
   });
 
+  it("people can be added to a trip that has none, edited by id, and removed", () => {
+    const { startTrip, upsertPerson, removePerson } = useTripStore.getState();
+    startTrip({ name: "Rome", travelerName: "Alex" });
+    expect(useTripStore.getState().trip!.people).toBeUndefined();
+
+    upsertPerson({ id: "p1", name: "Marco", role: "pickup" });
+    upsertPerson({ id: "p2", name: "Mum", role: "family", email: "mum@example.com" });
+    upsertPerson({ id: "p1", name: "Marco R", role: "pickup", phone: "+39 06 0000 0199" });
+    expect(useTripStore.getState().trip!.people).toEqual([
+      { id: "p1", name: "Marco R", role: "pickup", phone: "+39 06 0000 0199" },
+      { id: "p2", name: "Mum", role: "family", email: "mum@example.com" },
+    ]);
+
+    removePerson("p1");
+    expect(useTripStore.getState().trip!.people!.map((p) => p.id)).toEqual(["p2"]);
+    expect(TripSchema.safeParse(useTripStore.getState().trip).success).toBe(true);
+  });
+
   it("loadSampleTrip gives a copy, so editing the trip never edits the sample", () => {
     useTripStore.getState().reportDisruption(sampleTrip.flights[0].id, "delay", { arriveAt: "2026-10-17T11:20" });
     expect(sampleTrip.flights[0].status).toBe("scheduled");

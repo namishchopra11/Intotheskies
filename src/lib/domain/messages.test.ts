@@ -55,6 +55,25 @@ describe("buildDrafts", () => {
     expect(sendLink({ ...list[0], phone: undefined, email: undefined })).toBeNull();
   });
 
+  it("gives a trip with no people its first Send-to draft once someone is added", () => {
+    const bare: Trip = { ...structuredClone(sampleTrip), people: undefined };
+    expect(drafts(bare).list.map((d) => d.kind)).toEqual(["hotel"]);
+
+    useTripStore.setState({ trip: bare });
+    useTripStore.getState().upsertPerson({ id: "p1", name: "Sam", role: "family", email: "sam@example.com" });
+    simulateFlightChange("missed");
+    const trip = useTripStore.getState().trip!;
+    const list = buildDrafts(trip, trip.disruptions[0].id);
+    expect(list.map((d) => d.kind)).toEqual(["family", "hotel"]);
+    expect(list[0]).toMatchObject({ name: "Sam", email: "sam@example.com" });
+  });
+
+  it("puts the person's trimmed, encoded email in the mail link", () => {
+    const { list } = drafts();
+    expect(sendLink({ ...list[0], phone: undefined, email: " sam@example.com " })?.href).toMatch(/^mailto:sam%40example\.com\?subject=/);
+    expect(sendLink({ ...list[0], phone: undefined, email: "a&b@example.com" })?.href).toMatch(/^mailto:a%26b%40example\.com\?subject=/);
+  });
+
   it("says so when there is no new arrival time", () => {
     useTripStore.setState({ trip: structuredClone(sampleTrip) });
     simulateFlightChange("cancelled");

@@ -24,6 +24,7 @@ import {
   type Flight,
   type FlightStatus,
   type LocalDateTime,
+  type Person,
   type Ride,
   type Stay,
   type Trip,
@@ -87,6 +88,9 @@ export type TripState = {
   removeStay: (stayId: string) => void;
   upsertRide: (ride: Ride) => void;
   removeRide: (rideId: string) => void;
+  /** Someone waiting on the traveler (a driver, a relative); each one gets a draft message. */
+  upsertPerson: (person: Person) => void;
+  removePerson: (personId: string) => void;
   /** Ticks or unticks a "Before you go" reminder by its key. */
   togglePrep: (key: string) => void;
   /** Adds or replaces someone waiting on the traveler (their phone or email for updates). */
@@ -265,6 +269,10 @@ export const useTripStore = create<TripState>()(
           }),
         removeRide: (rideId) =>
           updateTrip((trip) => ({ ...trip, rides: (trip.rides ?? []).filter((r) => r.id !== rideId) })),
+        upsertPerson: (person) =>
+          updateTrip((trip) => ({ ...trip, people: upsert(trip.people ?? [], person) })),
+        removePerson: (personId) =>
+          updateTrip((trip) => ({ ...trip, people: (trip.people ?? []).filter((p) => p.id !== personId) })),
         upsertContact: (contact) =>
           updateTrip((trip) => ({ ...trip, contacts: upsert(trip.contacts, contact) })),
         removeContact: (contactId) =>
