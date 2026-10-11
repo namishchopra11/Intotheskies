@@ -3,7 +3,6 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { Card, Icon } from "@/components/ui";
 import { countdownLabel, departureInstant } from "@/lib/domain/countdown";
-import { flightLabel } from "@/lib/domain/text";
 import { formatDate, timePart } from "@/lib/domain/time";
 import type { Trip } from "@/lib/types";
 import { useTimeFormat } from "@/lib/useTimeFormat";
@@ -67,7 +66,7 @@ export function TripCountdown({ trip }: { trip: Trip }) {
   const { days } = daysUntil(first.departAt, today(now));
   const label = cancelled
     ? "Waiting for a new flight"
-    : live ? `${flightLabel(first.flightNumber)} · ${live.label}`
+    : live ? `${first.flightNumber} · ${live.label}`
     : departure !== null ? countdownLabel(departure, now)
     : days < 0 ? "Trip started"
     : days === 0 ? "Leaving today"
@@ -77,7 +76,7 @@ export function TripCountdown({ trip }: { trip: Trip }) {
     <section aria-label="Trip countdown" className="mx-4 mb-4">
       <Card className="flex items-center gap-3 py-2.5">
         <Icon name={live ? "clock" : "calendar"} size={20} className="shrink-0 text-ink-2" />
-        <p className="min-w-0 flex-1 font-num text-[15px] font-semibold tabular-nums">{label}</p>
+        <p className="min-w-0 flex-1 truncate font-num text-[15px] font-semibold whitespace-nowrap tabular-nums">{label}</p>
         {!live && !cancelled && (
           <span className="shrink-0 text-[13px] text-ink-2">
             {formatDate(first.departAt)} · {displayTime(timePart(first.departAt))}
