@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition, type ReactNode } from "reac
 import { useRouter } from "next/navigation";
 
 const THRESHOLD = 52;
+const TAKEOFF_MS = 460;
 const SETTLE = "240ms cubic-bezier(0.22, 1, 0.36, 1)";
 
 // Keep moving without a hard limit, while each extra pixel takes more effort.
@@ -16,7 +17,6 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
   const [distance, setDistance] = useState(0);
   const [pulling, setPulling] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [spinStart, setSpinStart] = useState(0);
   const [readyToSettle, setReadyToSettle] = useState(false);
   const refreshingRef = useRef(false);
 
@@ -102,7 +102,6 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
       if (refreshingRef.current) return;
       if (dragging && pull >= THRESHOLD && window.scrollY <= 0 && !refreshingRef.current && !document.querySelector("dialog[open]")) {
         refreshingRef.current = true;
-        setSpinStart(pull * 5);
         setRefreshing(true);
         setReadyToSettle(false);
         setPulling(false);
@@ -110,7 +109,8 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
         // Update the current page without remounting the app or flashing the screen.
         frame = window.requestAnimationFrame(() => {
           startTransition(() => router.refresh());
-          settleTimer = window.setTimeout(() => setReadyToSettle(true), 220);
+          // Long enough for the plane to fly out of the strip before it closes.
+          settleTimer = window.setTimeout(() => setReadyToSettle(true), TAKEOFF_MS);
         });
         origin = null;
         dragging = false;
@@ -208,17 +208,19 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
     <>
       <div className="pointer-events-none fixed inset-x-0 top-0 flex justify-center overflow-hidden"
         style={{ height: distance, opacity: Math.min(1, distance / 36), transition: pulling ? "none" : `height ${SETTLE}, opacity ${SETTLE}` }}>
-        <div role="status" className="absolute flex h-9 w-9 items-center justify-center rounded-full text-ink"
+        {/* A plane on the phone-width column: it taxis to the middle as you pull, then flies across while refreshing. */}
+        <div role="status" className="absolute inset-x-0 mx-auto h-9 max-w-[520px] overflow-hidden text-ink"
           style={{ top: 0, transform: `translateY(${Math.max(0, (distance - 36) / 2)}px)`, transition: pulling ? "none" : `transform ${SETTLE}` }}>
-          <span aria-hidden="true" style={{ transform: `rotate(${refreshing ? spinStart : distance * 5}deg)` }}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-              className={refreshing ? "animate-spin motion-reduce:animate-none" : ""}
-              style={{ animationDuration: "900ms" }}>
-              <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" opacity="0.15" />
-              <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                strokeDasharray="32 51" transform="rotate(-90 12 12)" />
+          <div aria-hidden="true" className={`absolute inset-0 ${refreshing ? "ck-ptr-fly" : ""}`}
+            style={{ transform: `translateX(${6 + Math.min(1, distance / THRESHOLD) * 44}%)` }}>
+            <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-dashed border-current opacity-40"
+              style={{ maskImage: "linear-gradient(to right, transparent, #000)", WebkitMaskImage: "linear-gradient(to right, transparent, #000)" }} />
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"
+              className="absolute left-0 top-1/2 -ml-3 -mt-3"
+              style={{ transform: `rotate(${ready || refreshing ? -10 : 0}deg)`, transition: "transform 160ms ease-out" }}>
+              <path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7H9l2-7H7l-2 2H2l2-4-2-4h3l2 2h4L9 3h3z" />
             </svg>
-          </span>
+          </div>
           <span className="sr-only">{refreshing ? "Refreshing…" : ready ? "Release to refresh" : "Pull to refresh"}</span>
         </div>
       </div>
