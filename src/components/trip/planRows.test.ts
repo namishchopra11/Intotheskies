@@ -29,6 +29,21 @@ describe("buildDayPlan", () => {
     expect(rows[6].detail).toBe("Hotel Aventino Garden · 4h to spare after landing");
   });
 
+  it("lists the trip as booked when nothing has changed (null)", () => {
+    const rows = buildDayPlan(useTripStore.getState().trip!, null);
+    expect(rows.map((r) => r.title)).toEqual([
+      "Leave San Francisco · BA 286",
+      "Land in London",
+      "Fly to Rome · AZ 201",
+      "Land in Rome",
+      "Your pickup",
+      "Hotel front desk closes",
+    ]);
+    expect(rows[1].status).toEqual({ tone: "warn", text: "Tight — 55 min until AZ 201" });
+    expect(rows[3].detail).toBe("Marco's picking you up");
+    expect(rows.some((r) => r.struck || r.highlight)).toBe(false);
+  });
+
   it("returns nothing for an unknown disruption", () => {
     expect(buildDayPlan(useTripStore.getState().trip!, "nope")).toEqual([]);
   });

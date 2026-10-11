@@ -91,11 +91,6 @@ export default function LoginPage() {
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
           {creating ? "Create your account" : "Welcome to Layover"}
         </h1>
-        <p className="mt-2 text-ink-2">
-          {creating
-            ? "Keep your trips in one place, and let Layover handle the changes."
-            : "Log in to see your trip, or continue as a guest to try it."}
-        </p>
       </section>
 
       <SocialSignIn onSignIn={social} />
@@ -202,8 +197,7 @@ export default function LoginPage() {
 
       <p className="mt-auto flex items-start gap-2 pt-8 text-[13px] leading-snug text-ink-2">
         <Icon name="lock" size={16} className="mt-px" />
-        Demo login: Apple and Google sign-in are simulated, your name and email stay on this phone,
-        and your password is never saved.
+        Demo login. Stays on this phone.
       </p>
     </main>
   );

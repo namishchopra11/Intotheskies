@@ -20,7 +20,7 @@ export function haptic() {
 
 /**
  * "Do this first": the first unfinished task with one clear action. The card and full list sit
- * behind "All tasks". Generated tasks are already in order of urgency, so no sorting here.
+ * behind "To do". Generated tasks are already in order of urgency, so no sorting here.
  */
 export function NextAction({
   disruption,
@@ -55,7 +55,7 @@ export function NextAction({
         onClick={() => setOpen((o) => !o)}
         className="inline-flex min-h-11 cursor-pointer items-center justify-between rounded-control px-1 text-[15px] font-semibold hover:bg-sunk"
       >
-        All tasks ({disruption.tasks.filter((t) => !t.done).length} to do)
+        To do ({disruption.tasks.filter((t) => !t.done).length})
         <Icon
           name="chevron-right"
           size={18}
@@ -73,28 +73,29 @@ export function NextAction({
               <Icon name={task ? "arrow-right" : "circle-check"} size={20} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="ck-label text-ink-2">{task ? "Do this first" : "All sorted"}</p>
+              <p className="ck-label text-ink-2">{task ? "Do this first" : "Sorted"}</p>
               <h2 id="first-task-heading" className="mt-1 break-words text-[18px] leading-snug font-semibold text-ink">
-                {task ? displayTime(task.title) : "Everything on your checklist is done"}
+                {task ? displayTime(task.title) : "All done"}
               </h2>
-              <p className="mt-2 break-words text-[14px] leading-relaxed text-ink-2">
-                {task
-                  ? (displayTime(task.detail || "") || "Take this one step at a time. Your next task will appear here when you're done.")
-                  : arrival && !arrival.unknown
-                    ? `Everything is done. You land in ${cityName(arrival.flight.to)} at ${displayTime(timePart(arrival.arriveAt))}.`
-                    : "You're ready to share the new plan with the people waiting for you."}
-              </p>
+              {task?.detail && (
+                <p className="mt-1.5 break-words text-[14px] leading-snug text-ink-2">{displayTime(task.detail)}</p>
+              )}
+              {!task && arrival && !arrival.unknown && (
+                <p className="mt-1.5 text-[14px] text-ink-2">
+                  Land {cityName(arrival.flight.to)} {displayTime(timePart(arrival.arriveAt))}
+                </p>
+              )}
             </div>
           </div>
           {task && (
             <Button variant="secondary" size="sm" block icon="check" className="mt-4"
               aria-label={`Mark done: ${task.title}`} onClick={markDone}>
-              Mark as done
+              Done
             </Button>
           )}
           {lastDone && (
             <div className="ck-rise mt-2 flex items-center justify-between gap-3 text-[13px]" role="status">
-              <span className="text-ok-fg">Task completed</span>
+              <span className="text-ok-fg">Done</span>
               <button type="button" aria-label={`Undo task: ${displayTime(lastDone.title)}`}
                 onClick={() => {
                   toggleTask(disruption.id, lastDone.id);

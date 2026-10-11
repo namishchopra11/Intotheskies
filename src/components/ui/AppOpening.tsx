@@ -1,25 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BrandMark } from "./Brand";
+import { OPENING_SEEN_KEY as SEEN_KEY } from "./theme";
 
-/** A brief brand entrance on a fresh app load; the root stays mounted between pages. */
+function hasSeen() {
+  try {
+    return window.sessionStorage.getItem(SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A brief brand entrance on a fresh app load; the root stays mounted between pages. It plays
+ * once per tab session, so a reload or a restored tab goes straight to the app.
+ */
 export function AppOpening() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
+
+  const finish = useCallback(() => {
+    try {
+      window.sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      // private mode: it just plays again next load
+    }
+    setVisible(false);
+  }, []);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-    // Browser refresh and pull-to-refresh should return straight to the app.
-    if (navigation?.type === "reload" || reducedMotion.matches) return;
-    const frame = window.requestAnimationFrame(() => setVisible(true));
-    // A fallback also removes the overlay if an animation event is missed.
-    const timer = window.setTimeout(() => setVisible(false), 3000);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.clearTimeout(timer);
-    };
-  }, []);
+    // Marked seen when it ends, not when it starts, so dev's double-mounted effect still plays it.
+    // The timer is also the fallback that removes the overlay if an animation event is missed.
+    const timer = window.setTimeout(() => finish(), reducedMotion.matches || hasSeen() ? 0 : 1700);
+    return () => window.clearTimeout(timer);
+  }, [finish]);
 
   if (!visible) return null;
 
@@ -28,7 +43,7 @@ export function AppOpening() {
       aria-hidden="true"
       className="ck-opening pointer-events-none fixed inset-0 z-[100] flex items-center justify-center bg-bg px-6 text-ink"
       onAnimationEnd={(event) => {
-        if (event.target === event.currentTarget) setVisible(false);
+        if (event.target === event.currentTarget) finish();
       }}
     >
       <div className="flex flex-col items-center text-center">

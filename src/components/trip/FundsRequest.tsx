@@ -51,7 +51,7 @@ export function FundsRequest({
       {demo && (
         <p className="mt-3 flex items-start gap-2 rounded-control bg-warn-bg px-3 py-2.5 text-[14px] text-warn-fg">
           <Icon name="info" size={18} className="mt-px" />
-          Demo on Solana&apos;s test network (devnet). No real money moves.
+          Devnet test network. No real money.
         </p>
       )}
 
@@ -59,13 +59,10 @@ export function FundsRequest({
         <Icon name="arrow-right" size={20} />
         Send help
       </a>
-      <p className="mt-2 text-[14px] leading-snug text-ink-3">
-        Opens your Solana wallet app{demo ? " (set it to devnet)" : ""}. You check and approve the
-        payment there. Nothing is sent from this page.
-      </p>
+      <p className="mt-2 text-[13px] text-ink-3">Opens your wallet{demo ? " (on devnet)" : ""}. You approve it there.</p>
 
       <div className="mt-4 flex flex-col items-center gap-2 border-t border-line pt-4">
-        <p className="self-start text-[13px] text-ink-3">Wallet on another device? Scan this with it</p>
+        <p className="self-start text-[13px] text-ink-3">Or scan with your wallet</p>
         {/* Always dark on white, even in dark mode, so every scanner can read it. */}
         <div className="rounded-control bg-white p-3">
           <QRCodeSVG
@@ -81,7 +78,7 @@ export function FundsRequest({
       </div>
 
       <div className="mt-4 border-t border-line pt-3">
-        <p className="text-[13px] text-ink-3">No wallet app? Send to this address</p>
+        <p className="text-[13px] text-ink-3">Or send to this address</p>
         <p className="mt-1 font-num text-[14px] break-all text-ink-2">{recipient}</p>
         <Button
           size="sm"

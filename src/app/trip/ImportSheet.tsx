@@ -190,9 +190,7 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
       }
     >
       <div className="flex flex-col gap-4 pt-1" aria-busy={reading}>
-        <p className="leading-snug text-ink-2">
-          Add a screenshot, PDF or the email for any flight, hotel or ride. We&apos;ll fill in the details.
-        </p>
+        <p className="leading-snug text-ink-2">Screenshot, PDF or email.</p>
 
         <input
           ref={input}
@@ -279,8 +277,7 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
 
         <p className="flex items-start gap-2 text-[13px] leading-snug text-ink-2">
           <Icon name="lock" size={16} className="mt-px" />
-          What you add here is sent to Claude, Anthropic&apos;s AI, to be read. We don&apos;t keep it, and your trip
-          stays saved on this phone.
+          Read by Claude (Anthropic). Not kept.
         </p>
       </div>
     </Sheet>

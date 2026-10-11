@@ -4,12 +4,9 @@ import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { copyText } from "@/app/share/[id]/copyText";
 import { Icon, ProgressBar, cx } from "@/components/ui";
-import { cityName } from "@/lib/domain/airports";
-import { formatDate } from "@/lib/domain/time";
 import { useTripStore } from "@/lib/store";
 import type { Trip } from "@/lib/types";
-import { arrivalPlan, bookingCodes, daysUntil, flightsInOrder, nights, prepItems } from "./prep";
-import { todayYMD } from "@/app/trip/dateInput";
+import { bookingCodes, prepItems } from "./prep";
 
 const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 
@@ -24,42 +21,6 @@ function Section({ title, aside, delay, children }: { title: string; aside?: Rea
     </section>
   );
 }
-
-function today(): string {
-  const t = todayYMD();
-  return `${t.y}-${String(t.m).padStart(2, "0")}-${String(t.d).padStart(2, "0")}`;
-}
-
-/** Three tiles: when you leave, how many flights, how long you stay. */
-export function AtAGlance({ trip, delay }: { trip: Trip; delay: number }) {
-  const displayTime = useTimeFormat();
-  const flights = flightsInOrder(trip);
-  const first = flights[0];
-  if (!first) return null;
-  const leaves = daysUntil(first.departAt, today());
-  const stops = flights.slice(0, -1).map((f) => cityName(f.to));
-  const stay = trip.stays[0];
-  const tiles = [
-    { label: "Leave", big: leaves.days >= 0 && leaves.days <= 1 ? cap(leaves.label) : formatDate(first.departAt), small: leaves.days > 1 ? leaves.label : `${first.from} ${displayTime(first.departAt.slice(11))}` },
-    { label: "Flights", big: `${flights.length} ${flights.length === 1 ? "flight" : "flights"}`, small: stops.length === 0 ? "Nonstop" : `Via ${stops.join(", ")}` },
-    stay
-      ? { label: "Stay", big: `${nights(stay)} ${nights(stay) === 1 ? "night" : "nights"}`, small: stay.name }
-      : { label: "Stay", big: "No hotel", small: "Add one in Your trip" },
-  ];
-  return (
-    <section aria-label="At a glance" className="ck-rise grid grid-cols-3 gap-2 px-4 pb-1" style={rise(delay)}>
-      {tiles.map((t) => (
-        <div key={t.label} className="flex min-w-0 flex-col gap-0.5 rounded-[10px] border border-line bg-surface p-3">
-          <span className="ck-label">{t.label}</span>
-          <span className="truncate text-[17px] font-semibold">{t.big}</span>
-          <span className="truncate text-[13px] text-ink-2">{t.small}</span>
-        </div>
-      ))}
-    </section>
-  );
-}
-
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Reminders for the days before the trip, ticked off as you go and saved with the trip. */
 // A ticked reminder stays long enough for its strike-through and check to play, then folds away.
@@ -127,10 +88,7 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
                       <Icon name="check" size={14} strokeWidth={3.5} />
                     </span>
                   </span>
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                    <span className="ck-task-text">{displayTime(item.title)}</span>
-                    <span className="text-[14px] leading-snug text-ink-2">{displayTime(item.detail)}</span>
-                  </span>
+                  <span className="ck-task-text min-w-0 flex-1 text-[15px]">{displayTime(item.title)}</span>
                 </button>
               </div>
             </li>
@@ -143,44 +101,13 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
           onClick={() => setShowDone((v) => !v)}
           className="mt-2 min-h-11 cursor-pointer self-start text-[14px] font-semibold text-ink-2 hover:text-ink"
         >
-          {showDone ? "Hide done" : `Show ${doneCount} done`}
+          {showDone ? "Hide done" : `${doneCount} done`}
         </button>
       )}
       {doneCount === items.length && !showDone && (
-        <p className="ck-rise py-3 text-[15px] text-ok-fg">All set. Nothing left before you go.</p>
+        <p className="ck-rise py-3 text-[15px] text-ok-fg">All set.</p>
       )}
     </section>
-  );
-}
-
-/** Landing, then the pickup and the hotel, with a warning where a step is tight. */
-export function WhenYouLand({ trip, delay }: { trip: Trip; delay: number }) {
-  const displayTime = useTimeFormat();
-  const steps = arrivalPlan(trip);
-  if (steps.length <= 1) return null; // just "land" says nothing the flights don't
-  return (
-    <Section title="When you land" delay={delay}>
-      <ol className="flex flex-col rounded-card border border-line bg-surface px-4 py-2">
-        {steps.map((s, i) => (
-          <li key={s.key} className="relative flex gap-3 py-2.5">
-            {i < steps.length - 1 && (
-              <span aria-hidden="true" className="absolute top-9 bottom-[-10px] left-[27px] w-px bg-line-strong" />
-            )}
-            <span className="w-[78px] shrink-0 pt-px font-num text-[15px] font-semibold tabular-nums">{displayTime(s.time)}</span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-semibold">{s.title}</span>
-              {s.detail && <span className="block text-[14px] leading-snug text-ink-2">{displayTime(s.detail)}</span>}
-              {s.warn && (
-                <span className="mt-1 flex items-start gap-1.5 text-[14px] leading-snug text-warn-fg">
-                  <Icon name="clock" size={16} className="mt-0.5" />
-                  {displayTime(s.warn)}
-                </span>
-              )}
-            </span>
-          </li>
-        ))}
-      </ol>
-    </Section>
   );
 }
 
@@ -190,7 +117,7 @@ export function BookingCodes({ trip, delay }: { trip: Trip; delay: number }) {
   const [copied, setCopied] = useState<string | null>(null);
   if (codes.length === 0) return null;
   return (
-    <Section title="Your booking codes" delay={delay}>
+    <Section title="Booking codes" delay={delay}>
       <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
         {codes.map((c) => (
           <li key={c.key} className="flex items-center gap-3 py-2 pr-2 pl-4">

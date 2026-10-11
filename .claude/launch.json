@@ -3,18 +3,20 @@
   "configurations": [
     {
       "name": "web",
-      "runtimeExecutable": "pnpm",
+      "runtimeExecutable": "/bin/zsh",
       "runtimeArgs": [
-        "dev"
+        "-c",
+        "export PATH=$HOME/.local/node/bin:$PATH; pnpm dev --port ${PORT:-3000}"
       ],
       "port": 3000,
       "autoPort": true
     },
     {
       "name": "web-prod",
-      "runtimeExecutable": "pnpm",
+      "runtimeExecutable": "/bin/zsh",
       "runtimeArgs": [
-        "start"
+        "-c",
+        "export PATH=$HOME/.local/node/bin:$PATH; pnpm start --port ${PORT:-3100}"
       ],
       "port": 3100,
       "autoPort": true

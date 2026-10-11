@@ -53,7 +53,6 @@ export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: strin
                   </span>
                 )}
               </div>
-              <p className="line-clamp-3 text-[14px] leading-snug text-ink-2">{d.body}</p>
               {/* Switching between sending and editing the number or email crossfades. */}
               <div key={link && editing !== d.id ? "send" : "edit"} className="ck-fade flex flex-col gap-2.5">
                 {link && editing !== d.id ? (
@@ -71,7 +70,7 @@ export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: strin
                     </a>
                     <p className="flex items-center justify-between gap-2 text-[13px] text-ink-2">
                       <span className="truncate">
-                        {link.channel === "text" ? "By text to" : "By email to"} <span className="font-num">{to}</span>
+                        <span className="font-num">{to}</span>
                       </span>
                       <button
                         type="button"
@@ -90,10 +89,6 @@ export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: strin
           );
         })}
       </Card>
-      <p className="mt-2 px-1 text-[13px] leading-snug text-ink-2">
-        Goes by text if there&apos;s a phone number saved for them, otherwise by email. It opens Messages or Mail
-        with the update written; you tap send.
-      </p>
     </section>
   );
 }
@@ -150,7 +145,7 @@ function ContactEditor({ trip, draft, onDone, canCancel }: { trip: Trip; draft: 
       }}
     >
       <p className="text-[13px] text-ink-2">
-        {canCancel ? `Change how to reach ${draft.name}.` : `No ${hotel ? "phone number" : "phone or email"} saved for ${draft.name}.`}
+        {canCancel ? `Reach ${draft.name} at:` : `Add ${hotel ? "a phone number" : "a phone or email"}`}
       </p>
       <div className="flex gap-2">
         <input

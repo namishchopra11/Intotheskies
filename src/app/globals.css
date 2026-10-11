@@ -523,22 +523,26 @@ body {
   to { transform: scaleX(1); }
 }
 .ck-opening {
-  animation: ck-opening-exit 2800ms ease-in-out both;
+  animation: ck-opening-exit 1500ms ease-in-out both;
+}
+/* Set by the theme script before first paint when the entrance already played in this tab. */
+html[data-opening-seen] .ck-opening {
+  display: none;
 }
 .ck-opening-mark {
-  animation: ck-opening-mark 550ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: ck-opening-mark 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .ck-opening-mark svg {
-  animation: ck-opening-arrow 800ms 200ms ease-in-out 3 both;
+  animation: ck-opening-arrow 500ms 150ms ease-in-out 2 both;
 }
 .ck-opening-name {
-  animation: ck-opening-copy 450ms 180ms ease-out both;
+  animation: ck-opening-copy 350ms 120ms ease-out both;
 }
 .ck-opening-caption {
-  animation: ck-opening-copy 450ms 280ms ease-out both;
+  animation: ck-opening-copy 350ms 200ms ease-out both;
 }
 .ck-opening-route span {
-  animation: ck-opening-route 2200ms 200ms linear both;
+  animation: ck-opening-route 1100ms 150ms linear both;
 }
 
 @media (prefers-reduced-motion: reduce) {

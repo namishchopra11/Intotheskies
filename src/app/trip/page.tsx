@@ -63,9 +63,6 @@ function StartTrip() {
 
   return (
     <div id={START_TRIP_ID} className="flex flex-1 flex-col">
-      <p className="px-5 pb-4 text-ink-2">
-        Add your flights, hotel and rides. When something changes, Layover shows what it affects.
-      </p>
       <ImportCard />
       <p className="ck-label px-5 pt-7 pb-1">Or type it in</p>
       <form

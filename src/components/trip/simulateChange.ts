@@ -64,8 +64,8 @@ export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlert
       disruptionId: id,
       title: `Simulated change · ${first.flightNumber} is delayed`,
       lines: [
-        `${first.flightNumber} to ${cityName(first.to)} is ${formatDuration(late)} late.`,
-        `Now lands ${timePart(addMinutes(first.arriveAt, late))}. Your checklist is ready.`,
+        `${first.flightNumber} is ${formatDuration(late)} late.`,
+        `Now lands ${timePart(addMinutes(first.arriveAt, late))}.`,
       ],
     };
   }
@@ -106,15 +106,14 @@ export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlert
     disruptionId: id,
     title: "Simulated flight change · new plan ready",
     lines: [
-      `${first.flightNumber} is ${formatDuration(late)} late, so you'll miss ${onward.flightNumber} in ${cityName(onward.from)}.`,
-      `You're rebooked on ${newNumber}, ${timePart(newDepart)} → ${timePart(newArrive)} to ${cityName(onward.to)}.`,
+      `Missed ${onward.flightNumber}. New flight ${newNumber}, ${timePart(newDepart)} → ${timePart(newArrive)}.`,
       ...(handled ? [handled] : []),
-      open > 0 ? `${open} ${open === 1 ? "thing" : "things"} to sort out. Tap to see your plan.` : "Tap to see your plan.",
+      open > 0 ? `${open} to do.` : "Tap to see your plan.",
     ],
   };
 }
 
-/** "Told Hotel X your new arrival and moved your Y pickup to 18:40." from the automatic updates. */
+/** "Told the hotel you land at 18:00 and moved your pickup to 18:40." from the automatic updates. */
 function handledLine(actions: AutoAction[]): string | null {
   const titles = actions.filter((a) => a.kind !== "flight" && a.status === "done").map((a) => a.title);
   if (titles.length === 0) return null;

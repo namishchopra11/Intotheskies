@@ -29,55 +29,50 @@ export type ChecklistCopyEntry = { title: string; detail?: string };
 export const checklistCopy = {
   ask_rebooking_options: {
     title: "Ask {airline} to rebook you",
-    detail: "Try the app, the service desk and the phone line at once. Use whichever answers first.",
+    detail: "App, desk or phone. Whichever is fastest.",
   },
   go_to_transfer_desk: {
-    title: "Go to the service desk for {airline}",
-    detail: "Say you missed {flight} and ask for the next available flight.",
+    title: "Go to the {airline} desk",
+    detail: "Ask for the next flight.",
   },
   confirm_new_times: {
     title: "Check the latest times for {flight}",
-    detail: "Times can change again. Check the airline app or departure board before you move.",
+    detail: "They may change again.",
   },
   confirm_new_booking: {
     title: "Check your new booking for {flight}",
-    detail: "Check the date, time and seat. Ask whether your bags are on the same flight.",
+    detail: "Date, time, seat and bags.",
   },
   rebook_onward: {
     title: "Rebook the onward flight {onwardFlight}",
-    detail: "Ask {onwardAirline} if you can still make it, and what the next flight is if you can't.",
+    detail: "Ask {onwardAirline} for the next one.",
   },
   check_bags: {
-    title: "Ask where your checked bags are",
-    detail: "Find out if they follow you automatically or if you need to collect and recheck them.",
+    title: "Ask where your bags are",
   },
   tell_hotel: {
-    title: "Tell the hotel you may arrive late: {hotel}",
-    detail: "Ask them to hold your room, and how to get in if you arrive after the front desk closes.",
+    title: "Tell the hotel you'll be late: {hotel}",
+    detail: "Ask them to hold the room.",
   },
   rearrange_pickup: {
-    title: "Rearrange your pickup or transfer",
-    detail: "Send your driver, transfer company or host the new arrival time.",
+    title: "Move your pickup",
+    detail: "Send them your new landing time.",
   },
   send_update: {
-    title: "Send an update to someone waiting for you",
-    detail: "Use the share button to tell them what changed and what you're doing about it.",
+    title: "Send an update",
+    detail: "Use Share update.",
   },
   ask_entitlements: {
     title: "Ask {airline} what you're entitled to",
-    detail: "This differs by country and airline, so ask staff directly rather than assuming.",
   },
   get_it_in_writing: {
-    title: "Ask for the change in writing",
-    detail: "Get an email, text or printed notice from {airline} saying what happened.",
+    title: "Get the change in writing",
   },
   keep_receipts: {
     title: "Keep receipts for extra costs",
-    detail: "Meals, transport, a hotel night. Take a photo of each one.",
   },
   contact_insurer: {
-    title: "Contact your travel insurer: {insurer}",
-    detail: "Tell them what happened and ask what they need from you.",
+    title: "Call your insurer: {insurer}",
   },
 } satisfies Record<string, ChecklistCopyEntry>;
 
