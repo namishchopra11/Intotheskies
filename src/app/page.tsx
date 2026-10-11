@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { NextAction, haptic } from "@/components/trip/NextAction";
-import { ScenarioSheet } from "@/components/trip/ScenarioSheet";
 import { AtAGlance, BeforeYouGo, BookingCodes, WhenYouLand } from "@/components/trip/OnTrackDetails";
 import { prepItems } from "@/components/trip/prep";
 import { ProfileButton } from "@/components/trip/ProfileButton";
@@ -45,7 +44,6 @@ export default function TripStatusPage() {
   const loadNotice = useTripStore((s) => s.loadNotice);
   const dismissLoadNotice = useTripStore((s) => s.dismissLoadNotice);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [scenarioOpen, setScenarioOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   const menuButton = (
@@ -81,16 +79,7 @@ export default function TripStatusPage() {
         ) : (
           <Status trip={trip} />
         )}
-        <TripMenu
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          hasTrip={Boolean(trip)}
-          onScenario={() => {
-            setMenuOpen(false);
-            setScenarioOpen(true);
-          }}
-        />
-        <ScenarioSheet open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
+        <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
         <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
       </main>
     </PageTransition>
@@ -827,12 +816,10 @@ function TripMenu({
   open,
   onClose: closeSheet,
   hasTrip,
-  onScenario,
 }: {
   open: boolean;
   onClose: () => void;
   hasTrip: boolean;
-  onScenario: () => void;
 }) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
@@ -876,9 +863,6 @@ function TripMenu({
               Edit flights, hotels and rides
             </Button>
           )}
-          <Button variant="secondary" block icon="plane" onClick={onScenario}>
-            Pick a scenario
-          </Button>
           {confirming ? (
             <Confirm
               title={confirming === "restart" ? "Restart the demo trip?" : "Clear this trip?"}
@@ -923,8 +907,7 @@ function TripMenu({
         {hasTrip && (
           <p className="text-[13px] leading-snug text-ink-2">
             Restarting loads the sample trip back on time. A few seconds later the simulated airline
-            feed changes it, and you get the notification again. Or pick a scenario to play one
-            straight away.
+            feed changes it, and you get the notification again.
           </p>
         )}
       </div>
