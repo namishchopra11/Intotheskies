@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { DemoNextButton } from "@/components/trip/DemoNextButton";
 import { FlightWatcher } from "@/components/trip/FlightWatcher";
 import { AppOpening } from "@/components/ui/AppOpening";
+import { NavHistory } from "@/components/ui/BackButton";
 import { THEME_COLORS, themeScript } from "@/components/ui/theme";
 import "./globals.css";
 
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </div>
         {/* Reads the URL, so it streams in after the static shell. */}
         <Suspense fallback={null}>
+          <NavHistory />
           <FlightWatcher />
           <DemoNextButton />
         </Suspense>

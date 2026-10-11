@@ -2,6 +2,7 @@
 export { Badge, FlightStatusBadge, FLIGHT_STATUS_BADGE, CONNECTION_BADGE, type Tone } from "./Badge";
 export { Autocomplete, type AutocompleteOption } from "./Autocomplete";
 export { AppHeader, BrandMark, SignalBar } from "./Brand";
+export { BackButton, NavHistory } from "./BackButton";
 export { HomeLogo } from "./HomeLogo";
 export { Button, buttonClasses, type ButtonVariant } from "./Button";
 export { Card } from "./Card";
