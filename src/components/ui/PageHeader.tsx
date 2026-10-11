@@ -8,7 +8,7 @@ type PageHeaderProps = {
   /** Something on the right of the title row, e.g. a ThemeToggle or small Button. */
   action?: ReactNode;
   /**
-   * "bar" (default): a compact row (back arrow and an 18px title) for a step inside a flow, like Share.
+   * "bar" (default): the logo row, then a 22px title, for a step inside a flow, like Share.
    * "title": a large headline that says what happened, with an optional eyebrow and body.
    */
   variant?: "title" | "bar";
