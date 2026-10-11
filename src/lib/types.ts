@@ -159,15 +159,20 @@ export const ProfileSchema = z.object({
 });
 export type Profile = z.infer<typeof ProfileSchema>;
 
-// What Layover may do on its own when a flight changes (see lib/domain/autoUpdates.ts).
+// The ElevenLabs voices "Listen to summary" can use (ids and labels: components/trip/speechVoices.ts).
+export const SpeechVoiceSchema = z.enum(["george", "sarah", "alice", "roger"]);
+
+// What Layover may do on its own when a flight changes (see lib/domain/autoUpdates.ts),
+// plus the traveler's preferences.
 export const SettingsSchema = z.object({
   notifyHotel: z.boolean(),
   moveRides: z.boolean(),
   // Alert the traveler when a flight changes (banner, buzz and phone notification).
   notifications: z.boolean(),
+  voice: SpeechVoiceSchema,
 });
 export type Settings = z.infer<typeof SettingsSchema>;
-export const DEFAULT_SETTINGS: Settings = { notifyHotel: true, moveRides: true, notifications: true };
+export const DEFAULT_SETTINGS: Settings = { notifyHotel: true, moveRides: true, notifications: true, voice: "george" };
 
 export const TripSchema = z.object({
   id: z.string(),
@@ -180,6 +185,8 @@ export const TripSchema = z.object({
   disruptions: z.array(DisruptionSchema),
   // Optional so a trip saved before people existed still loads.
   people: z.array(PersonSchema).optional(),
+  // Keys of the "Before you go" reminders the traveler has ticked off (see components/trip/prep.ts).
+  prepDone: z.array(z.string()).optional(),
   // Where a "request funds" link asks contacts to send USDC. Set it with the store's
   // setPayoutAddress, which rejects anything that is not a Solana public key. A stored
   // value that fails validation is dropped on load rather than discarding the trip.

@@ -43,6 +43,12 @@ const PATHS = {
       <path d="M2 7v10M22 17v-3H2M12 14h10v-2a3 3 0 0 0-3-3h-7z" />
     </>
   ),
+  calendar: (
+    <>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
   car: (
     <>
       <path d="M5 17H3v-5l2-5h14l2 5v5h-2M5 12h14" />

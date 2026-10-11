@@ -1,0 +1,187 @@
+"use client";
+
+import { useState, type CSSProperties, type ReactNode } from "react";
+import { copyText } from "@/app/share/[id]/copyText";
+import { Icon, ProgressBar, cx } from "@/components/ui";
+import { cityName } from "@/lib/domain/airports";
+import { formatDate } from "@/lib/domain/time";
+import { useTripStore } from "@/lib/store";
+import type { Trip } from "@/lib/types";
+import { arrivalPlan, bookingCodes, daysUntil, flightsInOrder, nights, prepItems } from "./prep";
+import { todayYMD } from "@/app/trip/dateInput";
+
+const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
+
+function Section({ title, aside, delay, children }: { title: string; aside?: ReactNode; delay: number; children: ReactNode }) {
+  return (
+    <section className="ck-rise flex flex-col gap-2.5 px-4 pt-7" style={rise(delay)}>
+      <div className="flex items-baseline justify-between gap-2 px-1">
+        <h2 className="ck-label">{title}</h2>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function today(): string {
+  const t = todayYMD();
+  return `${t.y}-${String(t.m).padStart(2, "0")}-${String(t.d).padStart(2, "0")}`;
+}
+
+/** Three tiles: when you leave, how many flights, how long you stay. */
+export function AtAGlance({ trip, delay }: { trip: Trip; delay: number }) {
+  const flights = flightsInOrder(trip);
+  const first = flights[0];
+  if (!first) return null;
+  const leaves = daysUntil(first.departAt, today());
+  const stops = flights.slice(0, -1).map((f) => cityName(f.to));
+  const stay = trip.stays[0];
+  const tiles = [
+    { label: "Leave", big: leaves.days >= 0 && leaves.days <= 1 ? cap(leaves.label) : formatDate(first.departAt), small: leaves.days > 1 ? leaves.label : `${first.from} ${first.departAt.slice(11)}` },
+    { label: "Flights", big: `${flights.length} ${flights.length === 1 ? "flight" : "flights"}`, small: stops.length === 0 ? "Nonstop" : `Via ${stops.join(", ")}` },
+    stay
+      ? { label: "Stay", big: `${nights(stay)} ${nights(stay) === 1 ? "night" : "nights"}`, small: stay.name }
+      : { label: "Stay", big: "No hotel", small: "Add one in Your trip" },
+  ];
+  return (
+    <section aria-label="At a glance" className="ck-rise grid grid-cols-3 gap-2 px-4 pb-1" style={rise(delay)}>
+      {tiles.map((t) => (
+        <div key={t.label} className="flex min-w-0 flex-col gap-0.5 rounded-[10px] border border-line bg-surface p-3">
+          <span className="ck-label">{t.label}</span>
+          <span className="truncate text-[17px] font-semibold">{t.big}</span>
+          <span className="truncate text-[13px] text-ink-2">{t.small}</span>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Reminders for the days before the trip, ticked off as you go and saved with the trip. */
+export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
+  const togglePrep = useTripStore((s) => s.togglePrep);
+  const [showDone, setShowDone] = useState(false);
+  const items = prepItems(trip);
+  if (items.length === 0) return null;
+  const done = new Set(trip.prepDone ?? []);
+  const doneCount = items.filter((i) => done.has(i.key)).length;
+  const visible = showDone ? items : items.filter((i) => !done.has(i.key));
+
+  return (
+    <section className="ck-rise flex flex-col px-5 pt-7" style={rise(delay)}>
+      <ProgressBar label="Before you go" value={doneCount} max={items.length} />
+      <ul className="mt-1 flex flex-col">
+        {visible.map((item) => {
+          const isDone = done.has(item.key);
+          return (
+            <li key={item.key} className="border-b border-line">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={isDone}
+                data-done={isDone}
+                onClick={() => togglePrep(item.key)}
+                className="flex min-h-13 w-full cursor-pointer items-center gap-3 py-2 text-left"
+              >
+                <span aria-hidden="true" className="relative inline-flex h-[22px] w-[22px] shrink-0">
+                  <Icon name="circle-dashed" size={22} className="ck-task-ring absolute inset-0 text-ink-2" />
+                  <span className="ck-task-disc absolute inset-0 inline-flex items-center justify-center rounded-full bg-meter text-bg">
+                    <Icon name="check" size={14} strokeWidth={3.5} />
+                  </span>
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
+                  <span className="ck-task-text">{item.title}</span>
+                  <span className="text-[14px] leading-snug text-ink-2">{item.detail}</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {doneCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowDone((v) => !v)}
+          className="mt-2 min-h-11 cursor-pointer self-start text-[14px] font-semibold text-ink-2 hover:text-ink"
+        >
+          {showDone ? "Hide done" : `Show ${doneCount} done`}
+        </button>
+      )}
+      {doneCount === items.length && !showDone && (
+        <p className="py-3 text-[15px] text-ok-fg">All set. Nothing left before you go.</p>
+      )}
+    </section>
+  );
+}
+
+/** Landing, then the pickup and the hotel, with a warning where a step is tight. */
+export function WhenYouLand({ trip, delay }: { trip: Trip; delay: number }) {
+  const steps = arrivalPlan(trip);
+  if (steps.length <= 1) return null; // just "land" says nothing the flights don't
+  return (
+    <Section title="When you land" delay={delay}>
+      <ol className="flex flex-col rounded-card border border-line bg-surface px-4 py-2">
+        {steps.map((s, i) => (
+          <li key={s.key} className="relative flex gap-3 py-2.5">
+            {i < steps.length - 1 && (
+              <span aria-hidden="true" className="absolute top-9 bottom-[-10px] left-[27px] w-px bg-line-strong" />
+            )}
+            <span className="w-[56px] shrink-0 pt-px font-num text-[15px] font-semibold tabular-nums">{s.time}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">{s.title}</span>
+              {s.detail && <span className="block text-[14px] leading-snug text-ink-2">{s.detail}</span>}
+              {s.warn && (
+                <span className="mt-1 flex items-start gap-1.5 text-[14px] leading-snug text-warn-fg">
+                  <Icon name="clock" size={16} className="mt-0.5" />
+                  {s.warn}
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </Section>
+  );
+}
+
+/** Every booking reference in one place, with a copy button each. */
+export function BookingCodes({ trip, delay }: { trip: Trip; delay: number }) {
+  const codes = bookingCodes(trip);
+  const [copied, setCopied] = useState<string | null>(null);
+  if (codes.length === 0) return null;
+  return (
+    <Section title="Your booking codes" delay={delay}>
+      <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
+        {codes.map((c) => (
+          <li key={c.key} className="flex items-center gap-3 py-2 pr-2 pl-4">
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[14px] text-ink-2">
+                {c.label} · {c.detail}
+              </span>
+              <span className="block font-num text-[17px] font-semibold tracking-[0.04em]">{c.code}</span>
+            </span>
+            <button
+              type="button"
+              aria-label={`Copy ${c.label} code ${c.code}`}
+              onClick={async () => {
+                if (await copyText(c.code)) {
+                  setCopied(c.key);
+                  setTimeout(() => setCopied((k) => (k === c.key ? null : k)), 1600);
+                }
+              }}
+              className={cx(
+                "inline-flex h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-control px-3 text-[14px] font-semibold hover:bg-sunk",
+                copied === c.key ? "text-ok-fg" : "text-ink-2",
+              )}
+            >
+              <Icon name={copied === c.key ? "check" : "copy"} size={18} />
+              {copied === c.key ? "Copied" : null}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}

@@ -3,10 +3,11 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { initials } from "@/components/trip/ProfileButton";
+import { SPEECH_VOICES } from "@/components/trip/speechVoices";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
-import { Button, Card, Field, PageHeader, Sheet, ThemeToggle, Toggle } from "@/components/ui";
+import { Button, Card, Field, PageHeader, SelectField, Sheet, ThemeToggle, Toggle } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
-import type { Profile } from "@/lib/types";
+import { SpeechVoiceSchema, type Profile } from "@/lib/types";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,6 +26,7 @@ export default function SettingsPage() {
           <Group title="Appearance">
             <ThemeToggle />
           </Group>
+          <ListenVoice />
           <YourData />
           <p className="px-1 text-[13px] leading-snug text-ink-2">
             Layover keeps your trips on this phone. Confirmations you import are sent to Claude, Anthropic&apos;s AI,
@@ -192,6 +194,28 @@ function Notifications() {
             Allow phone alerts
           </Button>
         )}
+      </Card>
+    </Group>
+  );
+}
+
+/** The ElevenLabs voice used by "Listen to summary" on the trip screen. */
+function ListenVoice() {
+  const voice = useTripStore((s) => s.settings.voice);
+  const updateSettings = useTripStore((s) => s.updateSettings);
+  return (
+    <Group title="Listen to summary">
+      <Card>
+        <SelectField
+          label="Voice"
+          hint="Used when you press Listen to summary."
+          value={voice}
+          onChange={(e) => {
+            const next = SpeechVoiceSchema.safeParse(e.target.value);
+            if (next.success) updateSettings({ voice: next.data });
+          }}
+          options={Object.entries(SPEECH_VOICES).map(([value, v]) => ({ value, label: v.label }))}
+        />
       </Card>
     </Group>
   );
