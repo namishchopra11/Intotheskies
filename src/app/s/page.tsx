@@ -9,7 +9,7 @@ import { lastLeg } from "@/lib/domain/impact";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import { flightLabel } from "@/lib/domain/text";
-import { connectionState, stayRisk, storyFor, type SnapConnection, type SnapFlight, type SnapStay } from "./story";
+import { NO_NAME, connectionState, stayRisk, storyFor, type SnapConnection, type SnapFlight, type SnapStay } from "./story";
 
 // The URL fragment never reaches a server, so it is read on the client only.
 // `null` while rendering on the server, then the hash (possibly "").
@@ -46,7 +46,7 @@ export default function SharedUpdatePage() {
 function Update({ s }: { s: ShareSnapshot }) {
   const displayTime = useTimeFormat();
   // A trip imported without a passenger name has none: never start a sentence with "'s".
-  const first = s.travelerName.trim().split(/\s+/)[0] || "Your traveler";
+  const first = s.travelerName.trim().split(/\s+/)[0] || NO_NAME;
   // In the order they're flown: a trip's flights can be saved in any order.
   const flights = [...s.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
   const changed = flights.find((f) => f.id === s.disruption.flightId);
@@ -113,7 +113,7 @@ function Update({ s }: { s: ShareSnapshot }) {
       )}
 
       {s.fundsRequest && (
-        <Section title={`Help ${first} with costs`} className="pt-6" style={stagger(5)}>
+        <Section title={first === NO_NAME ? "Help with costs" : `Help ${first} with costs`} className="pt-6" style={stagger(5)}>
           <FundsRequest {...s.fundsRequest} tripName={s.tripName} travelerName={s.travelerName} />
         </Section>
       )}

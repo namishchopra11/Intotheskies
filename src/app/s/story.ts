@@ -10,6 +10,9 @@ export type SnapFlight = ShareSnapshot["flights"][number];
 export type SnapStay = ShareSnapshot["stays"][number];
 export type SnapConnection = NonNullable<ShareSnapshot["impact"]["connection"]>;
 
+/** Who the page is about when the link has no traveler name (a guest's trip). Starts a sentence only. */
+export const NO_NAME = "Your traveler";
+
 /**
  * How the onward connection stands. "unknown" is a connection whose new arrival time is not
  * known yet: that is at risk, not missed, so it has to be told apart from "missed" first.
@@ -90,7 +93,7 @@ export function stayRisk(
   c: SnapConnection | null,
 ): string {
   if (final?.status === "cancelled") {
-    return `Check-in at ${stay.name} is on hold until ${first} has a new flight.`;
+    return `Check-in at ${stay.name} is on hold until ${first === NO_NAME ? "there's" : `${first} has`} a new flight.`;
   }
   if (final) {
     const landsOn = datePart(final.arriveAt);
