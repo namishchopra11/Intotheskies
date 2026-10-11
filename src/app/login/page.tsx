@@ -87,12 +87,12 @@ export default function LoginPage() {
 
       <section className="ck-rise pt-10 pb-6">
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
-          {creating ? "Create your account" : "Welcome back"}
+          {creating ? "Create your account" : "Welcome to Layover"}
         </h1>
         <p className="mt-2 text-ink-2">
           {creating
             ? "Keep your trips in one place, and let Layover handle the changes."
-            : "Log in to see your trip and anything that changed."}
+            : "Log in to see your trip, or continue as a guest to try it."}
         </p>
       </section>
 

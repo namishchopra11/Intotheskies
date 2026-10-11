@@ -30,10 +30,16 @@ which now lands in Rome at 18:00 instead of 15:05.
 
 ## How the change arrives
 
-There is no "report a change" screen. A change arrives on its own:
+There is no "report a change" screen. How the change arrives depends on **Demo controls**
+(Settings > Demo), which is **on** by default:
 
-- **Automatically:** about 6 seconds after a trip with no changes is on screen (the app must
-  be open, and not on the shared `/s` page).
+- **Demo controls on (default):** a **Next** button sits at the bottom right of every screen
+  and walks through the whole demo in order: **Log in as a guest**, **Your trip**, **Load the
+  sample trip**, **See your trip**, **Change the flight**, **Share the update**, **What they
+  see**, **Settings**, **Start over**. The flight changes **only when you tap Next: Change the
+  flight**, so you choose the moment. This is the safest way to present.
+- **Demo controls off:** the change arrives by itself about 6 seconds after a trip with no
+  changes is on the home screen (not on the shared `/s` page).
 - **On demand:** menu button (top right) > **Restart the demo trip** > **Restart**. It puts the
   trip back on time, and the same change arrives about 6 seconds later. Use this to replay the demo.
 
@@ -84,7 +90,9 @@ tight.
 > emails. Here it is one screen. The app is watching the flights. The airline feed is
 > simulated, so we can show you the moment it changes."
 
-Keep talking. The change lands about 6 seconds after the trip appears. Do not tap anything.
+When you finish the line, **TAP** **Next: Change the flight** (bottom right). (With Demo
+controls switched off in Settings, the change lands by itself about 6 seconds after the trip
+appears instead; then just keep talking.)
 
 ---
 

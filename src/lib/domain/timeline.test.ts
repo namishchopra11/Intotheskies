@@ -22,6 +22,7 @@ describe("buildTimeline", () => {
     const { nodes } = run("missed", noRides);
     expect(kinds(nodes)).toEqual(["flight:warn", "connection:bad", "flight:ok", "stay:ok", "person:bad", "person:warn"]);
     expect(nodes[1].title).toBe("Missed AZ 201");
+    expect(nodes[1].detail).toBe("BA 286 lands 12:45, 1h 15m after AZ 201 left at 11:30.");
     expect(nodes[1].broken).toBe(true);
     expect(nodes[2].time).toBe("18:00");
     expect(nodes[2].was).toBe("15:05");
@@ -32,6 +33,14 @@ describe("buildTimeline", () => {
     expect(nodes[1].state).toBe("warn");
     expect(nodes[1].title).toBe("10 min in London");
     expect(nodes.some((n) => n.broken)).toBe(false);
+  });
+
+  it("keeps the pickup on, not red, when the landing time has not moved", () => {
+    const { nodes } = run("delay45");
+    expect(nodes.find((n) => n.id === "person-marco")).toMatchObject({
+      state: "warn",
+      detail: "Pickup still on for 15:05 if you make the connection.",
+    });
   });
 
   it("treats a delay past the connection with no rebooking as an unknown arrival", () => {

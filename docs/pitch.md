@@ -41,13 +41,14 @@ line to say.
 ### 3. The demo (about 70 seconds)
 
 *Taps are in `docs/demo-script.md`. Say these lines while you do them. There is no "report
-a change" screen: the change arrives on its own, about 6 seconds after the trip loads.*
+a change" screen: after "the moment it changes", tap **Next: Change the flight** (bottom right) and the
+simulated airline change arrives.*
 
 > This is Alex's trip. Two flights, a hotel, the phone numbers Alex needs. The app is
 > watching the flights. The airline feed is simulated, so we can show you the moment it
 > changes. What it does with the change is the real part.
 >
-> *(the change card arrives)* The first flight is over two hours late. Alex has missed the
+> *(tap Next: Change the flight. The change card arrives)* The first flight is over two hours late. Alex has missed the
 > connection in London and is already rebooked. Alex did not type a thing.
 >
 > *(new plan)* Here is what the app worked out by itself. The old flight is struck out. The

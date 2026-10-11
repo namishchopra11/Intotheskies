@@ -82,7 +82,7 @@ function connectionNode(a: Flight, b: Flight): TimelineNode {
       id,
       kind: "connection",
       title: `Missed ${b.original?.flightNumber ?? b.flightNumber}`,
-      detail: `${a.flightNumber} lands ${timePart(a.arriveAt)}, ${formatDuration(-gapBooked)} after it left at ${timePart(booked)}.`,
+      detail: `${a.flightNumber} lands ${timePart(a.arriveAt)}, ${formatDuration(-gapBooked)} after ${b.original?.flightNumber ?? b.flightNumber} left at ${timePart(booked)}.`,
       state: "bad",
       broken: true,
     };
@@ -165,7 +165,10 @@ export function buildTimeline(trip: Trip, disruptionId: string): TimelineNode[] 
       );
     } else if (!key || !hasTask(key)) nodes.push({ ...base, detail: "Nothing to tell them yet.", state: "idle" });
     else if (isDone(key)) nodes.push({ ...base, detail: "Knows the new plan.", state: "ok" });
-    else nodes.push({ ...base, detail: p.role === "pickup" ? "Still expects the old arrival." : "Hasn't heard yet.", state: p.role === "pickup" ? "bad" : "warn" });
+    // The landing time has not moved (a tight connection, not a missed one): the pickup still stands.
+    else if (p.role === "pickup" && arrival.delayMinutes === 0) {
+      nodes.push({ ...base, detail: `Pickup still on for ${timePart(arrival.arriveAt)} if you make the connection.`, state: "warn" });
+    } else nodes.push({ ...base, detail: p.role === "pickup" ? "Still expects the old arrival." : "Hasn't heard yet.", state: p.role === "pickup" ? "bad" : "warn" });
   }
   return nodes;
 }

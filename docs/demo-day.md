@@ -30,7 +30,8 @@ On the phone you present from:
        Then use **Restart the demo trip** from now on, not **Clear this trip** (clearing wipes
        the address).
 7. [ ] Menu > **Restart the demo trip** > **Restart**, then go to the home screen and **stop**.
-       Do not wait for the change yet.
+       Check the **Next** button shows at the bottom right (Settings > Demo > **Demo
+       controls** on). With it on, nothing changes until you tap **Next: Change the flight**.
 8. [ ] Phone: volume up, Do Not Disturb on, auto-lock off (Settings > Display & Brightness >
        Auto-Lock > Never), brightness up.
 
@@ -52,7 +53,8 @@ On the second phone (for the shared link and Send help):
 | --- | --- |
 | The page will not load | Phone hotspot, reload. Still nothing: play the backup video. |
 | The trip already shows a change | Menu > **Restart the demo trip** > **Restart**. |
-| You do not want to wait 6 seconds | Tap **Simulate a change**. |
+| The change has not happened | Tap **Next: Change the flight** (bottom right), or **Simulate a change** on the home screen. |
+| The Next button is missing | Settings > Demo > switch **Demo controls** on. |
 | Listen is silent | Check the silent switch. Otherwise skip it. |
 | Send help does not open a wallet | Show the QR code and scan it from the second phone instead. |
 
