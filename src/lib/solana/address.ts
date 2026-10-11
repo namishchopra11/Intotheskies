@@ -28,7 +28,9 @@ function decodeBase58(input: string): Uint8Array | null {
 export function isValidSolanaAddress(input: string): boolean {
   // 32 bytes is 32 to 44 base58 characters; checking length first keeps the decode cheap.
   if (input.length < 32 || input.length > 44) return false;
-  return decodeBase58(input)?.length === 32;
+  const bytes = decodeBase58(input);
+  // 32 zero bytes ("1111...1") is the System Program, not an account anyone can pay.
+  return bytes?.length === 32 && bytes.some((b) => b !== 0);
 }
 
 /** Trims user input. Returns the address if valid, otherwise null. */

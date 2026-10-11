@@ -7,8 +7,8 @@ import type { Trip } from "@/lib/types";
 // references: the "airline app, confirmation emails, hotel" juggling the pitch talks about.
 // Flight numbers are plausible examples, not checked against real schedules.
 // Phone numbers are made up. UK numbers use Ofcom's reserved drama range (020 7946 0xxx).
-// Italy has no reserved range, so the Rome numbers use a 555 pattern that reads as fake;
-// do not tap them during the demo.
+// Italy has no reserved range, so the Rome numbers start 06 0000: Italian numbers never have a
+// leading zero after the area code, so they cannot connect to anyone.
 export const sampleTrip: Trip = {
   id: "trip-sample",
   name: "Rome via London",
@@ -44,11 +44,23 @@ export const sampleTrip: Trip = {
       id: "stay-rome",
       name: "Hotel Aventino Garden",
       address: "Via di Santa Prisca 14, 00153 Roma RM, Italy",
-      phone: "+39 06 5550 0142",
+      phone: "+39 06 0000 0142",
       checkIn: "2026-10-17T15:00",
       checkOut: "2026-10-21T11:00",
       confirmation: "HAG-48213",
       latestCheckIn: "22:00",
+    },
+  ],
+  rides: [
+    {
+      id: "ride-fco",
+      provider: "Roma Airport Transfers",
+      pickupAt: "2026-10-17T15:45",
+      from: "FCO Terminal 1 arrivals",
+      to: "Hotel Aventino Garden",
+      phone: "+39 06 0000 0190",
+      confirmation: "RAT-7731",
+      notes: "Driver waits at arrivals with a name sign.",
     },
   ],
   contacts: [
@@ -63,16 +75,23 @@ export const sampleTrip: Trip = {
       id: "contact-ita",
       kind: "airline",
       name: "ITA Airways",
-      phone: "+39 06 5550 0177",
+      phone: "+39 06 0000 0177",
       url: "https://www.ita-airways.com",
     },
     {
       id: "contact-hotel",
       kind: "hotel",
       name: "Hotel Aventino Garden",
-      phone: "+39 06 5550 0142",
+      phone: "+39 06 0000 0142",
       notes: "Front desk closes at 22:00. Call ahead for a late arrival.",
     },
+  ],
+  // The people waiting on Alex. Marco is the driver booked for the Rome arrival. Numbers are
+  // made up and left out here on purpose: the draft screen falls back to WhatsApp's own
+  // contact picker, so a demo never texts a real number.
+  people: [
+    { id: "person-marco", name: "Marco", role: "pickup" },
+    { id: "person-mum", name: "Mum", role: "family" },
   ],
   disruptions: [],
 };

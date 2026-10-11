@@ -47,7 +47,7 @@ function Shell({
       )}
       {children}
       {error && (
-        <p id={`${id}-error`} className="flex items-start gap-1.5 text-[14px] text-bad-fg">
+        <p id={`${id}-error`} role="alert" className="flex items-start gap-1.5 text-[14px] text-bad-fg">
           <Icon name="circle-x" size={16} strokeWidth={2} className="mt-0.5" />
           {error}
         </p>

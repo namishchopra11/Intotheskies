@@ -39,11 +39,11 @@ describe("normalizeUsdcAmount", () => {
 
 describe("fundsRequestMemo", () => {
   it("names the trip", () => {
-    expect(fundsRequestMemo("Lisbon  conference ")).toBe("ConnectionKeeper: Lisbon conference");
+    expect(fundsRequestMemo("Lisbon  conference ")).toBe("Layover: Lisbon conference");
   });
 
   it("falls back to the app name and caps the length", () => {
-    expect(fundsRequestMemo("  ")).toBe("ConnectionKeeper");
+    expect(fundsRequestMemo("  ")).toBe("Layover");
     expect(fundsRequestMemo("x".repeat(200))).toHaveLength(80);
   });
 });
@@ -63,8 +63,8 @@ describe("buildTransferRequestUrl", () => {
     expect(keys).toEqual(["amount", "spl-token", "label", "message", "memo"]);
     expect(params.amount).toBe("85.5");
     expect(params["spl-token"]).toBe(USDC_MINTS[SOLANA_CLUSTER]);
-    expect(params.label).toBe("ConnectionKeeper");
-    expect(params.memo).toBe("ConnectionKeeper: Lisbon & back");
+    expect(params.label).toBe("Layover");
+    expect(params.memo).toBe("Layover: Lisbon & back");
     expect(params.message).toContain("Sam");
   });
 
@@ -83,7 +83,7 @@ describe("buildTransferRequestUrl", () => {
 
   it("percent-encodes values so they survive as one query parameter", () => {
     const url = buildTransferRequestUrl(input)!;
-    expect(url).toContain("memo=ConnectionKeeper%3A%20Lisbon%20%26%20back");
+    expect(url).toContain("memo=Layover%3A%20Lisbon%20%26%20back");
     expect(url).not.toContain("+");
     expect(url).not.toContain(" ");
   });

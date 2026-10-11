@@ -1,3 +1,4 @@
+import { buildMessage, messageText } from "@/app/share/[id]/message";
 import { describe, expect, it } from "vitest";
 import { sampleTrip } from "@/lib/sampleTrip";
 import { TripSchema, type Disruption, type DisruptionType, type Flight, type Trip } from "@/lib/types";
@@ -335,6 +336,17 @@ describe("buildSummary", () => {
     expect(still).not.toMatch(/send an update|receipts|entitled|in writing|\byou(r)?\b/i);
   });
 
+  it("leaves the traveler's own admin tasks out of the message to others", () => {
+    const { trip } = delayFirst(45);
+    const text = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
+    expect(text).toMatch(/- Rebooking the onward flight AZ 201/);
+    expect(text).not.toMatch(/Send an update to someone|what you're entitled to|Keep receipts/);
+    const snapshot = decodeShare(encodeShare(trip, "d1", DEFAULT_SUMMARY_OPTIONS));
+    expect(snapshot!.openTasks.join(" ")).not.toMatch(/Send an update to someone|entitled to|receipts/);
+    expect(messageText(buildMessage(trip, "d1", DEFAULT_SUMMARY_OPTIONS))).not.toMatch(/send an update|entitled to|receipts/);
+    expect(trip.disruptions[0].tasks.some((t) => /receipts/.test(t.title))).toBe(true);
+  });
+
   it("shows booking references only when the option is on", () => {
     const { trip } = delayFirst(45);
     const off = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
@@ -488,5 +500,109 @@ describe("share link", () => {
     expect(decodeShare(compressToEncodedURIComponent(JSON.stringify({ v: 2, hello: "world" })))).toBeNull();
     expect(decodeShare(compressToEncodedURIComponent(JSON.stringify(null)))).toBeNull();
     expect(encodeShare(trip, "nope", DEFAULT_SUMMARY_OPTIONS)).toBe("");
+  });
+});
+
+describe("briefing wording", () => {
+  const withTasks = (tasks: { title: string; done: boolean }[]): Trip => {
+    const { trip } = delayFirst(45);
+    return {
+      ...trip,
+      disruptions: trip.disruptions.map((d) => ({
+        ...d,
+        tasks: tasks.map((t, i) => ({ id: `t${i}`, title: t.title, done: t.done, source: "custom" as const })),
+      })),
+    };
+  };
+
+  it("keeps acronyms and flight codes in the next task as written", () => {
+    expect(buildBriefing(withTasks([{ title: "BA desk opens at 6", done: false }]), "d1")).toMatch(
+      /First, BA desk opens at 6\.$/,
+    );
+    expect(buildBriefing(withTasks([{ title: "AZ 207 check-in", done: false }]), "d1")).toMatch(
+      /First, AZ 207 check-in\.$/,
+    );
+  });
+
+  it("lowercases the first letter of an ordinary sentence", () => {
+    expect(buildBriefing(withTasks([{ title: "Call the airline.", done: false }]), "d1")).toMatch(
+      /First, call the airline\.$/,
+    );
+  });
+
+  it("says everything is done once every task is ticked, and says nothing with no tasks", () => {
+    expect(buildBriefing(withTasks([{ title: "Call the airline", done: true }]), "d1")).toMatch(
+      /Everything on your list is done\.$/,
+    );
+    expect(buildBriefing(withTasks([]), "d1")).not.toMatch(/First,|Everything on your list/);
+  });
+});
+
+describe("connection to a cancelled onward flight", () => {
+  it("is at risk, not fine, when the onward flight is cancelled with no replacement", () => {
+    const trip: Trip = {
+      ...baseTrip,
+      flights: baseTrip.flights.map((f) => (f.id === ONWARD ? { ...f, status: "cancelled" as const } : f)),
+    };
+    const { connection } = computeImpact(trip, FIRST);
+    expect(connection).toMatchObject({ flightId: ONWARD, minutesAfter: null, status: "missed" });
+  });
+
+  it("still judges a rebooked onward flight on its new departure", () => {
+    const { trip } = report(baseTrip, ONWARD, "cancellation", {
+      departAt: "2026-10-17T14:25",
+      arriveAt: "2026-10-17T18:00",
+    });
+    expect(computeImpact(trip, FIRST).connection).toMatchObject({ minutesAfter: 230, status: "ok" });
+  });
+});
+
+describe("contact matching", () => {
+  const delayWith = (airline: string, contactName: string) => {
+    const trip: Trip = {
+      ...baseTrip,
+      flights: baseTrip.flights.map((f) => (f.id === FIRST ? { ...f, airline } : f)),
+      contacts: [{ id: "c-x", kind: "airline", name: contactName, phone: "+1 555 0100" }],
+    };
+    return report(trip, FIRST, "delay", { arriveAt: "2026-10-17T11:20" }).disruption;
+  };
+
+  it("matches a longer saved name that contains every word of the airline", () => {
+    const d = delayWith("British Airways", "British Airways Customer Care");
+    expect(d.tasks.some((t) => t.contactId === "c-x")).toBe(true);
+  });
+
+  it("does not match a name that merely starts with the same letters", () => {
+    const d = delayWith("BA", "Baltic Airlines");
+    expect(d.tasks.some((t) => t.contactId === "c-x")).toBe(false);
+  });
+});
+
+describe("date validation", () => {
+  const flight = (departAt: string) => ({
+    id: "f", airline: "A", flightNumber: "A 1", from: "SFO", to: "LHR",
+    departAt, arriveAt: "2026-10-17T10:35", bookingRef: "X", status: "scheduled",
+  });
+  const ok = (departAt: string) =>
+    TripSchema.safeParse({ ...baseTrip, flights: [flight(departAt)] }).success;
+
+  it("accepts real times, including a leap day", () => {
+    expect(ok("2026-10-16T16:40")).toBe(true);
+    expect(ok("2028-02-29T00:00")).toBe(true);
+    expect(ok("2026-12-31T23:59")).toBe(true);
+  });
+
+  it("rejects dates and times that do not exist", () => {
+    expect(ok("2026-02-31T10:00")).toBe(false);
+    expect(ok("2027-02-29T10:00")).toBe(false);
+    expect(ok("2026-13-01T10:00")).toBe(false);
+    expect(ok("2026-10-16T24:00")).toBe(false);
+    expect(ok("2026-10-16T10:60")).toBe(false);
+  });
+
+  it("rejects a latest check-in time that is not a time of day", () => {
+    const stay = { ...baseTrip.stays[0], latestCheckIn: "99:99" };
+    expect(TripSchema.safeParse({ ...baseTrip, stays: [stay] }).success).toBe(false);
+    expect(TripSchema.safeParse({ ...baseTrip, stays: [{ ...stay, latestCheckIn: "23:59" }] }).success).toBe(true);
   });
 });

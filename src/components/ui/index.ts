@@ -1,9 +1,11 @@
 // import { Button, Card, Badge, ... } from "@/components/ui";
-export { Badge, FlightStatusBadge, FLIGHT_STATUS_BADGE, CONNECTION_BADGE, TONE_ICON, type Tone } from "./Badge";
+export { Badge, FlightStatusBadge, FLIGHT_STATUS_BADGE, CONNECTION_BADGE, type Tone } from "./Badge";
+export { Autocomplete, type AutocompleteOption } from "./Autocomplete";
 export { AppHeader, BrandMark, SignalBar } from "./Brand";
 export { Button, buttonClasses, type ButtonVariant } from "./Button";
 export { Card } from "./Card";
 export { cx } from "./cx";
+export { FlapBoard } from "./FlapBoard";
 export { Field, SelectField, TextAreaField } from "./Field";
 export { Icon, type IconName } from "./Icon";
 export { NotificationBanner } from "./NotificationBanner";
@@ -11,4 +13,5 @@ export { PageHeader } from "./PageHeader";
 export { ProgressBar } from "./ProgressBar";
 export { Sheet } from "./Sheet";
 export { ThemeToggle } from "./ThemeToggle";
+export { Timeline } from "./Timeline";
 export { Toggle } from "./Toggle";

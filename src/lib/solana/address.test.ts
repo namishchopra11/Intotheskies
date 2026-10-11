@@ -4,7 +4,6 @@ import { USDC_MINTS } from "./config";
 
 describe("isValidSolanaAddress", () => {
   it.each([
-    ["system program (32 zero bytes)", "11111111111111111111111111111111"],
     ["token program", "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
     ["devnet USDC mint", USDC_MINTS.devnet],
     ["mainnet USDC mint", USDC_MINTS["mainnet-beta"]],
@@ -15,6 +14,7 @@ describe("isValidSolanaAddress", () => {
 
   it.each([
     ["empty", ""],
+    ["32 zero bytes (the system program, not a wallet)", "1".repeat(32)],
     ["31 zero bytes", "1".repeat(31)],
     ["33 zero bytes", "1".repeat(33)],
     ["more than 32 bytes", "z".repeat(44)],

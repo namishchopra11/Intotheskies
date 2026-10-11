@@ -18,7 +18,7 @@ type NotificationBannerProps = {
  * A banner that drops in from the top of the screen, like a phone notification.
  * Tap to open, swipe up or press the cross to dismiss.
  */
-export function NotificationBanner({ title, lines, onOpen, onDismiss, autoHideMs = 9000 }: NotificationBannerProps) {
+export function NotificationBanner({ title, lines, onOpen, onDismiss, autoHideMs = 5000 }: NotificationBannerProps) {
   const [leaving, setLeaving] = useState(false);
   const [dragY, setDragY] = useState(0);
   const start = useRef<number | null>(null);
@@ -76,7 +76,7 @@ export function NotificationBanner({ title, lines, onOpen, onDismiss, autoHideMs
             <BrandMark size={38} className="rounded-[9px]" />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2 font-num text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">
-                ConnectionKeeper
+                Layover
                 <span aria-hidden="true">·</span>
                 <span className="font-normal tracking-normal normal-case">now</span>
               </span>

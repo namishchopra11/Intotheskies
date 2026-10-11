@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 /*
-  ConnectionKeeper design tokens: "Wayfinding".
+  Layover design tokens: "Wayfinding".
 
   Airport signage. Light is warm grey paper, near-black ink and sign-yellow used sparingly.
   Dark is the same system at night: charcoal ground, the yellow becomes the main action.
   Both themes use IBM Plex Sans for words and IBM Plex Mono for times and flight numbers.
 
   The theme is chosen by data-theme on <html> ("light" | "dark"), set before first paint
-  by the script in layout.tsx. Without JS it follows the phone's setting.
+  by the script in layout.tsx, which also follows the phone while the choice is "Auto".
+  The app needs JS to show anything (the trip lives in localStorage), so there is no
+  separate no-JS dark copy of the tokens: the dark values below are the only ones.
 
   Every status is always paired with its own icon and a word, so colour is never the only
   signal, and the tones also differ in lightness:
@@ -29,7 +31,7 @@
   --ink-body: #2e2e2b; /* longer sentences on the shared page */
   --ink-2: #4a4a46;
   --ink-3: #66665f;
-  --ink-faint: #8c8c86; /* arrows and struck-through times only, never body text */
+  --ink-faint: #73736d; /* arrows and struck-through times only, never body text; 4.7:1 on --surface */
   --line: #d9d9d3;
   --line-soft: #e6e6e1;
   --line-strong: #8c8c86;
@@ -89,7 +91,7 @@
   --ink-body: #d0d0c8;
   --ink-2: #a8a8a0;
   --ink-3: #8e8e86;
-  --ink-faint: #77776f;
+  --ink-faint: #8a8a82; /* 4.9:1 on --surface */
   --line: #2e2f2b;
   --line-soft: #272824;
   --line-strong: #5f605a;
@@ -130,63 +132,6 @@
   --done: #5fd3a8;
   --done-bg: #13332a;
   --done-fg: #5fd3a8;
-}
-
-/* No JS yet (or it failed): follow the phone. Same values as [data-theme="dark"]. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    color-scheme: dark;
-
-    --bg: #121311;
-    --surface: #1c1d1a;
-    --surface-2: #23241f;
-    --sunk: #272824;
-    --ink: #f0f0ec;
-    --ink-body: #d0d0c8;
-  --ink-2: #a8a8a0;
-    --ink-3: #8e8e86;
-    --ink-faint: #77776f;
-    --line: #2e2f2b;
-    --line-soft: #272824;
-    --line-strong: #5f605a;
-    --focus: #ffc82e;
-    --scrim: rgb(0 0 0 / 0.6);
-
-    --accent: #ffc82e;
-    --on-accent: #0a0a09;
-    --key-shadow: #9c7a12;
-    --chip: #0a0a09;
-    --on-chip: #ffc82e;
-
-    --signal: #ffc82e;
-    --on-signal: #0a0a09;
-
-    --meter: #ffc82e;
-    --meter-track: #33342f;
-    --switch-off: #3a3b37;
-    --knob-off: #a8a8a0;
-    --switch-on: #ffc82e;
-    --knob-on: #0a0a09;
-    --bubble: #2e2f2b;
-    --on-bubble: #f0f0ec;
-    --band: #000000;
-    --on-band: #f0f0ec;
-    --mark: #ffc82e;
-    --on-mark: #0a0a09;
-
-    --ok: #5fd3a8;
-    --ok-bg: #13332a;
-    --ok-fg: #5fd3a8;
-    --warn: #ffb547;
-    --warn-bg: #3a2a0e;
-    --warn-fg: #ffb547;
-    --bad: #ff8a7a;
-    --bad-bg: #3d1a16;
-    --bad-fg: #ff8a7a;
-    --done: #5fd3a8;
-    --done-bg: #13332a;
-    --done-fg: #5fd3a8;
-  }
 }
 
 /* Tailwind utilities: bg-surface, text-ink-2, border-line, bg-warn-bg, text-warn-fg, font-num ... */
@@ -486,6 +431,22 @@ body {
 }
 .ck-pulse {
   animation: ck-pulse 2s ease-out infinite;
+}
+
+/* Departures-board digit turning over. data-flip digits only. */
+@keyframes ck-flap {
+  0% {
+    transform: rotateX(-90deg);
+    opacity: 0.3;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+.ck-flap {
+  transform-origin: 50% 0;
+  animation: ck-flap 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -35,7 +35,7 @@ export const UsdcAmountSchema = z
   .string()
   .refine((s) => normalizeUsdcAmount(s) === s, "Not a valid USDC amount");
 
-const APP_LABEL = "ConnectionKeeper";
+const APP_LABEL = "Layover";
 const MEMO_MAX_LENGTH = 80;
 
 /** The memo names the trip. It is stored on-chain publicly, so it carries nothing else. */

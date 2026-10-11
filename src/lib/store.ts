@@ -3,19 +3,26 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
+import { planAutoUpdates } from "@/lib/domain/autoUpdates";
 import { generateChecklist } from "@/lib/domain/checklist";
 import { computeImpact } from "@/lib/domain/impact";
 import { newId } from "@/lib/id";
 import { normalizeSolanaAddress } from "@/lib/solana/address";
+import { migratePersisted, recoverTrip, type LoadNotice } from "@/lib/recoverTrip";
 import { sampleTrip } from "@/lib/sampleTrip";
 import {
-  TripSchema,
+  DEFAULT_SETTINGS,
+  ProfileSchema,
+  SettingsSchema,
+  type Profile,
+  type Settings,
   type Contact,
   type Disruption,
   type DisruptionType,
   type Flight,
   type FlightStatus,
   type LocalDateTime,
+  type Ride,
   type Stay,
   type Trip,
 } from "@/lib/types";
@@ -27,16 +34,46 @@ export type FlightRevision = {
   arriveAt?: LocalDateTime;
 };
 
+const STORAGE_KEY = "connectionkeeper-trip";
+
 export type TripState = {
   trip: Trip | null;
+  /** Set when a saved trip was only partly readable, or not at all. Not persisted. */
+  loadNotice: LoadNotice | null;
+  dismissLoadNotice: () => void;
+  /** Trips put aside with saveAndCloseTrip, most recent first. */
+  savedTrips: Trip[];
+  /** Who is signed in on this phone; null = nobody yet (show /login). */
+  profile: Profile | null;
+  settings: Settings;
+
+  /** Demo sign-in: keeps the name and email on this phone. Never pass a password here. */
+  signIn: (profile: Profile) => void;
+  /** Signs out. With `erase`, also deletes the trip and saved trips from this phone. */
+  signOut: (options?: { erase?: boolean }) => void;
+  updateProfile: (changes: Partial<Pick<Profile, "name" | "email">>) => void;
+  updateSettings: (changes: Partial<Settings>) => void;
 
   loadSampleTrip: () => void;
   resetTrip: () => void;
+  /** Starts an empty trip (replacing any current one) for the traveler to fill in. */
+  startTrip: (details: { name: string; travelerName: string }) => void;
+  /** Puts the current trip in savedTrips (replacing an older copy of it) and closes it. */
+  saveAndCloseTrip: () => void;
+  /** Reopens a saved trip. The current trip, if any, is saved first so nothing is lost. */
+  openSavedTrip: (tripId: string) => void;
+  removeSavedTrip: (tripId: string) => void;
+  /** Renames the trip or the traveler. */
+  updateTripDetails: (details: { name?: string; travelerName?: string }) => void;
 
   upsertFlight: (flight: Flight) => void;
   removeFlight: (flightId: string) => void;
   upsertStay: (stay: Stay) => void;
   removeStay: (stayId: string) => void;
+  upsertRide: (ride: Ride) => void;
+  removeRide: (rideId: string) => void;
+  /** Ticks or unticks a "Before you go" reminder by its key. */
+  togglePrep: (key: string) => void;
   upsertContact: (contact: Contact) => void;
   removeContact: (contactId: string) => void;
 
@@ -49,6 +86,8 @@ export type TripState = {
   /**
    * Records what changed on a flight, updates the flight, generates the checklist
    * and returns the new disruption id. Throws if there is no trip or the flight is unknown.
+   * Reporting the same change again (same type, nothing new to apply) while the earlier
+   * one still has unfinished tasks is a no-op that returns the existing disruption's id.
    */
   reportDisruption: (flightId: string, type: DisruptionType, revised?: FlightRevision) => string;
 
@@ -88,11 +127,71 @@ export const useTripStore = create<TripState>()(
           disruptions: trip.disruptions.map((d) => (d.id === disruptionId ? fn(d) : d)),
         }));
 
+      const withSaved = (saved: Trip[], trip: Trip | null) =>
+        trip ? [trip, ...saved.filter((t) => t.id !== trip.id)] : saved;
+
       return {
         trip: null,
+        loadNotice: null,
+        dismissLoadNotice: () => set({ loadNotice: null }),
+        savedTrips: [],
+        profile: null,
+        settings: DEFAULT_SETTINGS,
 
-        loadSampleTrip: () => set({ trip: structuredClone(sampleTrip) }),
-        resetTrip: () => set({ trip: null }),
+        signIn: (profile) =>
+          set({ profile: { name: profile.name.trim(), email: profile.email.trim(), guest: profile.guest } }),
+        signOut: ({ erase = false } = {}) =>
+          set(
+            erase
+              ? { profile: null, trip: null, savedTrips: [], settings: DEFAULT_SETTINGS, loadNotice: null }
+              : { profile: null },
+          ),
+        updateProfile: (changes) =>
+          set((state) =>
+            state.profile
+              ? { profile: { ...state.profile, ...changes, guest: false } }
+              : state,
+          ),
+        updateSettings: (changes) => set((state) => ({ settings: { ...state.settings, ...changes } })),
+
+        // Restarting the demo keeps a saved Solana address, so a rehearsal does not lose it.
+        loadSampleTrip: () =>
+          set((state) => ({
+            trip: { ...structuredClone(sampleTrip), payoutAddress: state.trip?.payoutAddress },
+            loadNotice: null,
+          })),
+        resetTrip: () => set({ trip: null, loadNotice: null }),
+        startTrip: ({ name, travelerName }) =>
+          set({
+            trip: {
+              id: newId(),
+              name: name.trim(),
+              travelerName: travelerName.trim(),
+              flights: [],
+              stays: [],
+              rides: [],
+              contacts: [],
+              disruptions: [],
+            },
+            loadNotice: null,
+          }),
+        saveAndCloseTrip: () =>
+          set((state) => ({ trip: null, savedTrips: withSaved(state.savedTrips, state.trip) })),
+        openSavedTrip: (tripId) =>
+          set((state) => {
+            const saved = state.savedTrips.find((t) => t.id === tripId);
+            if (!saved) return state;
+            const rest = withSaved(state.savedTrips, state.trip).filter((t) => t.id !== tripId);
+            return { trip: saved, savedTrips: rest };
+          }),
+        removeSavedTrip: (tripId) =>
+          set((state) => ({ savedTrips: state.savedTrips.filter((t) => t.id !== tripId) })),
+        updateTripDetails: ({ name, travelerName }) =>
+          updateTrip((trip) => ({
+            ...trip,
+            name: name?.trim() ?? trip.name,
+            travelerName: travelerName?.trim() ?? trip.travelerName,
+          })),
 
         upsertFlight: (flight) =>
           updateTrip((trip) => ({ ...trip, flights: upsert(trip.flights, flight) })),
@@ -105,6 +204,17 @@ export const useTripStore = create<TripState>()(
         upsertStay: (stay) => updateTrip((trip) => ({ ...trip, stays: upsert(trip.stays, stay) })),
         removeStay: (stayId) =>
           updateTrip((trip) => ({ ...trip, stays: trip.stays.filter((s) => s.id !== stayId) })),
+        upsertRide: (ride) =>
+          updateTrip((trip) => ({ ...trip, rides: upsert(trip.rides ?? [], ride) })),
+        togglePrep: (key) =>
+          updateTrip((trip) => {
+            const done = new Set(trip.prepDone ?? []);
+            if (done.has(key)) done.delete(key);
+            else done.add(key);
+            return { ...trip, prepDone: [...done] };
+          }),
+        removeRide: (rideId) =>
+          updateTrip((trip) => ({ ...trip, rides: (trip.rides ?? []).filter((r) => r.id !== rideId) })),
         upsertContact: (contact) =>
           updateTrip((trip) => ({ ...trip, contacts: upsert(trip.contacts, contact) })),
         removeContact: (contactId) =>
@@ -135,7 +245,6 @@ export const useTripStore = create<TripState>()(
           const trip = get().trip;
           const flight = trip?.flights.find((f) => f.id === flightId);
           if (!trip || !flight) throw new Error(`reportDisruption: unknown flight "${flightId}"`);
-
           const updatedFlight: Flight = {
             ...flight,
             airline: revised?.airline ?? flight.airline,
@@ -150,7 +259,18 @@ export const useTripStore = create<TripState>()(
               arriveAt: flight.arriveAt,
             },
           };
-          const updatedTrip: Trip = {
+          const repeat = trip.disruptions.find(
+            (d) => d.flightId === flightId && d.type === type && d.tasks.some((t) => !t.done),
+          );
+          const unchanged =
+            updatedFlight.status === flight.status &&
+            updatedFlight.airline === flight.airline &&
+            updatedFlight.flightNumber === flight.flightNumber &&
+            updatedFlight.departAt === flight.departAt &&
+            updatedFlight.arriveAt === flight.arriveAt;
+          if (repeat && unchanged) return repeat.id;
+
+          const withFlight: Trip = {
             ...trip,
             flights: trip.flights.map((f) => (f.id === flightId ? updatedFlight : f)),
           };
@@ -161,6 +281,14 @@ export const useTripStore = create<TripState>()(
             flightId,
             createdAt: new Date().toISOString(),
             tasks: [],
+          };
+          // What Layover handles by itself (hotel, pickups) happens first, so the checklist
+          // only lists what is left for the traveler.
+          const plan = planAutoUpdates(withFlight, flightId, disruption.id, get().settings);
+          disruption.actions = plan.actions;
+          const updatedTrip: Trip = {
+            ...withFlight,
+            rides: (withFlight.rides ?? []).map((r) => plan.rides.find((m) => m.id === r.id) ?? r),
           };
           disruption.tasks = generateChecklist(
             updatedTrip,
@@ -197,25 +325,61 @@ export const useTripStore = create<TripState>()(
       };
     },
     {
-      name: "connectionkeeper-trip",
-      version: 1,
+      name: STORAGE_KEY,
+      version: 2,
       storage: createJSONStorage(() =>
         typeof window === "undefined" ? noopStorage : window.localStorage,
       ),
-      partialize: (state) => ({ trip: state.trip }),
+      partialize: (state) => ({
+        trip: state.trip,
+        savedTrips: state.savedTrips,
+        profile: state.profile,
+        settings: state.settings,
+      }),
       // Hydration is started by useStoreReady() after mount, so the server render and
       // the first client render both see `trip: null` and never mismatch.
       skipHydration: true,
-      // Anything in localStorage that no longer matches the schema is discarded.
+      migrate: (persisted) => migratePersisted(persisted),
+      // A saved trip that no longer matches the schema is rebuilt from the parts that do,
+      // and the screens are told (loadNotice) rather than silently showing "no trip".
       merge: (persisted, current) => {
-        const parsed = TripSchema.nullable().safeParse((persisted as { trip?: unknown })?.trip);
-        return { ...current, trip: parsed.success ? parsed.data : null };
+        const p = persisted as
+          | { trip?: unknown; savedTrips?: unknown; profile?: unknown; settings?: unknown }
+          | undefined;
+        const { trip, notice } = recoverTrip(p?.trip);
+        const profile = ProfileSchema.safeParse(p?.profile);
+        const settings = SettingsSchema.safeParse({ ...DEFAULT_SETTINGS, ...(p?.settings as object) });
+        // Saved trips are recovered the same way; one that cannot be read at all is left out.
+        const saved = Array.isArray(p?.savedTrips) ? p.savedTrips : [];
+        const savedTrips = saved.flatMap((t) => {
+          const r = recoverTrip(t).trip;
+          return r ? [r] : [];
+        });
+        return {
+          ...current,
+          trip,
+          // Keep a notice the traveler has not dismissed when another tab's save is read back.
+          loadNotice: notice ?? current.loadNotice,
+          savedTrips,
+          profile: profile.success ? profile.data : null,
+          settings: settings.success ? settings.data : DEFAULT_SETTINGS,
+        };
       },
     },
   ),
 );
 
 let hydrationStarted = false;
+
+// Another tab changed the saved trip: read it back, so this tab does not overwrite it later.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (hydrationStarted && (e.key === null || e.key === STORAGE_KEY)) {
+      void useTripStore.persist.rehydrate();
+    }
+  });
+}
+
 const subscribeToHydration = (onChange: () => void) =>
   useTripStore.persist.onFinishHydration(onChange);
 

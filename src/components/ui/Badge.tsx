@@ -17,14 +17,6 @@ const TONES: Record<Tone, { className: string; icon: IconName | null }> = {
   neutral: { className: "bg-sunk text-ink-2", icon: null },
 };
 
-export const TONE_ICON: Record<Tone, IconName | null> = {
-  ok: TONES.ok.icon,
-  warn: TONES.warn.icon,
-  bad: TONES.bad.icon,
-  done: TONES.done.icon,
-  neutral: null,
-};
-
 type BadgeProps = {
   tone?: Tone;
   children: ReactNode;
