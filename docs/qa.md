@@ -1,5 +1,91 @@
 # QA report
 
+## Latest: Saturday night pass on the merged Layover app (`main` at `b577236`)
+
+Ran the production build at phone size (375 to 390 pixels wide) as a first-time guest:
+sign-in screen, **Continue as guest**, **Try the sample trip**, the automatic change, all
+four **Pick a scenario** changes, **Share the new plan**, **Copy link** and the recipient
+page, the trip menu, **Your trip** (added a flight by hand, including the empty-form errors),
+**Settings**. Unit tests: 238 pass. Lint and build are clean. No errors in the browser
+console on any screen.
+
+**Result: the demo path works.** What is left is below, most serious first. Each has an
+owner; nothing here was changed in their files.
+
+### 1. The live site has no API keys (team, whoever owns Vercel)
+
+- **What I did:** asked the live site's import and speech routes whether they are set up
+  (an empty request, which costs nothing).
+- **What happened:** both answer "isn't available right now". `ANTHROPIC_API_KEY` and
+  `ELEVENLABS_API_KEY` are not set in Vercel.
+- **What it means on stage:** **Import** shows "Import isn't available right now. You can add
+  your trip by hand." **Listen to summary** still talks, but in the phone's own voice, while
+  the screen says it uses ElevenLabs.
+- **What to do:** add both keys in Vercel (Settings > Environment Variables) and redeploy.
+  Until then, do not mention Import or ElevenLabs. The pitch and demo script now say this.
+
+### 2. "Handled for you" and Settings do not say they are simulated (screens owner)
+
+- **What I saw:** **Handled for you** lists "Told Hotel Aventino Garden your new arrival" and
+  "Moved your Roma Airport Transfers pickup to 18:40", each marked **Done**. Settings says
+  "Your flights are always tracked." and "Send your hotel the new arrival time".
+- **Why it matters:** none of that really happens. `CLAUDE.md` says anything that says
+  Layover told a hotel or moved a ride must say it is simulated. A judge who reads "Done" may
+  think a hotel was really contacted.
+- **What to do:** add a short "Simulated in this demo" line under **Handled for you** and in
+  Settings. A fix is ready on the branch `fix/screens` for the owner to review.
+
+### 3. The privacy line on the first screen is out of date (screens owner)
+
+- **What I saw:** "Your trip is saved only on this phone. Listen sends the summary to
+  ElevenLabs for audio. No account needed." It does not mention that **Import** sends what you
+  paste to Claude. (Settings and the import sheet do say it.)
+- **What to do:** mention both. Fix on `fix/screens`.
+
+### 4. The missed-connection line reads as if the wrong flight left (logic owner)
+
+- **What I saw:** "Missed AZ 201. BA 286 lands 12:45, 1h 15m after it left at 11:30."
+- **Why it matters:** "it" sounds like BA 286. It means AZ 201.
+- **What to do:** "BA 286 lands 12:45, 1h 15m after AZ 201 left at 11:30." Fix on `fix/logic`.
+
+### 5. A 45-minute delay says the pickup "still expects the old arrival" (logic owner)
+
+- **What I did:** menu > **Pick a scenario** > **45-minute delay**.
+- **What happened:** the Rome arrival does not change (still 15:05), but **Marco · pickup**
+  is red: "Still expects the old arrival."
+- **Why it matters:** the old arrival is still right, so red and "old arrival" are confusing.
+- **What to do:** when the arrival has not moved, say the pickup is fine as long as the
+  connection is made. Fix on `fix/logic`.
+
+### 6. The sign-in screen says "Welcome back" to a first-time visitor (screens owner)
+
+- **What I saw:** a judge opening the link for the first time lands on **Log in** with
+  "Welcome back". **Continue as guest** is below the form.
+- **What to do:** in the demo, go through **Continue as guest** before you walk on (the demo
+  script already says so). Small wording fix on `fix/screens`.
+
+### 7. Small things
+
+- **Add a flight:** after the empty-form errors, the date and time boxes stay red even once
+  valid values are typed, until you press **Add flight** again. (screens owner)
+- **Import:** PDFs are not made smaller before upload. A few large ones together can pass
+  Vercel's 4.5 MB upload limit and show only "Reading failed". The import route also has no
+  limit on how often it can be called, and each call spends Anthropic credit. (screens owner)
+- **Trips you type in yourself** have no way to add people waiting (like Marco or Mum), so
+  **Send to** on the share screen is empty for them. (screens owner)
+
+### Checked and fine
+
+- The share preview shows booking references greyed out even when the switch is off. That is
+  on purpose: switched-off lines are dimmed and left out of the copied text and link.
+- Form labels are linked to their boxes for screen readers.
+- Listen falls back to the phone's own voice when ElevenLabs is not available (fixed since
+  the first pass).
+
+---
+
+## Earlier pass (before the Layover merge)
+
 Tested on Saturday 10 October, on the latest `main` (the "automatic flow": the app watches a
 simulated flight feed and the change arrives by itself).
 
