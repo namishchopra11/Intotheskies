@@ -100,7 +100,11 @@ export const useTripStore = create<TripState>()(
         loadNotice: null,
         dismissLoadNotice: () => set({ loadNotice: null }),
 
-        loadSampleTrip: () => set({ trip: structuredClone(sampleTrip), loadNotice: null }),
+        loadSampleTrip: () =>
+          set((state) => ({
+            trip: { ...structuredClone(sampleTrip), payoutAddress: state.trip?.payoutAddress },
+            loadNotice: null,
+          })),
         resetTrip: () => set({ trip: null, loadNotice: null }),
 
         upsertFlight: (flight) =>

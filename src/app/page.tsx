@@ -364,7 +364,7 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         aside={
           <span className="inline-flex items-center gap-2">
             <span aria-hidden="true" className="ck-pulse h-2 w-2 rounded-full bg-current" />
-            Simulated feed
+            Watching · simulated feed
           </span>
         }
       >
