@@ -111,7 +111,8 @@ export function useSpeech(voice: SpeechVoice) {
       setState("idle");
       setError(timedOut
         ? "The voice service took too long. Please try again."
-        : e instanceof Error && !(e instanceof DOMException)
+        // A failed request is a TypeError ("Failed to fetch", "Load failed"): not words for a traveler.
+        : e instanceof Error && !(e instanceof DOMException) && !(e instanceof TypeError)
           ? e.message
           : "Couldn't play the summary. Check your connection and try again.");
     } finally {
