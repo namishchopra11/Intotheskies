@@ -199,7 +199,7 @@ tested it and heard the picked voice.
 
 Only if you have a quiet moment. Tested on a real phone with Phantom: scanning works, completing the payment does not (see below).
 
-**Set it up beforehand, once.** Menu > **Solana address (optional)**, paste a wallet address,
+**Set it up beforehand, once.** With the trip open, go to **Settings** > **Send help** > **Solana address (optional)**, paste a wallet address,
 tap **Save address**. It is kept through **Restart the demo trip**, but **Clear this trip**
 wipes it. So: load the sample trip, save the address, then use **Restart the demo trip** as
 your step 1 instead of **Try the sample trip**.
