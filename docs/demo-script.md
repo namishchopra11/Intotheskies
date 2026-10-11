@@ -53,7 +53,8 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 3. Start clean: menu button > **Clear this trip** > **Clear trip**. The app remembers things on the phone, so
    a second run will otherwise open on the first run's change.
 4. You should now see "Flights change. Your plan keeps up." and **Try the sample trip**. Do
-   **not** tap it yet. Step 1 is the first thing the judges see.
+   **not** tap it yet. Step 1 is the first thing the judges see. (On a phone that has never
+   opened the app, the sign-in screen comes first: tap **Continue as guest**.)
 5. Optional: menu > **Allow phone notifications**, if you want the change to also arrive as a
    system notification when the app is in the background. Not needed for the demo.
 6. Open your messaging app in another tab or on a second device, with a chat ready to paste
@@ -61,8 +62,8 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 7. Have the backup video ready to play (see "If something goes wrong").
 8. Do not tap any phone number during the demo. The numbers are made up, but the Rome ones
    might ring a stranger.
-9. For the **Listen to summary** line, turn the phone volume up. The button only shows when
-   the browser has speech support. Test it once before you go up.
+9. For the **Listen to summary** line, turn the phone volume up. It needs the ElevenLabs key
+   on the server and a network connection. Test it once before you go up.
 
 ---
 
@@ -94,7 +95,8 @@ A card slides down from the top (the phone buzzes, if it can):
 > **Simulated flight change · new plan ready**
 > BA 286 is 2h 10m late, so you'll miss AZ 201 in London.
 > You're rebooked on AZ 207, 14:25 → 18:00 to Rome.
-> 6 things to sort out. Tap to see your plan.
+> Told Hotel Aventino Garden your new arrival and moved your Roma Airport Transfers pickup to 18:40.
+> 5 things to sort out. Tap to see your plan.
 
 **SAY**
 > "Here is the airline telling Alex. The first flight is over two hours late. Alex has
@@ -115,11 +117,16 @@ step appearing a beat after the one above:
 - **Missed AZ 201**, red, with a dashed rail: the link is broken.
 - **AZ 207**, green, lands 18:00 (was 15:05).
 - **Hotel Aventino Garden**, green: 4h to spare before the front desk closes.
-- **Marco · pickup**, red: still expects the old arrival. **Mum · family**, amber.
+- **Marco · pickup**, green: the pickup was moved to meet the new arrival.
+- **Mum · family**, amber: hasn't heard yet.
+
+Under the rail, **Handled for you** lists what the app did by itself: the hotel told, the
+airport pickup moved to 18:40. Like the feed, this is simulated: no message really goes out.
 
 **SAY**
 > "One flight ran late and everything downstream lights up: the missed connection, the new
-> flight, the hotel, and Marco, who is picking Alex up and doesn't know yet."
+> flight, the hotel, the pickup. The app already sorted the hotel and the transfer. Mum is
+> the one still waiting to hear."
 
 Say **"missed"** and **"rebooked"**. Those are the app's own words.
 
@@ -137,7 +144,7 @@ Say **"missed"** and **"rebooked"**. Those are the app's own words.
 
 ---
 
-## Step 5. Tell Marco (25 seconds)
+## Step 5. Tell Mum (25 seconds)
 
 **TAP** **Share the new plan**. Under **Send to** are ready-written messages for Marco, Mum
 and the hotel, each with the new arrival time.
@@ -145,14 +152,14 @@ and the hotel, each with the new arrival time.
 **POINT** at the hotel message (it has the booking confirmation) and Mum's (it has no
 booking numbers).
 
-**TAP** **WhatsApp** on Marco's message. WhatsApp opens with the text filled in (the sample
+**TAP** **WhatsApp** on Mum's message. WhatsApp opens with the text filled in (the sample
 trip has no numbers for Marco or Mum, so pick the chat yourself). **Nothing is
 sent from here.** Go back.
 
-The **Marco · pickup** node on the home screen is now green: the loop is closed.
+The **Mum · family** node on the home screen is now green: the loop is closed.
 
 **SAY**
-> "One tap opens the message. The app counts it as done, and Marco's step on the trip turns
+> "One tap opens the message. The app counts it as done, and Mum's step on the trip turns
 > green."
 
 Then, if time allows, **Copy link** and open it on a second device to show the read-only
@@ -163,15 +170,15 @@ page. No app, no account.
 ## Optional: Listen to summary (10 seconds)
 
 Only if you have time and the room is quiet. Back on the home screen, **TAP** **Listen to
-summary**. The phone reads a short briefing in its own built-in voice. Before you tick
-anything, it reads:
+summary**. The phone plays a short briefing in the voice picked in the menu (made by
+ElevenLabs; only this text is sent). Before you tick anything, it reads:
 
 > "You missed your flight to Rome. You are now on a new flight arriving at 6:00 PM. Nothing
 > else on your trip is affected. First, check your new booking for AZ 207."
 
-(The "first" thing is the first task not yet ticked, so after the two ticks in step 4 it names
-the third task instead.) Tap again to stop it. The voice comes from the device, not a
-service, so it works offline.
+(The "first" thing is the first task not yet done, so after **Mark done** in step 4 it names
+the next task instead.) Tap again to stop it. It needs a connection and the server's
+ElevenLabs key; if it shows an error, skip it.
 
 ---
 
@@ -224,12 +231,11 @@ phone. Otherwise the phone may show an "open with" prompt.
 Cut in this order, last cut first. The path from 1 to 5 never changes.
 
 1. Skip the optional **Listen to summary** step.
-2. Skip reading the preview message aloud. Just point at it.
-3. Skip the booking reference line in step 5.
-4. Skip opening the link on a second device. Say what happens instead.
+2. Skip pointing at the hotel and Mum messages in step 5.
+3. Skip opening the link on a second device. Say what happens instead.
 
-Never cut: the change arriving by itself, the two ticks, or the ticked items disappearing
-from the message. That is the whole idea.
+Never cut: the change arriving by itself, the rail lighting up, **Do this now**, or Mum's
+step turning green after the message. That is the whole idea.
 
 ---
 
@@ -267,7 +273,7 @@ Then, in this order:
 | You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip** > **Restart**. |
 | You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
 | Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |
-| **Listen to summary** is missing | The browser has no speech support. Skip that step. |
+| **Listen to summary** shows an error | The ElevenLabs key is missing or the network is down. Skip that step. |
 | A button does something you did not expect | Say "let me go back", tap **Back to trip**, and repeat the step. Do not apologise twice. |
 | The numbers are not 2h 10m, 14:25 and 18:00 | Stop. Something changed in the sample trip or the simulated feed. Switch to the backup video. |
 

@@ -58,6 +58,8 @@ None blocks the demo. All of these are small.
   0142` and `0177`) could ring a real stranger.
 - **What to do:** point at the buttons, do not tap them. Tell me if you want the Rome numbers
   replaced with something that cannot ring.
+- **Fixed since:** the Rome numbers now start `+39 06 0000`, which no Italian number does, so
+  they cannot connect to anyone.
 
 ### 4. **Clear this trip** wipes the saved Solana address
 
