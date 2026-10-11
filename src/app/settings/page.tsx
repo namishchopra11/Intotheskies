@@ -7,7 +7,7 @@ import { SPEECH_VOICES } from "@/components/trip/speechVoices";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { Button, Card, Field, PageHeader, PageTransition, SelectField, Sheet, ThemeToggle, Toggle } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
-import { SpeechVoiceSchema, type Profile } from "@/lib/types";
+import { SpeechVoiceSchema, TimeFormatSchema, type Profile } from "@/lib/types";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,6 +27,7 @@ export default function SettingsPage() {
             <Group title="Appearance">
               <ThemeToggle />
             </Group>
+            <TimeDisplay />
             <ListenVoice />
             <Demo />
             <YourData />
@@ -293,6 +294,28 @@ function YourData() {
           </Button>
         </div>
       </Sheet>
+    </Group>
+  );
+}
+
+function TimeDisplay() {
+  const timeFormat = useTripStore((s) => s.settings.timeFormat);
+  const updateSettings = useTripStore((s) => s.updateSettings);
+  return (
+    <Group title="Time display">
+      <Card>
+        <SelectField label="Time format" hint="Choose how times appear throughout your trip."
+          value={timeFormat}
+          onChange={(e) => {
+            const next = TimeFormatSchema.safeParse(e.target.value);
+            if (next.success) updateSettings({ timeFormat: next.data });
+          }}
+          options={[
+            { value: "12h", label: "12-hour (2:25 PM)" },
+            { value: "24h", label: "24-hour (14:25)" },
+          ]}
+        />
+      </Card>
     </Group>
   );
 }

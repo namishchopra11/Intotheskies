@@ -1,5 +1,6 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useState } from "react";
 import { Card, Icon, buttonClasses } from "@/components/ui";
 import { buildDrafts, channelLinks } from "@/lib/domain/messages";
@@ -13,9 +14,10 @@ const ROLE = { pickup: "Pickup", family: "Family", hotel: "Hotel" } as const;
  * filled in (nothing is sent from here) and counts the matching checklist task as done.
  */
 export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: string }) {
+  const displayTime = useTimeFormat();
   const toggleTask = useTripStore((s) => s.toggleTask);
   const [opened, setOpened] = useState<Set<string>>(new Set());
-  const drafts = buildDrafts(trip, disruptionId);
+  const drafts = buildDrafts(trip, disruptionId).map((draft) => ({ ...draft, body: displayTime(draft.body) }));
   if (drafts.length === 0) return null;
 
   // Read the live store: toggleTask flips the state, so only tick tasks that are still open.

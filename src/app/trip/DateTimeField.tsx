@@ -1,5 +1,6 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useId, useRef, useState } from "react";
 import { Icon, cx } from "@/components/ui";
 import { formatDate } from "@/lib/domain/time";
@@ -28,11 +29,12 @@ const dayFirst = () => typeof navigator === "undefined" || !/^en-US$/i.test(navi
  * is easy to spot.
  */
 export function DateTimeField({ label, hint, error, value, onChange, className }: Props) {
+  const displayTime = useTimeFormat();
   const id = useId();
   const picker = useRef<HTMLInputElement>(null);
   const initial = LOCAL.test(value) ? value : "";
   const [dateText, setDateText] = useState(initial ? formatDateInput(initial.slice(0, 10)) : "");
-  const [timeText, setTimeText] = useState(initial ? initial.slice(11) : "");
+  const [timeText, setTimeText] = useState(initial ? displayTime(initial.slice(11)) : "");
 
   const date = parseDate(dateText, todayYMD(), dayFirst());
   const time = parseTime(timeText);
@@ -105,7 +107,7 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
         </div>
         <input
           aria-label={`${label} time`}
-          placeholder="14:25"
+          placeholder={displayTime("14:25")}
           inputMode="text"
           value={timeText}
           autoComplete="off"
@@ -113,7 +115,7 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
             setTimeText(e.target.value);
             emit(dateText, e.target.value);
           }}
-          onBlur={() => time && setTimeText(time)}
+          onBlur={() => time && setTimeText(displayTime(time))}
           aria-invalid={timeUnread || (error && !time) ? true : undefined}
           className={cx(CONTROL, "min-w-0 flex-[2_1_0]", timeUnread || (error && !time) ? "border-bad" : "border-line-strong")}
         />
@@ -124,7 +126,7 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
           : timeUnread
             ? "Couldn't read that time. Try 14:25 or 2:25pm."
             : date
-              ? `${formatDate(`${date}T00:00`)} ${date.slice(0, 4)}${time ? ` at ${time}` : ""}`
+              ? `${formatDate(`${date}T00:00`)} ${date.slice(0, 4)}${time ? ` at ${displayTime(time)}` : ""}`
               : ""}
       </p>
       {error && (date === null || time === null) && !dateUnread && !timeUnread && (

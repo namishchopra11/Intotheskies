@@ -1,5 +1,6 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -32,6 +33,7 @@ function clockNow() {
 }
 
 export default function SharePage() {
+  const displayTime = useTimeFormat();
   const { id } = useParams<{ id: string }>();
   const ready = useStoreReady();
   const trip = useTripStore((s) => s.trip);
@@ -49,8 +51,8 @@ export default function SharePage() {
 
   const disruption = trip?.disruptions.find((d) => d.id === id);
   const lines = useMemo(
-    () => (trip && disruption ? buildMessage(trip, disruption.id, options) : []),
-    [trip, disruption, options],
+    () => (trip && disruption ? buildMessage(trip, disruption.id, options).map((line) => ({ ...line, text: displayTime(line.text) })) : []),
+    [trip, disruption, options, displayTime],
   );
   const message = messageText(lines);
 

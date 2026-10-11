@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Suspense } from "react";
 import { DemoNextButton } from "@/components/trip/DemoNextButton";
 import { FlightWatcher } from "@/components/trip/FlightWatcher";
+import { AppOpening } from "@/components/ui/AppOpening";
 import { THEME_COLORS, themeScript } from "@/components/ui/theme";
 import "./globals.css";
 
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-dvh bg-bg text-ink">
+        <AppOpening />
         {/* One phone-width column everywhere, centred on larger screens. */}
         <div className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col pb-[env(safe-area-inset-bottom)]">
           {children}
