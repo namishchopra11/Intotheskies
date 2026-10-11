@@ -36,7 +36,7 @@ export function FlightWatcher() {
     return () => clearTimeout(t);
   }, [watching]);
 
-  // The timer, the "Simulate a change" button and the scenario sheet all arrive here.
+  // The timer, the "Simulate a change" button and the demo's Next button all arrive here.
   useEffect(() => {
     const onChange = (e: Event) => {
       // Switched off in Settings: the trip still updates, there's just no alert.

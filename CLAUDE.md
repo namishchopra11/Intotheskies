@@ -262,7 +262,7 @@ Make no claims about legal rights or compensation amounts anywhere in the app.
 
 | Route | What it is |
 | --- | --- |
-| `/` | Everything about the trip: on-track view, then the flap board, the ripple timeline, Handled for you, Do this now and the checklist, share and listen. With no trip: Add your trip, Try the sample trip, saved trips. Also the trip menu (theme, voice, Solana address, Settings, edit the trip, Pick a scenario, restart or clear the demo trip) |
+| `/` | Everything about the trip: on-track view, then the flap board, the ripple timeline, Handled for you, Do this now and the checklist, share and listen. With no trip: Add your trip, Try the sample trip, saved trips. Also the trip menu (theme, voice, Solana address, Settings, edit the trip, restart or clear the demo trip) |
 | `/trip` | Enter or edit flights, hotels and rides by hand, or import them from pasted text |
 | `/login` | Demo sign-in (name and email kept on the phone) or Continue as guest |
 | `/settings` | Profile, what Layover may do by itself, notifications, theme, sign out |
@@ -285,7 +285,7 @@ AZ 201 is missed, the traveler is rebooked on AZ 207 (14:25 to 18:00).
 "Restart the demo trip" in the home menu reloads the sample trip, which replays it.
 With `settings.demoControls` on (the default; Settings > Demo), the timer does not run: the
 presenter's **Next** button (`DemoNextButton`, steps in `demoSteps.ts`) walks every screen and
-makes the change when pressed. It is hidden on `/s` for a visitor with no profile. "Pick a scenario" (`ScenarioSheet`) restarts and plays `delay45`, `delay180`, `missed` or `cancelled` at once.
+makes the change when pressed. It is hidden on `/s` for a visitor with no profile.
 Anything that says the app watches live flights must say this is simulated, and so must
 anything that says Layover told a hotel or moved a ride.
 

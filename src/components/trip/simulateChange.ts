@@ -31,12 +31,6 @@ function laterFlightNumber(n: string): string {
 
 export type Scenario = "delay45" | "delay180" | "missed" | "cancelled";
 
-export const SCENARIOS: { id: Scenario; label: string; hint: string }[] = [
-  { id: "delay45", label: "45-minute delay", hint: "Connection gets tight" },
-  { id: "delay180", label: "3-hour delay", hint: "You'll miss your connection" },
-  { id: "missed", label: "Missed connection", hint: "Rebooked on a later flight" },
-  { id: "cancelled", label: "Cancelled flight", hint: "No new flight yet" },
-];
 
 export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlertContent | null {
   const { trip, upsertFlight, reportDisruption } = useTripStore.getState();
@@ -134,7 +128,7 @@ export const FLIGHT_CHANGE_EVENT = "ck:flight-change";
 
 /**
  * Runs the simulation now and tells the watcher. Used by the timer, the "Simulate a change"
- * button and the scenario sheet.
+ * button and the demo's Next button.
  */
 export function triggerFlightChange(scenario?: Scenario): FlightAlertContent | null {
   const change = simulateFlightChange(scenario);

@@ -40,9 +40,6 @@ There is no "report a change" screen. How the change arrives depends on **Demo c
   flight**, so you choose the moment. This is the safest way to present.
 - **Demo controls off:** the change arrives by itself about 6 seconds after a trip with no
   changes is on the home screen (not on the shared `/s` page).
-- **Pick a scenario:** menu button (top right) > **Pick a scenario**: 45-minute delay, 3-hour
-  delay, missed connection or cancelled flight. It restarts the trip and plays the change
-  straight away. Let a judge choose.
 - **On demand:** menu button (top right) > **Restart the demo trip** > **Restart**. It puts the
   trip back on time, and the same change arrives about 6 seconds later. Use this to replay the demo.
 
@@ -281,7 +278,7 @@ Then, in this order:
 | What you see | What to do |
 | --- | --- |
 | The trip already shows a change from the last run | Menu > **Restart the demo trip** > **Restart**. It goes back on time and the change arrives again in about 6 seconds. |
-| You do not want to wait for the change | Tap **Simulate a change** on the home screen, or menu > **Pick a scenario**. |
+| You do not want to wait for the change | Tap **Simulate a change** on the home screen. |
 | You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip** > **Restart**. |
 | You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
 | Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |

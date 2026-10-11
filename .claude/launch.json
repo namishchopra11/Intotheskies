@@ -18,6 +18,15 @@
       ],
       "port": 3100,
       "autoPort": true
+    },
+    {
+      "name": "phone-demo",
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=$HOME/.local/node/bin:$PATH; pnpm build && pnpm exec next start -H 0.0.0.0 -p 3100"
+      ],
+      "port": 3100
     }
   ]
 }

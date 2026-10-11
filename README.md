@@ -66,8 +66,7 @@ pnpm build   # production build
    message. The app opens with the text filled in (nothing is sent from here).
 5. Open a shared link. It is a read-only page that needs no app and no account.
 
-To replay it, open the menu (top right) and choose **Restart the demo trip** (then confirm),
-or **Pick a scenario** (delay, 3-hour delay, missed connection, cancellation).
+To replay it, open the menu (top right) and choose **Restart the demo trip** (then confirm).
 
 **Live flight watching is simulated.** There is no flight-data feed: a scripted change is
 pushed a few seconds after the trip loads. "Handled for you" is simulated too: no message
