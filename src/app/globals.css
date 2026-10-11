@@ -545,18 +545,14 @@ html[data-opening-seen] .ck-opening {
   animation: ck-opening-route 1100ms 150ms linear both;
 }
 
-/* Pull to refresh (PullToRefresh.tsx): the plane keeps crossing while the strip is open. */
-@keyframes ck-ptr-cross {
-  from { transform: translateX(-6%); }
-  to { transform: translateX(150%); }
-}
+/* Pull to refresh (PullToRefresh.tsx): the plane crosses once; the component sets --ptr-x. */
 .ck-ptr-fly {
-  animation: ck-ptr-cross 1100ms linear infinite;
+  transform: translateX(var(--ptr-x, 50%));
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ck-opening { display: none; }
-  .ck-ptr-fly { animation: none; }
+  .ck-ptr-fly { transform: translateX(50%); transition: none !important; }
   *,
   *::before,
   *::after {
