@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CircleAlert, CircleCheck, CloudLightning, PlaneTakeoff, ShieldAlert, ShieldCheck, Unplug, Wrench, Car, Timer } from "lucide-react";
 import { applyRecovery, buildRecoveryDiff, buildRecoveryTimeline, costDelta, SCENARIOS, simulate, type Recovery, type RecoveryDiff, type ScenarioId, type ShieldResult } from "@/lib/jetflex/shield";
@@ -9,7 +8,7 @@ import type { Dir, Itinerary } from "@/lib/jetflex/types";
 import { useJet, useWorld } from "@/lib/jetflex/store";
 import { clock, dayOf, ItineraryBreakdown, ModeIcon, riskLabel, riskTone, SegmentRow } from "./Itinerary";
 import { ShieldTimeline } from "./ShieldTimeline";
-import { Badge, Button, Card, cx, EmptyState, Field, Notice, PageHeader, Select, SimBadge, Skeleton } from "./ui";
+import { Badge, Button, Card, cx, EmptyState, Field, LinkButton, Notice, PageHeader, Select, SimBadge, Skeleton, useDialogFocus } from "./ui";
 
 const ICON: Record<ScenarioId, typeof Timer> = { delay: Timer, aircraft: Wrench, weather: CloudLightning, missed: Unplug, ground: Car };
 
@@ -24,6 +23,7 @@ export function ShieldPage() {
   const [sel, setSel] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [done, setDone] = useState<RecoveryDiff | null>(null);
+  const [noDemo, setNoDemo] = useState(false);
 
   const cands = useMemo(() => { const m = new Map<string, Itinerary>(); [active, ...saved.map((s) => s.itinerary)].forEach((i) => i && m.set(i.id, i)); return [...m.values()]; }, [active, saved]);
   const it = cands.find((c) => c.id === pickId) ?? cands[0];
@@ -35,7 +35,7 @@ export function ShieldPage() {
   const loadDemo = () => {
     const r = search(request, { today, legs });
     const best = r.itineraries.find((i) => i.kind === "charter") ?? r.itineraries[0];
-    if (best) setActive(best);
+    if (best) { setActive(best); setNoDemo(false); } else setNoDemo(true);
   };
   const run = () => {
     if (!it) return;
@@ -43,12 +43,6 @@ export function ShieldPage() {
     setDone(null); setConfirm(false); setRes(r); setSel(r?.options[0]?.id ?? null); setRunId((n) => n + 1);
   };
   const steps = useMemo(() => (it && res ? buildRecoveryTimeline(it, res) : []), [it, res]);
-  useEffect(() => {
-    if (!confirm) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setConfirm(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [confirm]);
   const chosen: Recovery | undefined = res?.options.find((o) => o.id === sel);
   const approve = () => {
     if (!it || !res || !chosen) return;
@@ -68,20 +62,21 @@ export function ShieldPage() {
       </PageHeader>
 
       {!it ? (
-        <EmptyState icon={<ShieldCheck size={28} />} title="Choose an itinerary to protect" action={<div className="flex gap-2"><Button variant="primary" onClick={loadDemo}>Use the demo itinerary</Button><Link href="/jetflex/plan"><Button>Plan a trip</Button></Link></div>}>
+        <EmptyState icon={<ShieldCheck size={28} />} title="Choose an itinerary to protect" action={<div className="flex gap-2"><Button variant="primary" onClick={loadDemo}>Use the demo itinerary</Button><LinkButton href="/jetflex/plan">Plan a trip</LinkButton></div>}>
           JetShield works on the itinerary you selected in Plan a Trip or any saved trip. The demo itinerary is the New York to Miami private charter for four.
+          {noDemo && <span role="alert" className="mt-3 block text-warn">No itinerary fits your current search, so there is nothing to protect yet. Open Plan a Trip, adjust the request and pick an option.</span>}
         </EmptyState>
       ) : (
         <div className="grid gap-8 xl:grid-cols-[380px_1fr]">
           <div className="space-y-6">
             <Card className="space-y-4 p-5">
               <Field label="Itinerary">{(id) => <Select id={id} value={it.id} onChange={(e) => { setPickId(e.target.value); setRes(null); setDone(null); }}>{cands.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>}</Field>
-              {hasRet && <Field label="Disrupt which direction?">{() => <div className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-deep p-1">{(["out", "ret"] as Dir[]).map((d) => <button key={d} onClick={() => setDir(d)} aria-pressed={useDir === d} className={cx("rounded-lg py-1.5 text-xs", useDir === d ? "bg-gold font-semibold text-midnight" : "text-steel")}>{d === "out" ? "Outbound" : "Return"}</button>)}</div>}</Field>}
+              {hasRet && <Field label="Disrupt which direction?">{() => <div className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-deep p-1">{(["out", "ret"] as Dir[]).map((d) => <button key={d} onClick={() => setDir(d)} aria-pressed={useDir === d} className={cx("min-h-11 rounded-lg py-1.5 text-xs transition-colors sm:min-h-9", useDir === d ? "bg-gold font-semibold text-midnight" : "text-steel hover:text-warm")}>{d === "out" ? "Outbound" : "Return"}</button>)}</div>}</Field>}
               <fieldset>
                 <legend className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-steel">Scenario</legend>
                 <div className="space-y-1.5">
                   {SCENARIOS.map((s) => { const I = ICON[s.id]; return (
-                    <label key={s.id} className={cx("flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors", scenario === s.id ? "border-gold bg-gold/5" : "border-line hover:border-steel")}>
+                    <label key={s.id} className={cx("flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-gold", scenario === s.id ? "border-gold bg-gold/5" : "border-line hover:border-steel")}>
                       <input type="radio" name="scenario" className="sr-only" checked={scenario === s.id} onChange={() => setScenario(s.id)} />
                       <I size={18} className={scenario === s.id ? "text-gold" : "text-steel"} aria-hidden />
                       <span><span className="block text-sm">{s.label}</span><span className="block text-xs text-steel">{s.blurb}</span></span>
@@ -141,17 +136,25 @@ export function ShieldPage() {
       )}
 
       {confirm && chosen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-midnight/80 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal aria-label="Approve replacement" onClick={() => setConfirm(false)}>
-          <div className="rise w-full max-w-md rounded-2xl border border-line bg-panel p-6" onClick={(e) => e.stopPropagation()}>
+        <ApproveDialog onClose={() => setConfirm(false)}>
             <h2 className="display mb-2 text-2xl">Switch to this plan?</h2>
             <p className="text-sm text-steel">{chosen.name}</p>
             <dl className="num my-4 grid grid-cols-2 gap-y-1.5 text-sm"><dt className="text-steel">New arrival</dt><dd className="text-right">{clock(chosen.arrival, destPlace)}</dd><dt className="text-steel">Versus plan</dt><dd className="text-right">{fmtDur(chosen.vsPlan)} {chosen.vsPlan > 0 ? "later" : "earlier"}</dd><dt className="text-steel">Additional cost</dt><dd className="text-right">{costDelta(chosen.extraCost)}</dd><dt className="text-steel">New segments</dt><dd className="text-right">{usd(chosen.cost)}</dd></dl>
             <Notice tone="warn">Demo only. Approving updates your simulated itinerary in this browser. It does not rebook anything or secure an aircraft.</Notice>
             <div className="mt-5 flex justify-end gap-2"><Button onClick={() => setConfirm(false)}>Cancel</Button><Button variant="primary" onClick={approve}>Approve in demo</Button></div>
-          </div>
-        </div>
+        </ApproveDialog>
       )}
     </>
+  );
+}
+
+/** Modal for the approval step. Focus moves to Cancel (the first button) so Enter cannot approve by accident. */
+function ApproveDialog({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  const panel = useDialogFocus(onClose);
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-midnight/80 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal aria-label="Approve replacement" onClick={onClose}>
+      <div ref={panel} tabIndex={-1} className="rise w-full max-w-md rounded-2xl border border-line bg-panel p-6 outline-none" onClick={(e) => e.stopPropagation()}>{children}</div>
+    </div>
   );
 }
 

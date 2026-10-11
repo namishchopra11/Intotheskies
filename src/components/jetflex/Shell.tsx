@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Armchair, BarChart3, Bookmark, Compass, Hourglass, LayoutDashboard, Menu, Settings, ShieldCheck, X } from "lucide-react";
 import { useJet, useJetReady } from "@/lib/jetflex/store";
-import { Button, cx, Input, Field } from "./ui";
+import { Button, cx, Input, Field, useDialogFocus } from "./ui";
 
 export const Mark = ({ size = 28 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
@@ -58,14 +58,10 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
   const setCabin = useJet((s) => s.setCabin);
   const reset = useJet((s) => s.resetDemo);
   const [done, setDone] = useState(false);
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
-  }, [onClose]);
+  const panel = useDialogFocus(onClose);
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-midnight/80 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal aria-label="Settings" onClick={onClose}>
-      <div className="rise max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-line bg-panel p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-midnight/80 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal aria-label="Profile and settings" onClick={onClose}>
+      <div ref={panel} tabIndex={-1} className="rise max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-line bg-panel p-5 outline-none sm:p-6" onClick={(e) => e.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="display text-2xl">Profile & settings</h2>
           <button onClick={onClose} aria-label="Close" className="-mr-2 flex h-11 w-11 items-center justify-center rounded-lg text-steel hover:text-warm"><X size={18} /></button>
@@ -121,6 +117,7 @@ export function Shell({ children }: { children: ReactNode }) {
           )}
         </div>
         <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-8 sm:py-10">{children}</main>
+        <footer className="mx-auto w-full max-w-[1240px] px-4 pb-8 text-xs leading-snug text-steel sm:px-8 lg:hidden">Demo inventory is simulated. Nothing here is bookable or real-time.</footer>
       </div>
       {settings && <SettingsDialog onClose={() => setSettings(false)} />}
     </div>

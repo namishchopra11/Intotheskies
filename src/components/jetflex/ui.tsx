@@ -25,6 +25,30 @@ export function useMediaQuery(query: string): boolean {
 
 export const useReducedMotion = () => useMediaQuery("(prefers-reduced-motion: reduce)");
 
+/**
+ * Focus management for a modal dialog: moves focus into it on open, closes on Escape and gives focus
+ * back to whatever opened it. Attach the returned ref to the dialog panel (give it tabIndex={-1}).
+ */
+export function useDialogFocus<T extends HTMLElement = HTMLDivElement>(onClose: () => void) {
+  const ref = useRef<T>(null);
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
+  useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const first = ref.current?.querySelector<HTMLElement>("button, [href], input, select, textarea");
+    (first ?? ref.current)?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close.current();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      opener?.focus?.({ preventScroll: true });
+    };
+  }, []);
+  return ref;
+}
+
 /** Callback-ref + live width of the element (px). 0 until it is measured. */
 export function useElementWidth<T extends HTMLElement | SVGElement = HTMLDivElement>(): [(el: T | null) => void, number] {
   const [w, setW] = useState(0);

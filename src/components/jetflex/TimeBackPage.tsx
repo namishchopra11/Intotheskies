@@ -63,7 +63,7 @@ export function TimeBackPage() {
               <Field label="Arrival cushion (min)">{(id) => <Select id={id} value={inp.cushionMin} onChange={(e) => set({ cushionMin: Number(e.target.value) })}>{[0, 15, 30, 60, 90].map((v) => <option key={v} value={v}>{v} min</option>)}</Select>}</Field>
               <Field label="Max budget (optional)" className="col-span-2">{(id) => <Input id={id} inputMode="numeric" placeholder="Total, USD" value={inp.budget ?? ""} onChange={(e) => set({ budget: Number(e.target.value.replace(/\D/g, "")) || undefined })} />}</Field>
             </div>
-            <Field label="Optimise for">{() => <div className="grid grid-cols-2 gap-1.5">{(Object.keys(GOALS) as Goal[]).map((g) => <button key={g} onClick={() => { set({ goal: g }); setSel(0); }} aria-pressed={inp.goal === g} className={cx("rounded-xl border px-3 py-2 text-left text-xs", inp.goal === g ? "border-gold bg-gold/10" : "border-line text-steel hover:text-warm")}>{GOALS[g].label}</button>)}</div>}</Field>
+            <Field label="Optimise for">{() => <div className="grid grid-cols-2 gap-1.5">{(Object.keys(GOALS) as Goal[]).map((g) => <button key={g} onClick={() => { set({ goal: g }); setSel(0); }} aria-pressed={inp.goal === g} className={cx("min-h-11 rounded-xl border px-3 py-2 text-left text-xs transition-colors", inp.goal === g ? "border-gold bg-gold/10" : "border-line text-steel hover:text-warm")}>{GOALS[g].label}</button>)}</div>}</Field>
             {errors.map((e) => <Notice key={e} tone="bad">{e}</Notice>)}
           </Card>
         </div>
@@ -101,8 +101,8 @@ export function TimeBackPage() {
                 <div className="overflow-x-auto rounded-2xl border border-line">
                   <table className="w-full min-w-[640px] text-sm"><thead className="bg-panel/60 text-left text-xs text-steel"><tr>{["Option", "Cost", "On the ground", "Slack", "Home margin", "Miss risk"].map((h) => <th key={h} scope="col" className="p-3 font-normal">{h}</th>)}</tr></thead>
                     <tbody>{res.options.map((o, i) => (
-                      <tr key={o.it.id} onClick={() => setSel(i)} className={cx("cursor-pointer border-t border-line/70 hover:bg-panel/60", o === chosen && "bg-panel-2")} aria-selected={o === chosen}>
-                        <td className="p-3"><button className="text-left" onClick={() => setSel(i)}>{o.it.name}</button><div className="mt-1 flex gap-1">{o.tags.map((t) => <Badge key={t} tone="teal">{t}</Badge>)}</div></td>
+                      <tr key={o.it.id} onClick={() => setSel(i)} className={cx("cursor-pointer border-t border-line/70 hover:bg-panel/60", o === chosen && "bg-panel-2")}>
+                        <td className="p-3"><button className="flex min-h-11 items-center text-left underline-offset-2 hover:underline" aria-pressed={o === chosen} onClick={() => setSel(i)}>{o.it.name}</button><div className="mt-1 flex gap-1">{o.tags.map((t) => <Badge key={t} tone="teal">{t}</Badge>)}</div></td>
                         <td className="num p-3">{usd(o.it.totalPrice)}</td><td className="num p-3">{fmtDur(o.timeAtDest)}</td><td className="num p-3">{fmtDur(o.slack)}</td><td className="num p-3">{fmtDur(o.homeMargin)}</td><td className="num p-3">{Math.round(o.missRisk * 100)}%</td>
                       </tr>))}</tbody>
                   </table>

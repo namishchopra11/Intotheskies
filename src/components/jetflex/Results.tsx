@@ -89,7 +89,7 @@ export function Comparison({ items, selectedId, onSelect, topId }: { items: Itin
                     <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-[0.14em]" style={{ color: KIND_COLOR[k] }}><span className="h-2 w-2 rounded-full" style={{ background: KIND_COLOR[k] }} />{KIND_NAME[k]}</span>
                     {it ? (
                       <>
-                        <button onClick={() => onSelect(it.id)} className="text-left text-[13px] leading-snug text-warm underline-offset-2 hover:underline">{it.name}</button>
+                        <button onClick={() => onSelect(it.id)} aria-pressed={it.id === selectedId} className="min-h-11 text-left text-[13px] leading-snug text-warm underline-offset-2 hover:underline">{it.name}</button>
                         <div className="mt-2 flex flex-wrap gap-1">
                           {it.id === topId && <Badge tone="gold"><Sparkles size={10} />Recommended</Badge>}
                           {it.tags.map((t) => <Badge key={t} tone="teal">{t}</Badge>)}
@@ -182,7 +182,7 @@ export function RankedList({ items, selectedId, onSelect }: { items: Itinerary[]
         {shown.map((it, n) => (
           <li key={it.id} className="rise" style={stagger(n)}>
             <button onClick={() => onSelect(it.id)} aria-pressed={it.id === selectedId}
-              className={cx("grid w-full grid-cols-[28px_1fr_auto] items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors sm:grid-cols-[28px_1fr_90px_90px_80px]", it.id === selectedId ? "border-gold bg-panel-2" : "border-line bg-panel/50 hover:border-steel")}>
+              className={cx("grid min-h-11 w-full grid-cols-[28px_1fr_auto] items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors sm:grid-cols-[28px_1fr_90px_90px_80px]", it.id === selectedId ? "border-gold bg-panel-2" : "border-line bg-panel/50 hover:border-steel")}>
               <span className="num text-xs text-steel">{n + 1}</span>
               <span className="min-w-0">
                 <span className="block truncate text-sm">{it.name}</span>

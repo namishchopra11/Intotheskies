@@ -91,6 +91,7 @@ export function OperatorPage() {
   const facts = useMemo(() => pitchFacts(ops, projection, imported), [ops, projection, imported]);
   const fleetList = useMemo(() => allFleet(imported), [imported]);
   const inNextWeek = (o: Opportunity) => legWeek(o.leg.id, o.leg.earliest, today) === 1;
+  const shownOps = ops.filter((o) => nextWeek || !inNextWeek(o));
   const refresh = () => { setBusy(true); setTimeout(() => { setTick((x) => x + 1); setBusy(false); }, 700); };
   const date = form.date || (ready ? addDays(today, 3) : "");
   const gaPorts = Object.values(AIRPORTS).filter((a) => a.ga);
@@ -124,7 +125,8 @@ export function OperatorPage() {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="display text-2xl">Detected empty legs</h2><Button onClick={refresh} disabled={busy}><RefreshCw size={15} className={busy ? "animate-spin" : ""} />{busy ? "Refreshing…" : "Refresh matching"}</Button></div>
         {busy ? <div className="space-y-2"><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div> : (
           <div className="overflow-hidden rounded-2xl border border-line">
-            {ops.filter((o) => nextWeek || !inNextWeek(o)).map((o) => {
+            {shownOps.length === 0 && <p className="p-5 text-sm text-steel">No empty legs detected in this window. Add a booked flight under Schedule intelligence, import a CSV, or include the following week.</p>}
+            {shownOps.map((o) => {
               const l = o.leg;
               const isOpen = open === l.id;
               return (
@@ -141,7 +143,7 @@ export function OperatorPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-2 px-4 pb-3">
                     <span className="text-xs text-steel">Availability:</span>
-                    {(["available", "limited", "unavailable"] as LegStatus[]).map((s) => <button key={s} onClick={() => patch(l.id, { status: s })} aria-pressed={l.status === s} className={cx("rounded-full border px-2.5 py-0.5 text-xs", l.status === s ? "border-gold bg-gold/10 text-gold" : "border-line text-steel hover:text-warm")}>{s === "unavailable" ? "Mark unavailable" : s[0].toUpperCase() + s.slice(1)}</button>)}
+                    {(["available", "limited", "unavailable"] as LegStatus[]).map((s) => <button key={s} onClick={() => patch(l.id, { status: s })} aria-pressed={l.status === s} className={cx("min-h-11 rounded-full border px-3 py-1 text-xs transition-colors sm:min-h-0 sm:px-2.5 sm:py-0.5", l.status === s ? "border-gold bg-gold/10 text-gold" : "border-line text-steel hover:text-warm")}>{s === "unavailable" ? "Mark unavailable" : s[0].toUpperCase() + s.slice(1)}</button>)}
                   </div>
                   {isOpen && <Detail key={`${l.id}-${l.price}-${tick}`} o={o} />}
                 </div>
@@ -170,7 +172,7 @@ export function OperatorPage() {
             </div>
             {formErr && <p className="text-xs text-bad">{formErr}</p>}
             {added && <Notice tone="ok"><Check size={15} className="mt-0.5 shrink-0" />{added}</Notice>}
-            {custom.length > 0 && <ul className="divide-y divide-line/60 rounded-xl border border-line text-sm">{custom.map((f) => <li key={f.id} className="flex items-center justify-between px-3 py-2"><span className="num">{f.aircraft} {f.from}→{f.to} · {fmtDate(f.date!)} {fmtHHmm(f.dep)}</span><button aria-label="Remove flight" onClick={() => removeFlight(f.id)} className="text-steel hover:text-bad"><Trash2 size={15} /></button></li>)}</ul>}
+            {custom.length > 0 && <ul className="divide-y divide-line/60 rounded-xl border border-line text-sm">{custom.map((f) => <li key={f.id} className="flex items-center justify-between gap-2 px-3"><span className="num">{f.aircraft} {f.from}→{f.to} · {fmtDate(f.date!)} {fmtHHmm(f.dep)}</span><button aria-label={`Remove ${f.aircraft} ${f.from} to ${f.to}`} onClick={() => removeFlight(f.id)} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-steel hover:text-bad"><Trash2 size={15} aria-hidden /></button></li>)}</ul>}
           </Card>
         </section>
         <section>

@@ -36,7 +36,11 @@ export function OperatorImport({ today, overrides, custom, imported, onApply, on
   const onFile = async (f: File | undefined) => {
     if (!f) return;
     if (f.size > MAX_BYTES) { load("", `${f.name} is ${Math.round(f.size / 1000)} KB. The demo reads files up to ${MAX_BYTES / 1000} KB.`); return; }
-    load(await f.text(), `Loaded ${f.name}.`);
+    try {
+      load(await f.text(), `Loaded ${f.name}.`);
+    } catch {
+      load("", `Could not read ${f.name}. Paste the CSV text below instead.`);
+    }
   };
   const apply = () => {
     if (!result || !accepted) return;
@@ -67,9 +71,9 @@ export function OperatorImport({ today, overrides, custom, imported, onApply, on
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => load(sampleOperatorCsv(today))}>Load sample CSV</Button>
           <Button size="sm" onClick={() => load(sampleOperatorCsvWithErrors(today))}>Load sample with errors</Button>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-1.5 text-sm text-warm transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-gold hover:border-steel hover:bg-panel-2">
+          <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-line px-3 py-1.5 text-sm sm:min-h-9 text-warm transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-gold hover:border-steel hover:bg-panel-2">
             <FileUp size={15} aria-hidden />Choose a file
-            <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" className="sr-only" onChange={(e) => void onFile(e.target.files?.[0])} />
+            <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" className="sr-only" onChange={(e) => { const el = e.target; void onFile(el.files?.[0]).then(() => { el.value = ""; }); }} />
           </label>
         </div>
         {fileNote && <p className="text-xs text-steel" role="status">{fileNote}</p>}

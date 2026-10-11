@@ -52,7 +52,7 @@ export function OperatorRevenueChart({ projection, baseline, nextWeek, onNextWee
     <section className="mb-10" aria-labelledby="rev-h">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div><h2 id="rev-h" className="display text-2xl">Revenue view</h2><p className="mt-1 max-w-2xl text-sm text-steel">What each empty leg is worth right now, split into what the model expects to sell, what stays unsold on the market and what you are holding back. Change a price, publish toggle or availability below and this redraws.</p></div>
-        <label className="flex items-center gap-2 text-sm text-steel"><Toggle label="List following week legs by leg" checked={nextWeek} onChange={onNextWeek} />List following week by leg</label>
+        <label className="flex items-center gap-2 text-sm text-steel"><Toggle label="List following week by leg" checked={nextWeek} onChange={onNextWeek} />List following week by leg</label>
       </div>
       <Card className="space-y-6 p-5 sm:p-6">
         {/* Hidden defs shared by every bar. */}
