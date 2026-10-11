@@ -343,6 +343,9 @@ function HandledForYou({ actions }: { actions: AutoAction[] }) {
           );
         })}
       </ul>
+      <p className="pt-2 text-[13px] leading-snug text-ink-2">
+        Simulated in this demo: no message is really sent to the airline, hotel or driver.
+      </p>
     </div>
   );
 }
@@ -596,7 +599,7 @@ function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: numb
                   href={c.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-0.5 inline-flex min-h-8 items-center text-[13px] font-medium underline underline-offset-4"
+                  className="mt-0.5 inline-flex min-h-11 items-center text-[13px] font-medium underline underline-offset-4"
                 >
                   {new URL(c.url).hostname.replace(/^www\./, "")}
                 </a>

@@ -148,7 +148,9 @@ function AutoUpdates() {
         />
       </Card>
       <p className="px-1 text-[13px] leading-snug text-ink-2">
-        Your flights are always tracked. Anything switched off is added to your to-do list instead.
+        Your flights are always watched (in this demo, through a simulated airline feed, and no
+        message really reaches a hotel or driver). Anything switched off is added to your to-do
+        list instead.
       </p>
     </Group>
   );

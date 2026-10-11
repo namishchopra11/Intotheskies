@@ -9,6 +9,7 @@ import { computeImpact } from "@/lib/domain/impact";
 import { newId } from "@/lib/id";
 import { normalizeSolanaAddress } from "@/lib/solana/address";
 import { migratePersisted, recoverTrip, type LoadNotice } from "@/lib/recoverTrip";
+import { safeStorage } from "@/lib/safeStorage";
 import { sampleTrip } from "@/lib/sampleTrip";
 import {
   DEFAULT_SETTINGS,
@@ -328,7 +329,7 @@ export const useTripStore = create<TripState>()(
       name: STORAGE_KEY,
       version: 2,
       storage: createJSONStorage(() =>
-        typeof window === "undefined" ? noopStorage : window.localStorage,
+        typeof window === "undefined" ? noopStorage : safeStorage(() => window.localStorage),
       ),
       partialize: (state) => ({
         trip: state.trip,
