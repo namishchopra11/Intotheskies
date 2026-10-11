@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SpeechVoice } from "./speechVoices";
 
-/** Requests ElevenLabs audio through our server; the API key never reaches the browser. */
+/**
+ * Requests ElevenLabs audio through our server; the API key never reaches the browser.
+ * If that fails for any reason, the browser's built-in voice reads the text instead.
+ */
 export function useSpeech(voice: SpeechVoice) {
   const [state, setState] = useState<"idle" | "loading" | "playing">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +17,7 @@ export function useSpeech(voice: SpeechVoice) {
   const cached = useRef(new Map<string, Blob>());
 
   const release = useCallback(() => {
+    if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
     controller.current?.abort();
     controller.current = null;
     if (audio.current) {
@@ -41,6 +45,23 @@ export function useSpeech(voice: SpeechVoice) {
     release();
     setState("idle");
   }, [release]);
+
+  const speakBuiltIn = useCallback(
+    (text: string, pending: AbortController) => {
+      if (typeof speechSynthesis === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return false;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = utterance.onerror = () => {
+        if (controller.current === pending) {
+          release();
+          setState("idle");
+        }
+      };
+      speechSynthesis.speak(utterance);
+      setState("playing");
+      return true;
+    },
+    [release],
+  );
 
   const speak = useCallback(async (text: string) => {
     if (!text || controller.current) return;
@@ -82,7 +103,11 @@ export function useSpeech(voice: SpeechVoice) {
     } catch (e) {
       if (controller.current !== pending) return;
       const timedOut = pending.signal.aborted;
+      const fallback = new AbortController();
       release();
+      controller.current = fallback;
+      if (speakBuiltIn(text, fallback)) return;
+      controller.current = null;
       setState("idle");
       setError(timedOut
         ? "The voice service took too long. Please try again."
@@ -92,7 +117,7 @@ export function useSpeech(voice: SpeechVoice) {
     } finally {
       clearTimeout(timeout);
     }
-  }, [release, stop, voice]);
+  }, [release, stop, speakBuiltIn, voice]);
 
   return { speaking: state !== "idle", loading: state === "loading", error, speak, stop };
 }

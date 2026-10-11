@@ -34,7 +34,7 @@ function json(status: number, body: unknown) {
 
 export async function POST(request: Request) {
   if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-    return json(503, { error: "Import isn't set up yet: add ANTHROPIC_API_KEY to .env.local and restart." });
+    return json(503, { error: "Import isn't available right now. You can add your trip by hand." });
   }
 
   let form: FormData;
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     return json(200, response.parsed_output);
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
-      return json(503, { error: "Import isn't set up yet: the API key is missing or invalid." });
+      return json(503, { error: "Import isn't available right now. You can add your trip by hand." });
     }
     if (error instanceof Anthropic.RateLimitError) {
       return json(429, { error: "Too many imports right now. Try again in a minute." });

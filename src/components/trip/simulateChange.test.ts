@@ -52,11 +52,38 @@ describe("simulateFlightChange", () => {
     const change = simulateFlightChange();
     const [flight] = current().flights;
 
-    expect(change?.title).toBe("BA 286 is delayed");
+    expect(change?.title).toBe("Simulated change · BA 286 is delayed");
     expect(flight.status).toBe("delayed");
     expect(flight.departAt).toBe("2026-10-16T18:10");
     expect(flight.arriveAt).toBe("2026-10-17T12:05");
     expect(current().disruptions[0].type).toBe("delay");
+  });
+
+  it("does not pair a second flight that leaves from a different airport", () => {
+    const [first, second] = sampleTrip.flights;
+    load({ ...sampleTrip, flights: [first, { ...second, from: "CDG" }] });
+    const change = simulateFlightChange();
+
+    expect(change?.title).toBe("Simulated change · BA 286 is delayed");
+    expect(current().disruptions).toHaveLength(1);
+    expect(current().disruptions[0].type).toBe("delay");
+    expect(current().flights[1].status).toBe("scheduled");
+  });
+
+  it("delays only the first flight when the flights do not connect", () => {
+    const [a, b] = sampleTrip.flights;
+    load({ ...sampleTrip, flights: [a, { ...b, from: "CDG", departAt: "2026-10-25T09:00", arriveAt: "2026-10-25T11:00" }] });
+    simulateFlightChange();
+    const [first, second] = current().flights;
+    expect(first.status).toBe("delayed");
+    expect(first.arriveAt).toBe("2026-10-17T12:05"); // 90 minutes, not days
+    expect(second.status).toBe("scheduled");
+    expect(current().disruptions[0].type).toBe("delay");
+  });
+
+  it("says in the notification that the change is simulated", () => {
+    load(sampleTrip);
+    expect(simulateFlightChange()?.title).toMatch(/^Simulated/);
   });
 
   it("does nothing when the trip already has a disruption", () => {
@@ -73,5 +100,34 @@ describe("simulateFlightChange", () => {
     load({ ...sampleTrip, flights: [], stays: [] });
     expect(simulateFlightChange()).toBeNull();
     expect(current().disruptions).toHaveLength(0);
+  });
+
+  it("45-minute delay: first flight 45 minutes late, connection tight, onward flight untouched", () => {
+    load(sampleTrip);
+    simulateFlightChange("delay45");
+    const [first, onward] = current().flights;
+    expect(first.arriveAt).toBe("2026-10-17T11:20");
+    expect(first.status).toBe("delayed");
+    expect(onward.status).toBe("scheduled");
+    expect(current().disruptions[0].type).toBe("delay");
+  });
+
+  it("3-hour delay: lands after the onward departure with no rebooking", () => {
+    load(sampleTrip);
+    simulateFlightChange("delay180");
+    const [first, onward] = current().flights;
+    expect(first.arriveAt).toBe("2026-10-17T13:35");
+    expect(onward.status).toBe("scheduled");
+    expect(current().disruptions[0].tasks.some((t) => t.id.endsWith(":rebook_onward"))).toBe(true);
+  });
+
+  it("cancelled: the first flight is cancelled with its times unchanged", () => {
+    load(sampleTrip);
+    const change = simulateFlightChange("cancelled");
+    const [first] = current().flights;
+    expect(change?.title).toBe("Simulated change · BA 286 is cancelled");
+    expect(first.status).toBe("cancelled");
+    expect(first.arriveAt).toBe("2026-10-17T10:35");
+    expect(current().disruptions[0].type).toBe("cancellation");
   });
 });

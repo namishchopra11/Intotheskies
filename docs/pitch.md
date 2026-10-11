@@ -8,7 +8,7 @@ where you run out of breath.
 
 **Judging criteria:** innovativeness, functionality, creativity, theme ("Into the Skies").
 **Tracks entered:** Solana (see "Tracks" near the end before you say anything about it).
-ElevenLabs was dropped.
+ElevenLabs is back in, for **Listen to summary** only (see "Tracks").
 
 ---
 
@@ -72,7 +72,7 @@ a change" screen: the change arrives on its own, about 6 seconds after the trip 
 > The trip drives the checklist. The checklist drives the message. Change the trip and
 > the list changes. Tick something off and the message changes.
 >
-> And everything stays on the phone. No account. No server. Nothing to sign up for when
+> And your trip stays on the phone. No sign-up: continue as a guest. Nothing to fill in when
 > you are already stressed.
 
 ### 5. What is next (about 15 seconds)
@@ -126,8 +126,8 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 
 | Track | Where it stands | What must be true before you mention it | Who to ask |
 | --- | --- | --- | --- |
-| **Solana** | Built and tested. The traveler adds a Solana address in the **Trip menu**; the share screen has an **Add a Send help button** option with an amount in USDC; the shared page shows **Send help**, a QR code and the address to copy. All on devnet, Solana's test network, with address validation and the transfer-request builder tested under `src/lib/solana/`. Sebastian has tested it on a phone. | Say it only if it still works on the phone you present from. Run the optional step in `docs/demo-script.md` once before you go up. | Sebastian |
-| **ElevenLabs** | Dropped. There is no ElevenLabs code. The home screen does have a **Listen to summary** button, but it uses the phone's own built-in voice (browser speech), not ElevenLabs. | Do not claim ElevenLabs. If asked about the button, say it is the device's voice. | |
+| **Solana** | Built and tested. The traveler adds a Solana address in the **Trip menu**; the share screen has an **Add a Send help button** option with an amount in USDC; the shared page shows **Send help**, a QR code and the address to copy. All on devnet, Solana's test network, with address validation and the transfer-request builder tested under `src/lib/solana/`. Sebastian tested it on an iPhone with Phantom on devnet: scanning the QR code fills in the right amount and address. Phantom will not complete a devnet USDC payment ("Insufficient balance"), a limit of its test mode. | Say the wallet opens with everything filled in. Do not say a payment went through. On stage, stop on Phantom's filled-in screen. | Sebastian |
+| **ElevenLabs** | Built. **Listen to summary** sends only the short spoken briefing to ElevenLabs through the app's `/api/speak` route and plays the audio; the voice is picked in the trip menu. It needs the ElevenLabs key on the server and a connection. | Test it on the stage phone first. If it shows an error, do not mention ElevenLabs. | |
 
 If the Solana step does not work on the day, on the phone you present from, say nothing about
 Solana at the table. A judge who sees a broken promise scores the whole project down. If you
@@ -154,11 +154,13 @@ the hard part first: working out what a change means for everything else. Live s
 first thing we would add next.
 
 **Can I try it with my own flight?**
-Not yet. The app runs on a sample trip, and the change it plays is scripted. Entering your
-own trip and connecting a real status source are both things we would build next.
+Partly. **Add your trip** lets you enter flights, hotels and rides by hand, or paste a
+confirmation email to import them. The change it plays is still simulated: connecting a real
+status source is what we would build next.
 
 **Where is the data stored?**
-On your phone, in the browser. No server, no account. When you share an update, the
+On your phone, in the browser. No database, and no account needed (sign-in is a profile kept
+on the phone, or continue as a guest). When you share an update, the
 details travel inside the link itself, and the part of a link after the `#` is never sent to
 a web server. The catch: anyone who has the link can read the update. So booking numbers
 are off by default.

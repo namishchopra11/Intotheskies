@@ -18,7 +18,7 @@ type NotificationBannerProps = {
  * A banner that drops in from the top of the screen, like a phone notification.
  * Tap to open, swipe up or press the cross to dismiss.
  */
-export function NotificationBanner({ title, lines, onOpen, onDismiss, autoHideMs = 9000 }: NotificationBannerProps) {
+export function NotificationBanner({ title, lines, onOpen, onDismiss, autoHideMs = 5000 }: NotificationBannerProps) {
   const [leaving, setLeaving] = useState(false);
   const [dragY, setDragY] = useState(0);
   const start = useRef<number | null>(null);

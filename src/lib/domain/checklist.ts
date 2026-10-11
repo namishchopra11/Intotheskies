@@ -54,17 +54,18 @@ function fill(text: string, vars: Vars, fallback: Required<Vars> = FALLBACK): st
   return filled.charAt(0).toUpperCase() + filled.slice(1);
 }
 
-const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+
+/** True when every word of the shorter name is a whole word of the longer one. */
+function sameName(a: string, b: string): boolean {
+  const [short, long] = [words(a), words(b)].sort((x, y) => x.length - y.length);
+  return short.length > 0 && short.every((w) => long.includes(w));
+}
 
 function findContact(trip: Trip, kind: ContactKind, name?: string): Contact | undefined {
   const ofKind = trip.contacts.filter((c) => c.kind === kind);
   if (name === undefined) return ofKind[0];
-  const wanted = normalize(name);
-  if (!wanted) return undefined;
-  return ofKind.find((c) => {
-    const have = normalize(c.name);
-    return have !== "" && (have === wanted || have.includes(wanted) || wanted.includes(have));
-  });
+  return ofKind.find((c) => sameName(c.name, name));
 }
 
 // The airline that caused the change is the one to ask; the new one for a new booking.
@@ -79,7 +80,7 @@ function baseVarsFor(flight: Flight | undefined, onward: Flight | undefined, ins
 }
 
 /** Generated task ids are `${disruptionId}:${copyKey}`, plus `:${stayId}` for hotel tasks. */
-const taskId = (disruptionId: string, key: ChecklistCopyKey, idSuffix = "") => `${disruptionId}:${key}${idSuffix}`;
+export const taskId = (disruptionId: string, key: ChecklistCopyKey, idSuffix = "") => `${disruptionId}:${key}${idSuffix}`;
 
 /** The id of the "send an update" task, so the share screen can tick it off. */
 export const sendUpdateTaskId = (disruptionId: string) => taskId(disruptionId, "send_update");

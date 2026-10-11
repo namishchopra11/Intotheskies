@@ -24,7 +24,7 @@ export default function UiKit() {
   const [done, setDone] = useState(3);
   return (
     <main className="pb-10">
-      <PageHeader eyebrow="Lisbon to Tokyo" title="Your flight is delayed" action={<ThemeToggle compact />}>
+      <PageHeader variant="title" eyebrow="Lisbon to Tokyo" title="Your flight is delayed" action={<ThemeToggle compact />}>
         Here&apos;s what changed and what to do next.
       </PageHeader>
 

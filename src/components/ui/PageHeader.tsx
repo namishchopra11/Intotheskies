@@ -11,8 +11,8 @@ type PageHeaderProps = {
   /** Something on the right of the title row, e.g. a ThemeToggle or small Button. */
   action?: ReactNode;
   /**
-   * "title" (default): a large headline that says what happened.
-   * "bar": a compact row (back arrow and an 18px title) for a step inside a flow, like Share.
+   * "bar" (default): a compact row (back arrow and an 18px title) for a step inside a flow, like Share.
+   * "title": a large headline that says what happened, with an optional eyebrow and body.
    */
   variant?: "title" | "bar";
   /** One or two sentences under the title. */
@@ -22,7 +22,7 @@ type PageHeaderProps = {
 const TOP = "pt-[max(env(safe-area-inset-top),12px)]";
 
 /** The top of every screen, so they all start the same way. */
-export function PageHeader({ title, eyebrow, back, action, variant = "title", children }: PageHeaderProps) {
+export function PageHeader({ title, eyebrow, back, action, variant = "bar", children }: PageHeaderProps) {
   if (variant === "bar") {
     return (
       <header className={`flex items-center gap-1 pr-4 pb-3 pl-2 ${TOP}`}>

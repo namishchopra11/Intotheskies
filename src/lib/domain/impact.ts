@@ -74,8 +74,10 @@ export function computeImpact(trip: Trip, flightId: string): Impact {
   const onward = findConnection(trip, flight);
   let connection: ConnectionImpact | null = null;
   if (onward) {
-    // Arrival vs the onward departure, both at the connecting airport.
-    const minutesAfter = unknown ? null : minutesBetween(flight.arriveAt, onward.departAt);
+    // Arrival vs the onward departure, both at the connecting airport. If the onward flight
+    // is itself cancelled with no replacement, its departure time no longer means anything.
+    const onwardGone = onward.status === "cancelled" && isArrivalUnknown(onward);
+    const minutesAfter = unknown || onwardGone ? null : minutesBetween(flight.arriveAt, onward.departAt);
     connection = {
       flightId: onward.id,
       minutesBefore: minutesBetween(bookedArrival, onward.original?.departAt ?? onward.departAt),

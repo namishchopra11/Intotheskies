@@ -42,7 +42,7 @@ describe("speech route", () => {
     vi.stubEnv("ELEVENLABS_API_KEY", "");
     const response = await POST(request({ text: "Your flight is delayed." }));
     expect(response.status).toBe(503);
-    expect((await response.json()).error).toContain("isn't set up yet");
+    expect((await response.json()).error).toContain("isn't available");
     expect(fetch).not.toHaveBeenCalled();
   });
 

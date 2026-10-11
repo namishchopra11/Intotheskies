@@ -11,6 +11,7 @@ import { useStoreReady, useTripStore } from "@/lib/store";
 import { isDemoCluster, SOLANA_CLUSTER } from "@/lib/solana/config";
 import { normalizeUsdcAmount } from "@/lib/solana/pay";
 import { ShareSkeleton } from "../ShareSkeleton";
+import { SendTo } from "./SendTo";
 import { copyText } from "./copyText";
 import { buildMessage, messageText } from "./message";
 
@@ -58,11 +59,11 @@ export default function SharePage() {
   if (!trip || !disruption) {
     return (
       <main className="flex flex-1 flex-col">
-        <PageHeader variant="bar" title="Nothing to share yet" back={{ href: "/", label: "Back to trip" }} />
+        <PageHeader title="Nothing to share yet" back={{ href: "/", label: "Back to trip" }} />
         <div className="px-4 pt-2">
           <Card className="text-ink-2">
-            This update isn&apos;t on this phone. Changes to your flights show up on your trip
-            automatically, so open it and share from there.
+            This update isn&apos;t on this phone. Changes from the simulated airline feed show up on
+            your trip automatically, so open it and share from there.
             <Button href="/" variant="primary" block chip="arrow-right" className="mt-4">
               Go to your trip
             </Button>
@@ -120,9 +121,11 @@ export default function SharePage() {
 
   return (
     <main className="ck-screen-in flex flex-1 flex-col">
-      <PageHeader variant="bar" title="Share the new plan" back={{ href: "/", label: "Back to trip" }} />
+      <PageHeader title="Share the new plan" back={{ href: "/", label: "Back to trip" }} />
 
-      <section aria-label="Message preview" className="flex flex-col gap-2 px-4 pt-2">
+      <SendTo trip={trip} disruptionId={disruption.id} />
+
+      <section aria-label="Message preview" className="flex flex-col gap-2 px-4 pt-[22px]">
         <span className="ck-label px-1">Preview</span>
         <div
           aria-live="polite"
@@ -169,7 +172,7 @@ export default function SharePage() {
             label="Add a Send help button"
             description={
               trip.payoutAddress
-                ? "People who open the link can send you USDC from their own Solana wallet."
+                ? "People who open the link can send you USDC from their own Solana wallet, on Solana's test network (devnet)."
                 : "Add your Solana address from the trip menu first."
             }
           />
@@ -203,7 +206,7 @@ export default function SharePage() {
             <Icon name="info" size={18} className="mt-px" />
             <span>
               {amountOk
-                ? "The button is on the linked page only, not in the message text. Your address is visible to anyone with the link."
+                ? "The button is on the linked page only, not in the message text. Your address is visible to anyone with the link, and the trip name goes in the payment's note, which is public on the blockchain."
                 : "Enter an amount, or the link is shared without the button."}
             </span>
           </p>
