@@ -4,8 +4,41 @@ import { useEffect, useRef, useState, useTransition, type ReactNode } from "reac
 import { useRouter } from "next/navigation";
 
 const THRESHOLD = 52;
-const TAKEOFF_MS = 460;
+// How long one crossing of the plane takes: the expected refresh time, within these limits.
+const FLIGHT_MIN_MS = 600;
+const FLIGHT_MAX_MS = 3000;
+const FLIGHT_DEFAULT_MS = 800;
+const REFRESH_MS_KEY = "layover:refresh-ms";
 const SETTLE = "240ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+// A short buzz where the device supports it (Android; iOS Safari has no vibration API).
+const buzz = (ms: number) => {
+  if (typeof navigator !== "undefined") navigator.vibrate?.(ms);
+};
+
+// A refresh cannot be timed before it runs, so expect it to take about as long as recent ones
+// did on this device (a running average, kept in localStorage), plus a little headroom.
+const readRefreshMs = () => {
+  try {
+    const saved = Number(window.localStorage.getItem(REFRESH_MS_KEY));
+    return Number.isFinite(saved) && saved > 0 ? saved : null;
+  } catch {
+    return null;
+  }
+};
+const predictFlightMs = () => {
+  const expected = readRefreshMs();
+  if (expected === null) return FLIGHT_DEFAULT_MS;
+  return Math.round(Math.min(FLIGHT_MAX_MS, Math.max(FLIGHT_MIN_MS, expected * 1.15)));
+};
+const recordRefreshMs = (took: number) => {
+  const before = readRefreshMs();
+  try {
+    window.localStorage.setItem(REFRESH_MS_KEY, String(Math.round(before === null ? took : before * 0.6 + took * 0.4)));
+  } catch {
+    // Private mode or storage full: the next refresh uses the default.
+  }
+};
 
 // Keep moving without a hard limit, while each extra pixel takes more effort.
 const resistedDistance = (pixels: number) => 80 * Math.log1p(Math.max(0, pixels) / 200);
@@ -18,7 +51,30 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
   const [pulling, setPulling] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [readyToSettle, setReadyToSettle] = useState(false);
+  const [flightMs, setFlightMs] = useState(FLIGHT_DEFAULT_MS);
   const refreshingRef = useRef(false);
+  const pendingRef = useRef(false);
+  const pendingSince = useRef(0);
+
+  // Time each refresh so the next one's flight can be planned from it.
+  useEffect(() => {
+    pendingRef.current = pending;
+    if (pending) pendingSince.current = performance.now();
+    else if (pendingSince.current) {
+      recordRefreshMs(performance.now() - pendingSince.current);
+      pendingSince.current = 0;
+    }
+  }, [pending]);
+
+  // The strip closes when the plane finishes a crossing with the refresh done. A refresh that
+  // outlasts the plan gets another crossing at the same speed.
+  useEffect(() => {
+    if (!refreshing) return;
+    const landing = window.setInterval(() => {
+      if (!pendingRef.current) setReadyToSettle(true);
+    }, flightMs);
+    return () => window.clearInterval(landing);
+  }, [refreshing, flightMs]);
 
   useEffect(() => {
     if (!refreshing || !readyToSettle || pending) return;
@@ -41,7 +97,6 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
     let wheelTravel = 0;
     let dragging = false;
     let frame = 0;
-    let settleTimer = 0;
     let wheelTimer = 0;
     let mouseDown = false;
     const reset = () => {
@@ -102,16 +157,14 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
       if (refreshingRef.current) return;
       if (dragging && pull >= THRESHOLD && window.scrollY <= 0 && !refreshingRef.current && !document.querySelector("dialog[open]")) {
         refreshingRef.current = true;
+        buzz(20);
+        setFlightMs(predictFlightMs());
         setRefreshing(true);
         setReadyToSettle(false);
         setPulling(false);
         setDistance(THRESHOLD);
         // Update the current page without remounting the app or flashing the screen.
-        frame = window.requestAnimationFrame(() => {
-          startTransition(() => router.refresh());
-          // Long enough for the plane to fly out of the strip before it closes.
-          settleTimer = window.setTimeout(() => setReadyToSettle(true), TAKEOFF_MS);
-        });
+        frame = window.requestAnimationFrame(() => startTransition(() => router.refresh()));
         origin = null;
         dragging = false;
         pull = 0;
@@ -198,25 +251,30 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
       window.removeEventListener("wheel", wheel);
       window.removeEventListener("blur", cancel);
       window.cancelAnimationFrame(frame);
-      window.clearTimeout(settleTimer);
       window.clearTimeout(wheelTimer);
     };
   }, [router, startTransition]);
 
   const ready = distance >= THRESHOLD;
+  // One tick as the pull passes the point where letting go refreshes.
+  useEffect(() => {
+    if (ready && pulling) buzz(10);
+  }, [ready, pulling]);
   return (
     <>
       <div className="pointer-events-none fixed inset-x-0 top-0 flex justify-center overflow-hidden"
         style={{ height: distance, opacity: Math.min(1, distance / 36), transition: pulling ? "none" : `height ${SETTLE}, opacity ${SETTLE}` }}>
-        {/* A plane on the phone-width column: it taxis to the middle as you pull, then flies across while refreshing. */}
+        {/* A plane on the phone-width column, crossing left to right while the strip is open. On
+            release it starts again from the left and crosses once in the time the refresh should take. */}
         <div role="status" className="absolute inset-x-0 mx-auto h-9 max-w-[520px] overflow-hidden text-ink"
           style={{ top: 0, transform: `translateY(${Math.max(0, (distance - 36) / 2)}px)`, transition: pulling ? "none" : `transform ${SETTLE}` }}>
-          <div aria-hidden="true" className={`absolute inset-0 ${refreshing ? "ck-ptr-fly" : ""}`}
-            style={{ transform: `translateX(${6 + Math.min(1, distance / THRESHOLD) * 44}%)` }}>
+          <div aria-hidden="true" key={refreshing ? "refresh" : "pull"}
+            className={`absolute inset-0 ${distance > 0 || refreshing ? "ck-ptr-fly" : ""}`}
+            style={{ transform: "translateX(50%)", animationDuration: `${flightMs}ms` }}>
             <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-dashed border-current opacity-40"
               style={{ maskImage: "linear-gradient(to right, transparent, #000)", WebkitMaskImage: "linear-gradient(to right, transparent, #000)" }} />
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"
-              className="absolute left-0 top-1/2 -ml-3 -mt-3"
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--signal)" stroke="currentColor"
+              strokeWidth="1.25" strokeLinejoin="round" className="absolute left-0 top-1/2 -ml-3 -mt-3"
               style={{ transform: `rotate(${ready || refreshing ? -10 : 0}deg)`, transition: "transform 160ms ease-out" }}>
               <path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7H9l2-7H7l-2 2H2l2-4-2-4h3l2 2h4L9 3h3z" />
             </svg>
