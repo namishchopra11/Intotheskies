@@ -14,7 +14,6 @@ import {
   Button,
   CONNECTION_BADGE,
   Field,
-  FlapBoard,
   Icon,
   NAV_FORWARD,
   PageTransition,
@@ -22,7 +21,6 @@ import {
   Sheet,
   SignalBar,
   ThemeToggle,
-  Timeline,
   cx,
   type IconName,
   type Tone,
@@ -32,7 +30,7 @@ import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { LoadNotice } from "@/lib/recoverTrip";
-import { buildTimeline, finalArrival } from "@/lib/domain/timeline";
+import { finalArrival } from "@/lib/domain/timeline";
 import { useTripStore } from "@/lib/store";
 import type { AutoAction, Contact, Disruption, Flight, Ride, Stay, Trip } from "@/lib/types";
 
@@ -98,7 +96,6 @@ function Status({ trip }: { trip: Trip }) {
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
   const arrival = disruption ? finalArrival(trip, disruption.id) : null;
-  const timeline = disruption ? buildTimeline(trip, disruption.id) : [];
   const first = trip.flights[0];
   const last = trip.flights[trip.flights.length - 1];
   const eyebrow = [
@@ -124,26 +121,19 @@ function Status({ trip }: { trip: Trip }) {
         </h1>
       </section>
 
-      {arrival && (
-        <div key={`arrival-${disruption.id}`} className="ck-rise mx-4" style={rise(200)}>
-          <FlapBoard
-            label={`${arrival.unknown ? "Arrival" : "New arrival"} · ${cityName(arrival.flight.to)}`}
-            time={arrival.unknown ? null : timePart(arrival.arriveAt)}
-            was={timePart(arrival.was)}
-            note={
-              arrival.unknown
-                ? "No new time yet"
-                : arrival.delayMinutes
-                  ? `${formatDuration(Math.abs(arrival.delayMinutes))} ${arrival.delayMinutes > 0 ? "later" : "earlier"}`
-                  : "Unchanged"
-            }
-          />
-        </div>
-      )}
+      {/* What changed: the three black boxes (booked, status, new flight), then every flight
+          with the old booking struck through. Keep this layout. */}
+      <ChangeBoxes trip={trip} disruption={disruption} flight={changed} impact={impact} />
 
-      <div className="pt-6" key={`timeline-${disruption.id}`}>
-        <Timeline nodes={timeline} baseDelay={300} />
-      </div>
+      {trip.flights.length > 0 && (
+        <section
+          aria-label="Flights"
+          className="ck-rise mx-4 flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface"
+          style={rise(220)}
+        >
+          {trip.flights.flatMap((f) => flightRows(trip, f, impact))}
+        </section>
+      )}
 
       {(disruption.actions ?? []).length > 0 && (
         <section key={`handled-${disruption.id}`} className="ck-rise px-5 pt-6" style={rise(650)}>
@@ -162,6 +152,87 @@ function Status({ trip }: { trip: Trip }) {
       <ContactsSection contacts={trip.contacts} delay={600} />
       <div className="pb-[max(env(safe-area-inset-bottom),26px)]" />
     </>
+  );
+}
+
+/* ---------- What changed: three black boxes, like a departures board ---------- */
+
+function ChangeBoxes({ trip, disruption, flight, impact }: { trip: Trip; disruption: Disruption; flight: Flight; impact: Impact }) {
+  const was = flight.original ?? flight;
+  const unknown = impact.delayMinutes === null;
+  const late = impact.delayMinutes ?? 0;
+
+  let status: { word: string; sub?: string[] };
+  switch (disruption.type) {
+    case "cancellation":
+      status = { word: "Cancelled" };
+      break;
+    case "missed_connection": {
+      // The late inbound flight is what caused it.
+      const inbound = trip.flights.find((f) => f.to === flight.from && f.status === "delayed" && f.original);
+      const by = inbound?.original ? minutesBetween(inbound.original.arriveAt, inbound.arriveAt) : 0;
+      status = { word: "Missed", sub: inbound && by > 0 ? [`${inbound.flightNumber} late`, `+${formatDuration(by)}`] : ["connection"] };
+      break;
+    }
+    case "rebooked":
+      status = { word: "Changed" };
+      break;
+    default:
+      status = { word: "Delayed", sub: late > 0 ? [`+${formatDuration(late)}`] : undefined };
+  }
+
+  return (
+    <section aria-label="What changed" className="ck-rise grid grid-cols-3 gap-2 px-4 pb-4" style={rise(160)}>
+      <Box label="Booked">
+        <span className="text-[13px] opacity-70">{was.flightNumber}</span>
+        <BoxTimes from={flight.from} to={flight.to} departAt={was.departAt} arriveAt={was.arriveAt} struck />
+      </Box>
+      <Box label="Status">
+        <span className="text-[19px] leading-tight font-semibold text-signal">{status.word}</span>
+        {status.sub && (
+          <span className="mt-auto flex flex-col text-[13px] leading-snug opacity-70">
+            {status.sub.map((line) => (
+              <span key={line} className="whitespace-nowrap">
+                {line}
+              </span>
+            ))}
+          </span>
+        )}
+      </Box>
+      <Box label="New flight">
+        {unknown ? (
+          <span className="text-[14px] leading-snug">Finding one…</span>
+        ) : (
+          <>
+            <span className="text-[13px] opacity-70">{flight.flightNumber}</span>
+            <BoxTimes from={flight.from} to={flight.to} departAt={flight.departAt} arriveAt={flight.arriveAt} />
+          </>
+        )}
+      </Box>
+    </section>
+  );
+}
+
+function Box({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-[118px] min-w-0 flex-col gap-1 rounded-[10px] border border-line bg-band p-3 font-num text-on-band tabular-nums">
+      <span className="text-[10px] tracking-[0.08em] uppercase opacity-60">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function BoxTimes({ from, to, departAt, arriveAt, struck }: { from: string; to: string; departAt: string; arriveAt: string; struck?: boolean }) {
+  return (
+    <span className={cx("mt-auto flex flex-col text-[14px] leading-snug", struck && "line-through opacity-60")}>
+      {struck && <span className="sr-only">Was </span>}
+      <span>
+        {from} {timePart(departAt)}
+      </span>
+      <span>
+        {to} {timePart(arriveAt)}
+      </span>
+    </span>
   );
 }
 
