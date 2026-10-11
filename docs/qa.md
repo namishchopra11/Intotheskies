@@ -66,8 +66,6 @@ owner; nothing here was changed in their files.
 
 ### 7. Small things
 
-- **Add a flight:** after the empty-form errors, the date and time boxes stay red even once
-  valid values are typed, until you press **Add flight** again. (screens owner)
 - **Import:** PDFs are not made smaller before upload. A few large ones together can pass
   Vercel's 4.5 MB upload limit and show only "Reading failed". The import route also has no
   limit on how often it can be called, and each call spends Anthropic credit. (screens owner)
@@ -79,6 +77,10 @@ owner; nothing here was changed in their files.
 - The share preview shows booking references greyed out even when the switch is off. That is
   on purpose: switched-off lines are dimmed and left out of the copied text and link.
 - Form labels are linked to their boxes for screen readers.
+- **Add a flight** after the empty-form errors: the date and time boxes go back to normal once
+  a valid value is typed (the red fades out over a moment).
+- A trip typed in by hand (one flight, no hotel) plays a simulated change correctly: a
+  1h 30m delay, the new arrival, and a checklist.
 - Listen falls back to the phone's own voice when ElevenLabs is not available (fixed since
   the first pass).
 
