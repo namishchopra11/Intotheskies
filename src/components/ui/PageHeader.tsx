@@ -4,7 +4,7 @@ import { HomeLogo } from "./HomeLogo";
 
 type PageHeaderProps = {
   title: string;
-  /** Small line above the title, e.g. "Alex Morgan · San Francisco → Rome · Sat 17 Oct". */
+  /** Small line above the title, e.g. "Alex Morgan · San Francisco – Rome · Sat 17 Oct". */
   eyebrow?: string;
   /** Something on the right of the title row, e.g. a ThemeToggle or small Button. */
   action?: ReactNode;

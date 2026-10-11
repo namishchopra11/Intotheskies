@@ -106,7 +106,7 @@ export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlert
     disruptionId: id,
     title: "Simulated flight change · new plan ready",
     lines: [
-      `Missed ${onward.flightNumber}. New flight ${newNumber}, ${timePart(newDepart)} → ${timePart(newArrive)}.`,
+      `Missed ${onward.flightNumber}. New flight ${newNumber}, ${timePart(newDepart)} – ${timePart(newArrive)}.`,
       ...(handled ? [handled] : []),
       open > 0 ? `${open} to do.` : "Tap to see your plan.",
     ],

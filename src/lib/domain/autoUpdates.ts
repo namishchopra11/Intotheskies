@@ -52,7 +52,7 @@ function ridesMeeting(trip: Trip, bookedLanding: string): Ride[] {
 
 function flightAction(flight: Flight, disruptionId: string): AutoAction {
   const base = { id: `${disruptionId}:auto:flight`, kind: "flight" as const, targetId: flight.id };
-  const times = `${flight.from} ${timePart(flight.departAt)} → ${flight.to} ${timePart(flight.arriveAt)}`;
+  const times = `${flight.from} ${timePart(flight.departAt)} – ${flight.to} ${timePart(flight.arriveAt)}`;
   if (isArrivalUnknown(flight)) {
     return {
       ...base,

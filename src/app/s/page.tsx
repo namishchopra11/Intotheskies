@@ -197,7 +197,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
     <div className="flex flex-col gap-1.5 px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <p className="min-w-0 text-[14px] text-ink-2">
-          {cityName(f.from)} → {cityName(f.to)} · <span className="whitespace-nowrap">{f.flightNumber}</span>
+          {cityName(f.from)} – {cityName(f.to)} · <span className="whitespace-nowrap">{f.flightNumber}</span>
         </p>
         <Badge tone={b.tone}>{b.label}</Badge>
       </div>
@@ -205,7 +205,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
         <p className="text-[15px] text-ink-2">Waiting for a new flight</p>
       ) : (
         <p className="font-num text-[20px] font-medium tabular-nums">
-          {displayTime(timePart(f.departAt))} → {displayTime(timePart(f.arriveAt))}
+          {displayTime(timePart(f.departAt))} – {displayTime(timePart(f.arriveAt))}
         </p>
       )}
       {f.bookingRef && (
@@ -224,7 +224,7 @@ function HotelStay({ stay }: { stay: Stay }) {
       <p className="text-[17px] leading-snug font-medium">{stay.name}</p>
       <p className="text-[14px] text-ink-2">{stay.address}</p>
       <p className="text-[15px]">
-        {formatDate(stay.checkIn)} → {formatDate(stay.checkOut)}
+        {formatDate(stay.checkIn)} – {formatDate(stay.checkOut)}
       </p>
       {stay.latestCheckIn && (
         <p className="text-[14px] text-ink-2">

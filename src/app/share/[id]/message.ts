@@ -54,7 +54,7 @@ export function buildMessage(trip: Trip, disruptionId: string, options: SummaryO
     flight = "I don't have a new flight yet.";
   } else {
     const label = d.type === "delay" ? "New times" : "New flight";
-    flight = `${label}: ${f.flightNumber}, ${from} ${timePart(f.departAt)} → ${to} ${timePart(f.arriveAt)} (${formatDate(f.departAt)}).`;
+    flight = `${label}: ${f.flightNumber}, ${from} ${timePart(f.departAt)} – ${to} ${timePart(f.arriveAt)} (${formatDate(f.departAt)}).`;
     const c = impact.connection;
     if (c?.status === "missed") flight += " I'll likely miss my connection.";
     else if (c?.status === "tight") flight += " My connection is tight.";

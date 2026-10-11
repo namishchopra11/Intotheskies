@@ -53,7 +53,7 @@ function flightNode(f: Flight): TimelineNode {
   const o = f.original;
   const unknown = isArrivalUnknown(f);
   const late = o ? minutesBetween(o.arriveAt, f.arriveAt) : 0;
-  const route = `${f.from} → ${f.to}`;
+  const route = `${f.from} – ${f.to}`;
   const base = { id: f.id, kind: "flight" as const, title: `${f.flightNumber} · ${route}` };
   if (f.status === "cancelled" && unknown) {
     return { ...base, detail: "Cancelled. No new time yet.", state: "bad", time: "–:–", was: o && timePart(o.arriveAt) };

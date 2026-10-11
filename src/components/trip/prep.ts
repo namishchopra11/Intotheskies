@@ -123,7 +123,7 @@ export function arrivalPlan(trip: Trip): ArrivalStep[] {
       key: `ride:${r.id}`,
       time: timePart(r.pickupAt),
       title: `${r.provider} pickup`,
-      detail: `${r.from} → ${r.to}${gap > 0 ? `, ${formatDuration(gap)} after landing` : ""}`,
+      detail: `${r.from} – ${r.to}${gap > 0 ? `, ${formatDuration(gap)} after landing` : ""}`,
       warn:
         gap < SHORT_PICKUP_MINUTES
           ? gap < 0

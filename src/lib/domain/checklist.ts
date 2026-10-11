@@ -122,11 +122,21 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
   const causingAirline = baseVars.airline;
   const causingContact = causingAirline ? findContact(trip, "airline", causingAirline) : undefined;
 
+  // The ride company is saved as an "other" contact under the ride's provider name.
+  const pickupContact = (trip.rides ?? [])
+    .map((r) => findContact(trip, "other", r.provider))
+    .find(Boolean);
+
+  // Every task that means calling someone links them, so each gets the same Call button.
   const contactFor: Partial<Record<ChecklistCopyKey, Contact | undefined>> = {
     ask_rebooking_options: causingContact,
     go_to_transfer_desk: causingContact,
-    ask_entitlements: causingContact,
+    confirm_new_times: flight ? findContact(trip, "airline", flight.airline) : undefined,
     rebook_onward: onward ? findContact(trip, "airline", onward.airline) : undefined,
+    check_bags: causingContact,
+    rearrange_pickup: pickupContact,
+    ask_entitlements: causingContact,
+    get_it_in_writing: causingContact,
     contact_insurer: insurer,
   };
 
@@ -154,7 +164,10 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
         );
       }
     } else if (key === "confirm_new_booking") {
-      tasks.push(make(key, { ...baseVars, airline: flight?.airline, flight: flight?.flightNumber }));
+      const airline = flight?.airline;
+      tasks.push(
+        make(key, { ...baseVars, airline, flight: flight?.flightNumber }, airline ? findContact(trip, "airline", airline) : undefined),
+      );
     } else {
       tasks.push(make(key, baseVars, contactFor[key]));
     }

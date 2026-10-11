@@ -225,9 +225,9 @@ function summary(entry: Exclude<ImportItem, { kind: "skipped" }>): string {
   const t = formatDateTime;
   switch (entry.kind) {
     case "flight":
-      return `${entry.item.airline} · ${t(entry.item.departAt)} → ${t(entry.item.arriveAt)}`;
+      return `${entry.item.airline} · ${t(entry.item.departAt)} – ${t(entry.item.arriveAt)}`;
     case "stay":
-      return `${t(entry.item.checkIn)} → ${t(entry.item.checkOut)}`;
+      return `${t(entry.item.checkIn)} – ${t(entry.item.checkOut)}`;
     case "ride":
       return `Pickup ${t(entry.item.pickupAt)}`;
   }

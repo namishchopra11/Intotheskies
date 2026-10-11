@@ -126,7 +126,7 @@ function Status({ trip }: { trip: Trip }) {
         </section>
       )}
 
-      <NextAction disruption={disruption} arrival={arrival}>
+      <NextAction disruption={disruption} arrival={arrival} contacts={trip.contacts}>
         <SortingItOut disruption={disruption} contacts={trip.contacts} />
       </NextAction>
 
@@ -448,8 +448,11 @@ function RideCard({ r }: { r: Ride }) {
     <div className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">{r.provider}</p>
+        <p className="truncate text-[14px] text-ink-2">
+          {r.from} – {r.to}
+        </p>
         <p className="mt-0.5 font-num text-[14px] tabular-nums">
-          Pickup {displayTime(timePart(r.pickupAt))}{" "}
+          Pickup {displayTime(timePart(r.pickupAt))} {formatDate(r.pickupAt)}{" "}
           {r.rescheduledFrom && (
             <span className="text-ink-faint line-through">
               <span className="sr-only">was </span>
@@ -472,33 +475,13 @@ function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: numb
         {contacts.map((c) => (
           <li key={c.id} className="flex min-h-13 items-center gap-2 py-1.5 pr-2 pl-4">
             <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{c.name}</span>
-            {c.url && isWebUrl(c.url) && (
-              <a
-                href={c.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${c.name} website`}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
-              >
-                <Icon name="link" size={18} />
-              </a>
-            )}
+            {/* Every contact gets the same one action, a call. No website links: most contacts have none. */}
             {c.phone && <CallLink name={c.name} phone={c.phone} />}
           </li>
         ))}
       </ul>
     </Section>
   );
-}
-
-/** Only http(s) links are rendered, so a hand-edited saved value can't smuggle in another scheme. */
-function isWebUrl(url: string): boolean {
-  try {
-    const { protocol } = new URL(url);
-    return protocol === "https:" || protocol === "http:";
-  } catch {
-    return false;
-  }
 }
 
 /** The first layover that is already short or negative as booked, measured at its one airport. */
@@ -587,7 +570,7 @@ function SavedTrips({ trips }: { trips: Trip[] }) {
           const last = t.flights[t.flights.length - 1];
           const meta = [
             t.travelerName,
-            first && `${cityName(first.from)} → ${cityName(last.to)}`,
+            first && `${cityName(first.from)} – ${cityName(last.to)}`,
             first && formatDate(first.departAt),
           ].filter(Boolean);
           return (

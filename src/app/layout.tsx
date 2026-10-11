@@ -8,11 +8,12 @@ import { NavHistory } from "@/components/ui/BackButton";
 import { THEME_COLORS, themeScript } from "@/components/ui/theme";
 import "./globals.css";
 
-// Wayfinding: Plex Sans for words, Plex Mono for times and flight numbers. Both themes.
+// The only two fonts: Plex Sans for words, Plex Mono for times, codes and small labels. Both themes.
+// Neither has "→" in the latin subset (it would fall back to a system font): write "–" instead.
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
