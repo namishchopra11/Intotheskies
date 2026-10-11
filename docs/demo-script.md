@@ -40,6 +40,9 @@ There is no "report a change" screen. A change arrives on its own:
 
 It plays once per trip. Once the trip has a change, nothing more fires until you restart it.
 
+**Do not want to wait the 6 seconds?** Menu > **Trigger the change now** makes it arrive at
+once. Handy when rehearsing, or if a judge is hovering and time is short.
+
 ## Before you walk on (2 minutes, do this every time)
 
 1. Charge the phone. Turn off notifications and Do Not Disturb on, so nothing else buzzes.
@@ -156,8 +159,10 @@ You are on **Share the new plan**.
 > "Someone is waiting in Rome. Alex is not going to type all this with tired thumbs in a
 > departure lounge. The app writes it, in plain words."
 
-**POINT** at the **Still sorting:** line. It lists four things. The two ticked items are
-**not** there.
+**POINT** at the **Still sorting:** line. After the two ticks it lists just one thing:
+*"rearranging the pickup or transfer"*. The two ticked items are **not** there, and neither are
+Alex's private to-dos (receipts, "what you're entitled to"). The message only mentions what
+matters to the person waiting.
 
 **SAY**
 > "And look. The two things Alex already did are gone from the message. The trip drives the
@@ -193,6 +198,40 @@ anything, it reads:
 (The "first" thing is the first task not yet ticked, so after the two ticks in step 4 it names
 the third task instead.) Tap again to stop it. The voice comes from the device, not a
 service, so it works offline.
+
+---
+
+## Optional: Send help (20 seconds)
+
+Only if you have a quiet moment. Tested on a real phone with Phantom: scanning works, completing the payment does not (see below).
+
+**Set it up beforehand, once.** Menu > **Solana address (optional)**, paste a wallet address,
+tap **Save address**. It is kept through **Restart the demo trip**, but **Clear this trip**
+wipes it. So: load the sample trip, save the address, then use **Restart the demo trip** as
+your step 1 instead of **Try the sample trip**.
+
+**On the share screen (step 5):** switch on **Add a Send help button**, type an amount such as
+**50** (the screen says it is USDC), then **Copy link** as usual.
+
+**On the recipient page,** scroll to **Help Alex with costs**. It says **Alex is asking for 50
+USDC** and, in a yellow box, **Demo on Solana's test network (devnet). No real money moves.**
+Point at **Send help** (it opens the person's Solana wallet app to approve the payment), the
+QR code (for a wallet on another device) and **Copy address**.
+
+**Scan it (optional, 10 seconds).** Have Phantom open on a second phone, in **Testnet Mode**
+(Solana Devnet), on the account playing the person helping. Tap the scan icon and scan the QR
+code. Phantom opens a payment screen with the amount and Alex's address filled in. **Stop
+there. Do not tap Send:** Phantom shows "Insufficient balance" for devnet USDC even when the
+account has it, which is a limit of its test mode, not of our app.
+
+**SAY**
+> "And if Alex needs help with costs, the person waiting can send it from the same link. They
+> scan this, and their own wallet opens with the amount and Alex's address already filled in.
+> They just approve. Today it runs on Solana's test network, so no real money moves. We never
+> hold keys or sign anything."
+
+Do **not** tap **Send help** on stage unless a wallet app set to devnet is installed on that
+phone. Otherwise the phone may show an "open with" prompt.
 
 ---
 
@@ -250,6 +289,7 @@ Then, in this order:
 | What you see | What to do |
 | --- | --- |
 | The trip already shows a change from the last run | Menu > **Restart the demo trip** > **Restart**. It goes back on time and the change arrives again in about 6 seconds. |
+| You do not want to wait for the change | Menu > **Trigger the change now**. |
 | You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip** > **Restart**. |
 | You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
 | Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |

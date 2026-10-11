@@ -12,6 +12,15 @@ The trip drives the checklist, and both drive the update. Everything stays on th
 device: there is no backend and no account. A shared update travels inside the link
 itself.
 
+## What it looks like
+
+The demo on a phone: the trip is on track, the airline changes a flight, the plan rebuilds
+itself, and the update is ready to send to the person waiting.
+
+| On track | New plan | Share it | What they see |
+| --- | --- | --- | --- |
+| <img src="docs/screenshots/1-on-track.png" width="190" alt="The trip is on time, with a tight 55-minute connection in London flagged"> | <img src="docs/screenshots/2-new-plan.png" width="190" alt="London connection missed: rebooked on AZ 207, with a checklist of what to do"> | <img src="docs/screenshots/3-share.png" width="190" alt="The share screen with a preview of the message and a Copy link button"> | <img src="docs/screenshots/4-recipient.png" width="190" alt="The read-only page the recipient opens: Alex now lands in Rome at 18:00"> |
+
 ## Run it
 
 You need Node.js 20 or newer and [pnpm](https://pnpm.io).
@@ -68,3 +77,14 @@ airport or city.
 
 [CLAUDE.md](CLAUDE.md) is the contract for contributors: the data model, the store, the
 domain functions and who owns which files.
+
+## Built by
+
+Four people in a 24-hour hackathon.
+
+| Who | What they built |
+| --- | --- |
+| Namish | Head coder |
+| Boris | Code and logic: the connection, checklist and message |
+| Will Kim | Frontend design: the screens and the look |
+| Sebastian | Presenter: the pitch and the demo, and the Solana "Send help" button |

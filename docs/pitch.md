@@ -61,6 +61,9 @@ a change" screen: the change arrives on its own, about 6 seconds after the trip 
 > ready to send. Notice the two things Alex just did are already gone from it.
 >
 > *(copy link, open it)* They tap the link. No app. No account.
+>
+> *(Solana, if it works on the day)* And if Alex needs help with costs, the person waiting can
+> send it from the same link, on Solana's test network, so no real money moves.
 
 ### 4. Why it is more than a to-do list (about 30 seconds)
 
@@ -79,10 +82,10 @@ a change" screen: the change arrives on its own, about 6 seconds after the trip 
 
 ### 6. Hand-off (about 10 seconds)
 
-> We each built a different part. Namish led the code, Boris built the logic, and Will
-> designed the screens. Ask us anything, or let's look at the code.
+> We each built a different part. Namish led the code, Boris built the logic, Will designed
+> the screens, and I built the Solana help button. Ask us anything, or let's look at the code.
 
-*Sebastian's part (Solana) goes in only once it works on a phone. See "Tracks" below.*
+*Sebastian's part is the Solana "Send help" button. It has its own line in the demo, below.*
 
 ---
 
@@ -123,14 +126,12 @@ Say these things in your own words if a judge asks "why you?". Do not recite the
 
 | Track | Where it stands | What must be true before you mention it | Who to ask |
 | --- | --- | --- | --- |
-| **Solana** | The screens exist. The traveler adds a Solana address in the **Trip menu**; the share screen has an **Ask for help** option with an amount in USDC; the shared page shows a **Send help** button, a QR code and the address to copy. All on devnet, Solana's test network, with address validation and the transfer-request builder tested under `src/lib/solana/`. It has been checked in a browser at phone width, **not yet on a real phone with a wallet**. | Someone has opened a shared link on a phone, tapped **Send help**, and seen it open in a wallet set to devnet (or scanned the QR from a laptop). | Sebastian |
+| **Solana** | Built and tested. The traveler adds a Solana address in the **Trip menu**; the share screen has an **Add a Send help button** option with an amount in USDC; the shared page shows **Send help**, a QR code and the address to copy. All on devnet, Solana's test network, with address validation and the transfer-request builder tested under `src/lib/solana/`. Sebastian tested it on an iPhone with Phantom on devnet: scanning the QR code fills in the right amount and address. Phantom will not complete a devnet USDC payment ("Insufficient balance"), a limit of its test mode. | Say the wallet opens with everything filled in. Do not say a payment went through. On stage, stop on Phantom's filled-in screen. | Sebastian |
 | **ElevenLabs** | Dropped. There is no ElevenLabs code. The home screen does have a **Listen to summary** button, but it uses the phone's own built-in voice (browser speech), not ElevenLabs. | Do not claim ElevenLabs. If asked about the button, say it is the device's voice. | |
 
-If the Solana request has not been phone-tested with a real wallet by tomorrow morning, say
-nothing about Solana at the table. A judge who sees a broken promise scores the whole project down. Tell
-me when it is confirmed and I will add one sentence to this pitch and one step to the demo
-script. If you do show it, say it uses devnet, Solana's test network, so no real money
-moves.
+If the Solana step does not work on the day, on the phone you present from, say nothing about
+Solana at the table. A judge who sees a broken promise scores the whole project down. If you
+do show it, say it uses devnet, Solana's test network, so no real money moves.
 
 ---
 
@@ -173,6 +174,12 @@ Their trip data could feed ours.
 *Say only what is true: do not say TripIt "can't" do something. We checked its public
 description (see sources below), not the app itself. If a judge pushes, say "as far as we
 know, it does not write the update for the people waiting".*
+
+**Why Solana? Is it real money?**
+Not today: it runs on Solana's test network, so no real money moves. We chose Solana because
+a small payment from someone in another country can arrive in seconds and cost almost nothing.
+The app only builds a payment request. The person's own wallet approves it, so we never hold
+keys or sign anything.
 
 **Isn't this just a to-do list?**
 A to-do list holds what you type. Here the list is written from your trip: it names your
@@ -219,12 +226,12 @@ built the logic.)*
 | Namish | Head coder | How it is built, the store, the share link |
 | Boris | Code and logic | How the connection time, checklist and message are worked out |
 | Will | Frontend design | The screens, the look, phone layout |
-| Sebastian | Presenter, Solana | The story, plus the Solana request once it has been tried on a phone with a real wallet |
+| Sebastian | Presenter, Solana | The story, plus the Solana help button |
 
 ## Open items
 
-1. Whether the Solana request works on a phone with a real wallet. Tell me and I will add one
-   sentence to this pitch and one step to the demo script.
+1. Run the optional Send help step in `docs/demo-script.md` once on the phone you will present
+   from, the morning of the demo.
 2. Where the TripIt answer came from: public descriptions of TripIt, not the app itself.
    Sources: [TripIt Pro review](https://www.iphonejd.com/?p=1094),
    [TechCrunch on the launch of TripIt Pro](https://techcrunch.com/2009/06/23/tripit-goes-pro-launches-premium-flight-monitoring-and-alerts),
