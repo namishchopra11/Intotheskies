@@ -1,7 +1,7 @@
 import { cityName } from "@/lib/domain/airports";
 import { isArrivalUnknown } from "@/lib/domain/impact";
 import { datePart, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
-import { buildTimeline, finalArrival } from "@/lib/domain/timeline";
+import { buildTimeline, finalArrival, type TimelineNode } from "@/lib/domain/timeline";
 import type { Flight, Trip } from "@/lib/types";
 
 export type PlanTone = "ok" | "warn" | "bad";
@@ -44,18 +44,30 @@ function pickupLine(name: string, detail: string): string {
   return `${name}'s picking you up`;
 }
 
+/** Before any change, the people waiting stand as booked: a pickup simply expects you. */
+function asBookedPeople(trip: Trip): Pick<TimelineNode, "kind" | "title" | "detail" | "state">[] {
+  return (trip.people ?? [])
+    .filter((p) => p.role === "pickup")
+    .map((p) => ({ kind: "person" as const, title: `${p.name} · pickup`, detail: "", state: "ok" as const }));
+}
+
 /**
- * The traveler's day after a change, as one list in time order: each flight's departure
+ * The traveler's day (after a change, or as booked when `disruptionId` is null), as one list in time order: each flight's departure
  * (an old booking struck through above its replacement), each landing with the time until
  * the next flight, then the ride and hotel waiting at the end. All comparisons are at one
  * airport or one city (see the wall-clock rule in CLAUDE.md).
  */
-export function buildDayPlan(trip: Trip, disruptionId: string): PlanRow[] {
-  const d = trip.disruptions.find((x) => x.id === disruptionId);
-  const arrival = finalArrival(trip, disruptionId);
-  if (!d || !arrival) return [];
+export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[] {
   const flights = [...trip.flights].sort(byDeparture);
-  const nodes = buildTimeline(trip, disruptionId);
+  const d = disruptionId === null ? undefined : trip.disruptions.find((x) => x.id === disruptionId);
+  // With no change yet (null), the day as booked: the last flight's arrival stands.
+  const last = flights.at(-1);
+  const arrival =
+    disruptionId === null
+      ? last && { flight: last, arriveAt: last.arriveAt, unknown: false }
+      : d && finalArrival(trip, disruptionId);
+  if (!arrival) return [];
+  const nodes = d ? buildTimeline(trip, d.id) : asBookedPeople(trip);
   const rows: PlanRow[] = [];
 
   flights.forEach((f, i) => {
@@ -72,7 +84,7 @@ export function buildDayPlan(trip: Trip, disruptionId: string): PlanRow[] {
         time: timePart(o.departAt),
         title: `${o.flightNumber} to ${cityName(f.to)}`,
         struck: true,
-        status: { tone: "bad", text: d.type === "missed_connection" && d.flightId === f.id ? "Missed" : "Cancelled" },
+        status: { tone: "bad", text: d?.type === "missed_connection" && d.flightId === f.id ? "Missed" : "Cancelled" },
         marker: "x",
       });
       if (isArrivalUnknown(f)) {

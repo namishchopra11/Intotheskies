@@ -5,7 +5,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { DayPlan } from "@/components/trip/DayPlan";
 import { TripCountdown } from "@/components/trip/TripCountdown";
 import { NextAction, haptic } from "@/components/trip/NextAction";
-import { AtAGlance, BeforeYouGo, BookingCodes, WhenYouLand } from "@/components/trip/OnTrackDetails";
+import { BeforeYouGo, BookingCodes } from "@/components/trip/OnTrackDetails";
 import { prepItems } from "@/components/trip/prep";
 import { ProfileButton } from "@/components/trip/ProfileButton";
 import { triggerFlightChange } from "@/components/trip/simulateChange";
@@ -15,7 +15,6 @@ import {
   AppHeader,
   Badge,
   Button,
-  CONNECTION_BADGE,
   Field,
   Icon,
   NAV_FORWARD,
@@ -27,7 +26,6 @@ import {
   Collapse,
   cx,
   type IconName,
-  type Tone,
 } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
@@ -138,99 +136,6 @@ function Status({ trip }: { trip: Trip }) {
       <TripDetails trip={trip} delay={560} />
       <div className="pb-[max(env(safe-area-inset-bottom),26px)]" />
     </>
-  );
-}
-
-/* ---------- Flights ---------- */
-
-type Row = {
-  key: string;
-  number: string;
-  badge: { tone: Tone; label: string };
-  from: string;
-  to: string;
-  departAt: string;
-  arriveAt: string;
-  struck?: boolean;
-  isNew?: boolean;
-};
-
-function latestFor(trip: Trip, flightId: string): Disruption | undefined {
-  return trip.disruptions.filter((d) => d.flightId === flightId).at(-1);
-}
-
-/** One row per flight; a replaced flight shows its old booking struck through above the new one. */
-function flightRows(trip: Trip, f: Flight, impact: Impact | null) {
-  const d = latestFor(trip, f.id);
-  const o = f.original;
-  const rows: Row[] = [];
-  const base = { from: f.from, to: f.to };
-
-  const replaced = o && d && (d.type === "missed_connection" || d.type === "cancellation");
-  if (replaced) {
-    rows.push({
-      ...base,
-      key: `${f.id}-was`,
-      number: o.flightNumber,
-      badge: d.type === "missed_connection" ? { tone: "bad", label: "Missed" } : { tone: "bad", label: "Cancelled" },
-      departAt: o.departAt,
-      arriveAt: o.arriveAt,
-      struck: true,
-    });
-    if (f.status === "rebooked") {
-      rows.push({ ...base, key: f.id, number: withSeat(f), badge: { tone: "done", label: "Rebooked" }, departAt: f.departAt, arriveAt: f.arriveAt, isNew: true });
-    }
-  } else {
-    const c = impact?.connection?.flightId === f.id ? impact.connection : null;
-    let badge: Row["badge"];
-    if (c?.status === "missed" && c.minutesAfter === null) badge = { tone: "warn", label: "At risk" };
-    else if (c?.status === "missed") badge = { tone: "bad", label: "Likely missed" };
-    else if (c?.status === "tight") badge = { tone: "warn", label: "Tight connection" };
-    else if (f.status === "delayed") {
-      const late = o ? minutesBetween(o.arriveAt, f.arriveAt) : 0;
-      badge = { tone: "warn", label: late > 0 ? `Delayed ${formatDuration(late)}` : "Delayed" };
-    } else if (f.status === "rebooked") badge = { tone: "done", label: "Rebooked" };
-    else if (f.status === "cancelled") badge = { tone: "bad", label: "Cancelled" };
-    else badge = { tone: "ok", label: "On time" };
-    const isNew = f.status === "rebooked";
-    rows.push({ ...base, key: f.id, number: isNew ? withSeat(f) : f.flightNumber, badge, departAt: f.departAt, arriveAt: f.arriveAt, struck: f.status === "cancelled", isNew });
-  }
-
-  return rows.map((r) => <FlightRow key={r.key} r={r} />);
-}
-
-function withSeat(f: Flight) {
-  return f.seat ? `${f.flightNumber} · Seat ${f.seat}` : f.flightNumber;
-}
-
-function FlightRow({ r }: { r: Row }) {
-  const displayTime = useTimeFormat();
-  return (
-    <div className={cx("flex flex-col gap-2 px-4 py-3.5", r.isNew && "bg-surface-2")}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-num text-[13px] text-ink-2">{r.number}</span>
-        <Badge tone={r.badge.tone}>{r.badge.label}</Badge>
-      </div>
-      <p
-        className={cx(
-          "flex flex-wrap items-baseline gap-x-2.5 font-num tabular-nums",
-          r.isNew ? "text-[24px] font-semibold" : "text-[20px] font-medium",
-          r.struck && "text-ink-faint line-through",
-        )}
-      >
-        {r.struck && <span className="sr-only">Was </span>}
-        <span>
-          {r.from} {displayTime(timePart(r.departAt))}
-        </span>
-        <span className={r.struck ? undefined : "text-ink-faint"} aria-hidden="true">
-          →
-        </span>
-        <span className="sr-only">to</span>
-        <span>
-          {r.to} {displayTime(timePart(r.arriveAt))}
-        </span>
-      </p>
-    </div>
   );
 }
 
@@ -466,27 +371,12 @@ function OnTrack({ trip }: { trip: Trip }) {
         <p className="text-ink-2">{toDo > 0 ? `${toDo} to do before you go` : "All set"}</p>
       </section>
 
-      <AtAGlance trip={trip} delay={160} />
-      <div className="h-4" />
-
-      <section
-        aria-label="Flights"
-        className="ck-rise mx-4 flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface"
-        style={rise(220)}
-      >
-        {trip.flights.map((f, i) => {
-          const next = trip.flights[i + 1];
-          return (
-            <div key={f.id} className="flex flex-col divide-y divide-line-soft">
-              {flightRows(trip, f, null)}
-              {next && <ConnectionRow arrive={f} depart={next} />}
-            </div>
-          );
-        })}
+      {/* The day as booked, on the same rail the change view uses. */}
+      <section aria-label="Your day" className="ck-rise" style={rise(160)}>
+        <DayPlan trip={trip} disruptionId={null} baseDelay={180} />
       </section>
 
       <BeforeYouGo trip={trip} delay={300} />
-      <WhenYouLand trip={trip} delay={360} />
       <BookingCodes trip={trip} delay={400} />
       <ContactsSection contacts={trip.contacts} delay={440} />
       <TripDetails trip={trip} delay={470} />
@@ -618,34 +508,6 @@ function tightLayover(trip: Trip): { gap: number; airport: string } | null {
     if (gap < TIGHT_CONNECTION_MINUTES) return { gap, airport: trip.flights[i + 1].from };
   }
   return null;
-}
-
-/** The layover between two flights, measured at the one airport they share. */
-function ConnectionRow({ arrive, depart }: { arrive: Flight; depart: Flight }) {
-  const gap = minutesBetween(arrive.arriveAt, depart.departAt);
-  const status = gap < 0 ? "missed" : gap < TIGHT_CONNECTION_MINUTES ? "tight" : "ok";
-  const badge = CONNECTION_BADGE[status];
-  return (
-    <div className="flex items-center justify-between gap-3 bg-surface-2 px-4 py-2.5">
-      <span className="flex flex-col">
-        <span className="ck-label">Change planes · {depart.from}</span>
-        <span className="text-[14px]">
-          {gap < 0 ? (
-            <>
-              Missed by <span className="font-num font-medium tabular-nums">{formatDuration(gap)}</span> in{" "}
-              {cityName(depart.from)}
-            </>
-          ) : (
-            <>
-              <span className="font-num font-medium tabular-nums">{formatDuration(gap)}</span> in{" "}
-              {cityName(depart.from)}
-            </>
-          )}
-        </span>
-      </span>
-      <Badge tone={badge.tone}>{badge.label}</Badge>
-    </div>
-  );
 }
 
 function Section({ title, delay, children }: { title: string; delay: number; children: ReactNode }) {

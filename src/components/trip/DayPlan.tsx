@@ -17,12 +17,12 @@ const MARKER_WORD: Record<PlanMarker, string> = {
   open: "Not known yet",
 };
 
-/** The traveler's day after the change, as one list down a rail (see planRows.ts). */
-export function DayPlan({ trip, disruptionId, baseDelay = 0 }: { trip: Trip; disruptionId: string; baseDelay?: number }) {
+/** The traveler's day as one list down a rail, as booked (null) or after a change (see planRows.ts). */
+export function DayPlan({ trip, disruptionId, baseDelay = 0 }: { trip: Trip; disruptionId: string | null; baseDelay?: number }) {
   const rows = buildDayPlan(trip, disruptionId);
   if (rows.length === 0) return null;
   return (
-    <ol aria-label="Your day, re-planned" className="flex flex-col px-3 pt-1 pb-2">
+    <ol aria-label={disruptionId ? "Your day, re-planned" : "Your day"} className="flex flex-col px-3 pt-1 pb-2">
       {rows.map((r, i) => (
         <Row key={r.id} r={r} first={i === 0} last={i === rows.length - 1} style={{ animationDelay: `${baseDelay + i * 90}ms` }} />
       ))}
