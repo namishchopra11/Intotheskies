@@ -154,7 +154,7 @@ login. Shared links use whatever address the app is open on, so open the app at
 
 **Do this**
 
-- Open the app at `https://layoverapp.vercel.app`, not any other address.
+- Open the app at `https://layoverapp.vercel.app/login`, not any other address.
 - Start with menu, **Clear this trip**, then **Try the sample trip**.
 - Leave the three switches in Settings **on**. With them off there is no notification card
   and the hotel and pickup are not handled, so the screen will not match the script.

@@ -30,7 +30,7 @@ The airline feed in the video is simulated, as it is in the demo.
 
 ## Try it
 
-Live: **https://layoverapp.vercel.app** (open it on a phone, tap **Continue as guest**,
+Live: **https://layoverapp.vercel.app/login** (open it on a phone, tap **Continue as guest**,
 then **Try the sample trip**).
 
 ## Run it
