@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Icon, SelectField, cx } from "@/components/ui";
+import { Button, Icon, SelectField, Sheet, cx } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
 
 type Props = {
@@ -41,8 +41,12 @@ export function BookingDatePicker({ label, date, time, onApply, onCancel }: Prop
   };
 
   return (
-    <div role="group" aria-label={`Choose ${label.toLowerCase()} date and time`} className="mt-1 flex flex-col gap-4 rounded-card border border-line bg-sunk p-3"
-      onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onCancel(); } }}>
+    <Sheet open onClose={onCancel} title={`Choose ${label.toLowerCase()} date and time`}
+      footer={<div className="flex gap-2">
+        <Button variant="ghost" className="flex-1" onClick={onCancel}>Cancel</Button>
+        <Button variant="primary" className="flex-1" icon="check" onClick={() => onApply(chosen, `${pad(hour)}:${minute}`)}>Use date & time</Button>
+      </div>}>
+    <div role="group" aria-label={`Choose ${label.toLowerCase()} date and time`} className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <button type="button" aria-label="Previous month" disabled={month.year <= 2000 && month.index === 0} onClick={() => moveMonth(-1)} className="inline-flex h-11 w-11 items-center justify-center rounded-control hover:bg-surface disabled:opacity-30"><Icon name="chevron-left" size={20} /></button>
         <p aria-live="polite" className="font-semibold">{monthLabel}</p>
@@ -67,10 +71,7 @@ export function BookingDatePicker({ label, date, time, onApply, onCancel }: Prop
         {format === "12h" && <SelectField label="AM / PM" value={hour >= 12 ? "PM" : "AM"} options={[{ value: "AM", label: "AM" }, { value: "PM", label: "PM" }]}
           onChange={(event) => setHour(hour % 12 + (event.target.value === "PM" ? 12 : 0))} />}
       </div>
-      <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1" onClick={onCancel}>Cancel</Button>
-        <Button variant="primary" className="flex-1" icon="check" onClick={() => onApply(chosen, `${pad(hour)}:${minute}`)}>Use date & time</Button>
-      </div>
     </div>
+    </Sheet>
   );
 }
