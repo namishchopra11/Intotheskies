@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton, Button, Field, HomeLogo, Icon, cx } from "@/components/ui";
 import { accountKey, useStoreReady, useTripStore } from "@/lib/store";
 import type { Profile } from "@/lib/types";
 import { SocialSignIn } from "./SocialSignIn";
 import { useTour } from "@/lib/tour";
+import { hasStartedSession, markSessionStarted } from "@/components/trip/useRequireProfile";
 
 type Mode = "signin" | "create";
 
@@ -32,6 +33,8 @@ export default function LoginPage() {
   const profile = useTripStore((s) => s.profile);
   const signIn = useTripStore((s) => s.signIn);
   const router = useRouter();
+  // Opening the link always lands here first, even when a profile is saved on the phone.
+  const wasStarted = useRef(hasStartedSession());
 
   const [mode, setMode] = useState<Mode>("signin");
   const [name, setName] = useState("");
@@ -49,9 +52,13 @@ export default function LoginPage() {
     setTried(false);
   }, []);
 
-  // Already signed in (not as a guest): nothing to do here.
   useEffect(() => {
-    if (ready && profile && !profile.guest) router.replace("/");
+    markSessionStarted();
+  }, []);
+
+  // Already signed in (not as a guest) and past the first screen: nothing to do here.
+  useEffect(() => {
+    if (ready && profile && !profile.guest && wasStarted.current) router.replace("/");
   }, [ready, profile, router]);
 
   const creating = mode === "create";
