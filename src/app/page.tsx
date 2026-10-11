@@ -50,6 +50,7 @@ export default function TripStatusPage() {
     <button
       type="button"
       aria-label="Trip menu"
+      data-tour="menu"
       onClick={() => setMenuOpen(true)}
       className="inline-flex h-11 w-11 items-center justify-center rounded-control text-ink hover:bg-sunk"
     >

@@ -6,6 +6,7 @@ import { BackButton, Button, Field, HomeLogo, Icon, cx } from "@/components/ui";
 import { accountKey, useStoreReady, useTripStore } from "@/lib/store";
 import type { Profile } from "@/lib/types";
 import { SocialSignIn } from "./SocialSignIn";
+import { useTour } from "@/lib/tour";
 
 type Mode = "signin" | "create";
 
@@ -68,13 +69,18 @@ export default function LoginPage() {
     // Logging back in: the name this account had on this phone, else one made from the email.
     const key = accountKey({ name: "", email, guest: false, provider: "email" });
     const known = key ? useTripStore.getState().accounts[key]?.name : undefined;
-    signIn({ name: creating ? name : known || nameFromEmail(email), email, guest: false, provider: "email" });
+    const nextProfile: Profile = { name: creating ? name : known || nameFromEmail(email), email, guest: false, provider: "email" };
+    signIn(nextProfile);
+    if (creating) useTour.getState().start(nextProfile);
     setPassword("");
     router.replace("/");
   };
 
   const social = (profile: Profile) => {
+    const key = accountKey(profile);
+    const known = key && useTripStore.getState().accounts[key];
     signIn(profile);
+    if (!known) useTour.getState().start(profile);
     router.replace("/");
   };
 

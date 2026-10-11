@@ -20,6 +20,7 @@ export function ProfileButton() {
       href="/settings"
       transitionTypes={["nav-forward"]}
       aria-label="Settings"
+      data-tour="profile"
       className="inline-flex h-11 w-11 items-center justify-center rounded-control hover:bg-sunk"
     >
       <span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-band text-[13px] font-semibold text-on-band">

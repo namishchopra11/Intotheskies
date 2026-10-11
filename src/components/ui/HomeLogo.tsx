@@ -17,6 +17,7 @@ export function HomeLogo() {
       href="/"
       transitionTypes={atHome ? undefined : NAV_BACK}
       aria-label="Layover home"
+      data-tour="home"
       onClick={(e) => {
         if (!atHome) return;
         e.preventDefault();

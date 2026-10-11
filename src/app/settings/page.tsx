@@ -7,6 +7,7 @@ import { SPEECH_VOICES } from "@/components/trip/speechVoices";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { Button, Card, Field, PageHeader, PageTransition, SelectField, Sheet, ThemeToggle, Toggle } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
+import { useTour } from "@/lib/tour";
 import { SpeechVoiceSchema, TimeFormatSchema, type Profile } from "@/lib/types";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -14,6 +15,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function SettingsPage() {
   const ok = useRequireProfile();
   const profile = useTripStore((s) => s.profile);
+  const router = useRouter();
 
   return (
     <PageTransition>
@@ -25,10 +27,16 @@ export default function SettingsPage() {
             <AutoUpdates />
             <Notifications />
             <Group title="Appearance">
-              <ThemeToggle />
+              <div data-tour="appearance"><ThemeToggle /></div>
             </Group>
             <TimeDisplay />
             <ListenVoice />
+            <Group title="Getting started">
+              <Button variant="secondary" block onClick={() => {
+                useTour.getState().start(profile, true);
+                router.push("/");
+              }}>Replay the quick tour</Button>
+            </Group>
             <Demo />
             <YourData />
             <p className="px-1 text-[12px] text-ink-2">Trips stay on this phone. Imports are read by Claude.</p>

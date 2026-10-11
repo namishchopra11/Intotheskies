@@ -25,6 +25,7 @@ function ImportCard() {
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-tour="import"
         className="mx-4 flex cursor-pointer items-center gap-3.5 rounded-card bg-signal px-4 py-3.5 text-left text-on-signal"
       >
         <span aria-hidden="true" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-ink/10">
@@ -82,7 +83,7 @@ function StartTrip() {
           error={tried && !name.trim() ? "Required." : undefined}
         />
         <div className="mt-auto pt-6 pb-[max(env(safe-area-inset-bottom),24px)]">
-          <Button type="submit" variant="primary" size="lg" block chip="arrow-right">
+          <Button data-tour="bookings" type="submit" variant="primary" size="lg" block chip="arrow-right">
             Start adding bookings
           </Button>
         </div>
@@ -234,7 +235,7 @@ function Section<T extends { id: string }>({
           ))}
         </Card>
       )}
-      <Button variant="secondary" size="sm" block icon="plus" onClick={onAdd}>
+      <Button data-tour={kind.noun === "flight" ? "bookings" : undefined} variant="secondary" size="sm" block icon="plus" onClick={onAdd}>
         Add {items.length > 0 ? "another" : "a"} {kind.noun}
       </Button>
     </section>
