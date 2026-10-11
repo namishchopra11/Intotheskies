@@ -2,7 +2,7 @@ import { cityName } from "@/lib/domain/airports";
 import { recipientTasks } from "@/lib/domain/checklist";
 import { computeImpact, isArrivalUnknown } from "@/lib/domain/impact";
 import type { SummaryOptions } from "@/lib/domain/summary";
-import { lowerFirst } from "@/lib/domain/text";
+import { flightLabel, lowerFirst } from "@/lib/domain/text";
 import { formatDate, formatDuration, timePart } from "@/lib/domain/time";
 import type { Trip } from "@/lib/types";
 
@@ -54,7 +54,7 @@ export function buildMessage(trip: Trip, disruptionId: string, options: SummaryO
     flight = "I don't have a new flight yet.";
   } else {
     const label = d.type === "delay" ? "New times" : "New flight";
-    flight = `${label}: ${f.flightNumber}, ${from} ${timePart(f.departAt)} – ${to} ${timePart(f.arriveAt)} (${formatDate(f.departAt)}).`;
+    flight = `${label}: ${flightLabel(f.flightNumber)}, ${from} ${timePart(f.departAt)} – ${to} ${timePart(f.arriveAt)} (${formatDate(f.departAt)}).`;
     const c = impact.connection;
     if (c?.status === "missed") flight += " I'll likely miss my connection.";
     else if (c?.status === "tight") flight += " My connection is tight.";

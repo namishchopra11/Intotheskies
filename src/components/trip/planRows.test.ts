@@ -14,10 +14,10 @@ describe("buildDayPlan", () => {
     const change = simulateFlightChange()!;
     const rows = buildDayPlan(useTripStore.getState().trip!, change.disruptionId);
     expect(rows.map((r) => r.title)).toEqual([
-      "Leave San Francisco · BA 286",
+      "Leave San Francisco · Flight BA 286",
       "Land in London",
-      "AZ 201 to Rome",
-      "New flight · AZ 207",
+      "Flight AZ 201 to Rome",
+      "Flight AZ 207 to Rome",
       "Land in Rome",
       "Your pickup",
       "Hotel front desk closes",
@@ -32,14 +32,14 @@ describe("buildDayPlan", () => {
   it("lists the trip as booked when nothing has changed (null)", () => {
     const rows = buildDayPlan(useTripStore.getState().trip!, null);
     expect(rows.map((r) => r.title)).toEqual([
-      "Leave San Francisco · BA 286",
+      "Leave San Francisco · Flight BA 286",
       "Land in London",
-      "Fly to Rome · AZ 201",
+      "Fly to Rome · Flight AZ 201",
       "Land in Rome",
       "Your pickup",
       "Hotel front desk closes",
     ]);
-    expect(rows[1].status).toEqual({ tone: "warn", text: "Tight — 55 min until AZ 201" });
+    expect(rows[1].status).toEqual({ tone: "warn", text: "Tight — 55 min until Flight AZ 201" });
     expect(rows[3].detail).toBe("Marco's picking you up");
     expect(rows.some((r) => r.struck || r.highlight)).toBe(false);
   });
@@ -62,15 +62,15 @@ describe("buildDayPlan on a round trip saved out of order", () => {
   it("puts the pickup and hotel after the Rome landing, and the flights home after them", () => {
     const rows = buildDayPlan(roundTrip(), null);
     expect(rows.map((r) => r.title)).toEqual([
-      "Leave San Francisco · BA 286",
+      "Leave San Francisco · Flight BA 286",
       "Land in London",
-      "Fly to Rome · AZ 201",
+      "Fly to Rome · Flight AZ 201",
       "Land in Rome",
       "Your pickup",
       "Hotel front desk closes",
-      "Leave Rome · AZ 204",
+      "Leave Rome · Flight AZ 204",
       "Land in London",
-      "Fly to San Francisco · BA 287",
+      "Fly to San Francisco · Flight BA 287",
       "Land in San Francisco",
     ]);
     // Four days in Rome is a stay, not a layover.

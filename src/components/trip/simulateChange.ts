@@ -1,6 +1,7 @@
 import { useTripStore } from "@/lib/store";
 import { findConnection } from "@/lib/domain/impact";
 import { cityName } from "@/lib/domain/airports";
+import { flightLabel } from "@/lib/domain/text";
 import { addMinutes, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { AutoAction } from "@/lib/types";
 
@@ -46,9 +47,9 @@ export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlert
     const id = reportDisruption(first.id, "cancellation");
     return {
       disruptionId: id,
-      title: `Simulated change · ${first.flightNumber} is cancelled`,
+      title: `Simulated change · ${flightLabel(first.flightNumber)} is cancelled`,
       lines: [
-        `${first.flightNumber} to ${cityName(first.to)} was cancelled and there's no new flight yet.`,
+        `${flightLabel(first.flightNumber)} to ${cityName(first.to)} was cancelled and there's no new flight yet.`,
         "Your checklist is ready. Tap to see what to do first.",
       ],
     };
@@ -62,9 +63,9 @@ export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlert
     });
     return {
       disruptionId: id,
-      title: `Simulated change · ${first.flightNumber} is delayed`,
+      title: `Simulated change · ${flightLabel(first.flightNumber)} is delayed`,
       lines: [
-        `${first.flightNumber} is ${formatDuration(late)} late.`,
+        `${flightLabel(first.flightNumber)} is ${formatDuration(late)} late.`,
         `Now lands ${timePart(addMinutes(first.arriveAt, late))}.`,
       ],
     };
@@ -106,7 +107,7 @@ export function simulateFlightChange(scenario: Scenario = "missed"): FlightAlert
     disruptionId: id,
     title: "Simulated flight change · new plan ready",
     lines: [
-      `Missed ${onward.flightNumber}. New flight ${newNumber}, ${timePart(newDepart)} – ${timePart(newArrive)}.`,
+      `Missed ${flightLabel(onward.flightNumber)}. Rebooked on ${flightLabel(newNumber)}, ${timePart(newDepart)} – ${timePart(newArrive)}.`,
       ...(handled ? [handled] : []),
       open > 0 ? `${open} to do.` : "Tap to see your plan.",
     ],

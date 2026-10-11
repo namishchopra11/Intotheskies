@@ -1,5 +1,6 @@
 import { cityName } from "@/lib/domain/airports";
 import { isArrivalUnknown, lastLeg, nextLeg } from "@/lib/domain/impact";
+import { flightLabel } from "@/lib/domain/text";
 import { datePart, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import { buildTimeline, finalArrival, type TimelineNode } from "@/lib/domain/timeline";
 import type { Flight, Trip } from "@/lib/types";
@@ -91,7 +92,7 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
       rows.push({
         id: `${f.id}-was`,
         time: timePart(o.departAt),
-        title: `${o.flightNumber} to ${cityName(f.to)}`,
+        title: `${flightLabel(o.flightNumber)} to ${cityName(f.to)}`,
         struck: true,
         status: { tone: "bad", text: d?.type === "missed_connection" && d.flightId === f.id ? "Missed" : "Cancelled" },
         marker: "x",
@@ -109,7 +110,7 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
         rows.push({
           id: f.id,
           time: timePart(f.departAt),
-          title: `New flight · ${f.flightNumber}`,
+          title: `${flightLabel(f.flightNumber)} to ${cityName(f.to)}`,
           detail: bookingLine(f),
           status: { tone: "ok", text: "Rebooked" },
           marker: "check",
@@ -124,7 +125,7 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
       rows.push({
         id: f.id,
         time: timePart(f.departAt),
-        title: `${verb} ${place} · ${f.flightNumber}`,
+        title: `${verb} ${place} · ${flightLabel(f.flightNumber)}`,
         status: unconfirmed
           ? { tone: "warn", text: "Depends on a new flight" }
           : late > 0
@@ -145,8 +146,8 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
     if (unknown) status = { tone: "warn", text: "No new arrival time yet" };
     else if (onward && !isArrivalUnknown(onward)) {
       const gap = minutesBetween(f.arriveAt, onward.departAt);
-      const what = onward.original && onward.status === "rebooked" ? "your new flight" : onward.flightNumber;
-      if (gap < 0) status = { tone: "bad", text: `Lands after ${onward.flightNumber} leaves` };
+      const what = onward.original && onward.status === "rebooked" ? "your new flight" : flightLabel(onward.flightNumber);
+      if (gap < 0) status = { tone: "bad", text: `Lands after ${flightLabel(onward.flightNumber)} leaves` };
       else if (gap < 60) status = { tone: "warn", text: `Tight — ${formatDuration(gap)} until ${what}` };
       else detail = `${formatDuration(gap)} until ${what}`;
     } else if (!onward && f.id === arrival.flight.id) {

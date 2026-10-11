@@ -1,4 +1,5 @@
 import { formatDate, formatDateTime, minutesBetween } from "@/lib/domain/time";
+import { flightLabel } from "@/lib/domain/text";
 import { LocalDateTimeSchema, type Flight, type Person, type PersonRole, type Ride, type Stay } from "@/lib/types";
 import type { SuggestionSource } from "./suggestions";
 
@@ -81,7 +82,7 @@ export const FLIGHT: EntryKind<Flight> = {
   // No departure-vs-arrival check: the two times are at different airports.
   check: (d): Record<string, string> =>
     d.from && d.from === d.to ? { to: "Arrival airport is the same as departure." } : {},
-  title: (f) => `${f.flightNumber} · ${f.from} – ${f.to}`,
+  title: (f) => `${flightLabel(f.flightNumber)} · ${f.from} – ${f.to}`,
   subtitle: (f) => `${f.airline} · ${formatDateTime(f.departAt)}`,
 };
 

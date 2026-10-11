@@ -680,3 +680,11 @@ dialog.ck-sheet[data-closing="true"] > .ck-sheet-panel {
   .ck-tour-spotlight, .ck-tour-card { transition: none; }
   .ck-account-tour[open] .ck-tour-card, .ck-tour-copy { animation: none; }
 }
+
+/* When the demo Next circle has to sit over the column (narrow screens), leave room under
+   the last thing on the page so it never covers it. Wider screens put it beside the column. */
+@media (max-width: 679px) {
+  body:has([data-demo-next]) .app-column {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+  }
+}

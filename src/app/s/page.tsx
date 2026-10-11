@@ -8,6 +8,7 @@ import { cityName } from "@/lib/domain/airports";
 import { lastLeg } from "@/lib/domain/impact";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
+import { flightLabel } from "@/lib/domain/text";
 import { connectionState, stayRisk, storyFor, type SnapConnection, type SnapFlight, type SnapStay } from "./story";
 
 // The URL fragment never reaches a server, so it is read on the client only.
@@ -202,7 +203,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
     <div className="flex flex-col gap-1.5 px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <p className="min-w-0 text-[14px] text-ink-2">
-          {cityName(f.from)} – {cityName(f.to)} · <span className="whitespace-nowrap">{f.flightNumber}</span>
+          {cityName(f.from)} – {cityName(f.to)} · <span className="whitespace-nowrap">{flightLabel(f.flightNumber)}</span>
         </p>
         <Badge tone={b.tone}>{b.label}</Badge>
       </div>

@@ -72,7 +72,7 @@ describe("toImportItems", () => {
 
   it("skips bookings whose times are missing or malformed", () => {
     const skipped = items.filter((i) => i.kind === "skipped").map((i) => i.label);
-    expect(skipped).toEqual(["AZ 201 · LHR – FCO", "Rome Transfers · FCO – Hotel"]);
+    expect(skipped).toEqual(["Flight AZ 201 · LHR – FCO", "Rome Transfers · FCO – Hotel"]);
   });
 
   it("drops an unreadable latest check-in rather than storing it", () => {

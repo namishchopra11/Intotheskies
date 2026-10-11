@@ -1,6 +1,7 @@
 import { checklistCopy, shareCopy, type ChecklistCopyKey } from "@/lib/content/checklistCopy";
 import type { Contact, ContactKind, Disruption, DisruptionType, Flight, Task, Trip } from "@/lib/types";
 import { computeImpact, type Impact } from "./impact";
+import { flightLabel } from "./text";
 
 // Most urgent first. Every key in checklistCopy appears here exactly once.
 const URGENCY: ChecklistCopyKey[] = [
@@ -32,7 +33,7 @@ const FALLBACK: Required<Vars> = {
   airline: "the airline",
   flight: "your flight",
   onwardAirline: "the airline",
-  onwardFlight: "",
+  onwardFlight: "the onward flight",
   hotel: "your hotel",
   insurer: "",
 };
@@ -68,13 +69,15 @@ function findContact(trip: Trip, kind: ContactKind, name?: string): Contact | un
   return ofKind.find((c) => sameName(c.name, name));
 }
 
+const label = (n: string | undefined) => (n ? flightLabel(n) : undefined);
+
 // The airline that caused the change is the one to ask; the new one for a new booking.
 function baseVarsFor(flight: Flight | undefined, onward: Flight | undefined, insurer: Contact | undefined): Vars {
   return {
     airline: flight?.original?.airline ?? flight?.airline,
-    flight: flight?.original?.flightNumber ?? flight?.flightNumber,
+    flight: label(flight?.original?.flightNumber ?? flight?.flightNumber),
     onwardAirline: onward?.airline,
-    onwardFlight: onward?.flightNumber,
+    onwardFlight: label(onward?.flightNumber),
     insurer: insurer?.name,
   };
 }
@@ -166,7 +169,7 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
     } else if (key === "confirm_new_booking") {
       const airline = flight?.airline;
       tasks.push(
-        make(key, { ...baseVars, airline, flight: flight?.flightNumber }, airline ? findContact(trip, "airline", airline) : undefined),
+        make(key, { ...baseVars, airline, flight: label(flight?.flightNumber) }, airline ? findContact(trip, "airline", airline) : undefined),
       );
     } else {
       tasks.push(make(key, baseVars, contactFor[key]));
@@ -209,7 +212,7 @@ export function recipientTasks(trip: Trip, disruption: Disruption, options: { in
       if (!stay) continue;
       vars = { ...baseVars, hotel: stay.name };
     } else if (key === "confirm_new_booking") {
-      vars = { ...baseVars, airline: flight?.airline, flight: flight?.flightNumber };
+      vars = { ...baseVars, airline: flight?.airline, flight: label(flight?.flightNumber) };
     }
     lines.push(fill(template, vars, RECIPIENT_FALLBACK));
   }

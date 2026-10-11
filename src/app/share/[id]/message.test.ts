@@ -80,7 +80,7 @@ describe("buildMessage by disruption type", () => {
       "Change of plans — my flight from San Francisco to London is running 45 min late.",
     );
     expect(line(lines, "flight")!.text).toBe(
-      "New times: BA 286, San Francisco 17:25 – London 11:20 (Fri 16 Oct). My connection is tight.",
+      "New times: Flight BA 286, San Francisco 17:25 – London 11:20 (Fri 16 Oct). My connection is tight.",
     );
   });
 
@@ -101,7 +101,7 @@ describe("buildMessage by disruption type", () => {
     const lines = buildMessage(report("cancellation", FIRST, REPLACEMENT), "d1", ALL_ON);
     expect(line(lines, "lead")!.text).toContain("was cancelled.");
     expect(line(lines, "flight")!.text).toBe(
-      "New flight: BA 288, San Francisco 18:40 – London 12:35 (Fri 16 Oct). I'll likely miss my connection.",
+      "New flight: Flight BA 288, San Francisco 18:40 – London 12:35 (Fri 16 Oct). I'll likely miss my connection.",
     );
   });
 
@@ -115,8 +115,8 @@ describe("buildMessage by disruption type", () => {
   it("rebooked: shows the new flight", () => {
     const lines = buildMessage(report("rebooked", FIRST, REPLACEMENT), "d1", ALL_ON);
     expect(line(lines, "lead")!.text).toBe("Change of plans — my flight from San Francisco to London has changed.");
-    expect(line(lines, "flight")!.text).toContain("New flight: BA 288, San Francisco 18:40 – London 12:35");
-    expect(line(lines, "unresolved")!.text).toContain("confirming the new booking for BA 288");
+    expect(line(lines, "flight")!.text).toContain("New flight: Flight BA 288, San Francisco 18:40 – London 12:35");
+    expect(line(lines, "unresolved")!.text).toContain("confirming the new booking for Flight BA 288");
   });
 
   it("returns nothing for an unknown disruption", () => {
@@ -162,13 +162,13 @@ describe("buildMessage toggles", () => {
     expect(line(offLines, "hotel")!.on).toBe(false);
     // The hotel's name must not leak through the open tasks either.
     expect(messageText(offLines)).not.toContain("Aventino");
-    expect(line(offLines, "unresolved")!.text).toContain("rebooking the onward flight AZ 201");
+    expect(line(offLines, "unresolved")!.text).toContain("rebooking Flight AZ 201");
   });
 
   it("includeOpenTasks switches the 'Still sorting' line", () => {
     const on = buildMessage(delayed, "d1", ALL_ON);
     expect(line(on, "unresolved")!.on).toBe(true);
-    expect(messageText(on)).toContain("Still sorting: confirming the latest times for BA 286");
+    expect(messageText(on)).toContain("Still sorting: confirming the latest times for Flight BA 286");
 
     const off = buildMessage(delayed, "d1", { ...ALL_ON, includeOpenTasks: false });
     expect(line(off, "unresolved")!.on).toBe(false);

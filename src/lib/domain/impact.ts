@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Flight, Stay, Trip } from "@/lib/types";
+import { flightLabel } from "./text";
 import { datePart, formatDate, minutesBetween, timePart } from "./time";
 
 export const ConnectionStatusSchema = z.enum(["ok", "tight", "missed"]);
@@ -140,14 +141,14 @@ function stayReason(
   unknown: boolean,
 ): string | null {
   if (unknown) {
-    return `${flight.flightNumber} is cancelled with no new arrival time yet, so check-in at ${stay.name} is at risk.`;
+    return `${flightLabel(flight.flightNumber)} is cancelled with no new arrival time yet, so check-in at ${stay.name} is at risk.`;
   }
   if (onward && connection) {
     if (connection.status === "missed") {
-      return `You are likely to miss ${onward.flightNumber}, so you may reach ${stay.name} late or on a later day.`;
+      return `You are likely to miss ${flightLabel(onward.flightNumber)}, so you may reach ${stay.name} late or on a later day.`;
     }
     if (connection.status === "tight") {
-      return `Your connection to ${onward.flightNumber} is tight. If you miss it you will reach ${stay.name} late.`;
+      return `Your connection to ${flightLabel(onward.flightNumber)} is tight. If you miss it you will reach ${stay.name} late.`;
     }
     return null;
   }

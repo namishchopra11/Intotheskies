@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS, type AutoAction, type Flight, type Ride, type Settings, type Stay, type Trip } from "@/lib/types";
 import { cityName } from "./airports";
 import { computeImpact, isArrivalUnknown, lastLeg } from "./impact";
+import { flightLabel } from "./text";
 import { addMinutes, datePart, formatDate, minutesBetween, timePart } from "./time";
 
 /**
@@ -54,11 +55,11 @@ function flightAction(flight: Flight, disruptionId: string): AutoAction {
     return {
       ...base,
       status: "done",
-      title: `Rebooked on ${flight.flightNumber}`,
+      title: `Rebooked on ${flightLabel(flight.flightNumber)}`,
       detail: times,
     };
   }
-  return { ...base, status: "done", title: `Updated ${flight.flightNumber} times`, detail: times };
+  return { ...base, status: "done", title: `Updated ${flightLabel(flight.flightNumber)} times`, detail: times };
 }
 
 /**
