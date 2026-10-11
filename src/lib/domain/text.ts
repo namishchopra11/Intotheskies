@@ -6,3 +6,8 @@
 export function lowerFirst(s: string): string {
   return /^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s;
 }
+
+/** "BA 286" -> "Flight BA 286", so a bare airline code reads as a flight. */
+export function flightLabel(flightNumber: string): string {
+  return `Flight ${flightNumber}`;
+}

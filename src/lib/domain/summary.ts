@@ -2,6 +2,7 @@ import type { Disruption, Flight, Trip } from "@/lib/types";
 import { cityName } from "./airports";
 import { recipientTasks } from "./checklist";
 import { computeImpact, isArrivalUnknown, type Impact } from "./impact";
+import { flightLabel } from "./text";
 import { datePart, formatDate, formatDateTime, formatDuration, timePart } from "./time";
 
 export type SummaryOptions = {
@@ -30,8 +31,8 @@ function whatChanged(flight: Flight, disruption: Disruption, impact: Impact): st
   const where = route(flight);
   if (isArrivalUnknown(flight)) {
     return disruption.type === "missed_connection"
-      ? `I missed ${was.flightNumber} (${where}) and don't have a new flight yet.`
-      : `${was.flightNumber} (${where}) was cancelled. I don't have a new flight yet.`;
+      ? `I missed ${flightLabel(was.flightNumber)} (${where}) and don't have a new flight yet.`
+      : `${flightLabel(was.flightNumber)} (${where}) was cancelled. I don't have a new flight yet.`;
   }
 
   const sameDay = datePart(was.arriveAt) === datePart(flight.arriveAt);
@@ -45,18 +46,18 @@ function whatChanged(flight: Flight, disruption: Disruption, impact: Impact): st
   if (disruption.type === "delay") {
     const amount =
       impact.delayMinutes && impact.delayMinutes > 0 ? ` by ${formatDuration(impact.delayMinutes)}` : "";
-    return `${flight.flightNumber} (${where}) is delayed${amount}. ${timing}`;
+    return `${flightLabel(flight.flightNumber)} (${where}) is delayed${amount}. ${timing}`;
   }
   const newFlight =
     flight.flightNumber === was.flightNumber
       ? "The flight has been rescheduled."
-      : `I'm now on ${flight.airline} ${flight.flightNumber}.`;
+      : `I'm now on ${flightLabel(flight.flightNumber)} (${flight.airline}).`;
   const lead =
     disruption.type === "cancellation"
-      ? `${was.flightNumber} (${where}) was cancelled.`
+      ? `${flightLabel(was.flightNumber)} (${where}) was cancelled.`
       : disruption.type === "missed_connection"
-        ? `I missed ${was.flightNumber} (${where}).`
-        : `My flight ${was.flightNumber} (${where}) has changed.`;
+        ? `I missed ${flightLabel(was.flightNumber)} (${where}).`
+        : `${flightLabel(was.flightNumber)} (${where}) has changed.`;
   return `${lead} ${newFlight} ${timing}`;
 }
 
@@ -64,7 +65,7 @@ function connectionLine(trip: Trip, impact: Impact): string | null {
   const c = impact.connection;
   const onward = c && trip.flights.find((f) => f.id === c.flightId);
   if (!c || !onward) return null;
-  const name = `${onward.flightNumber} to ${cityName(onward.to)}`;
+  const name = `${flightLabel(onward.flightNumber)} to ${cityName(onward.to)}`;
   if (c.minutesAfter === null) return `My connection to ${name} is at risk until I have a new flight.`;
   if (c.status === "missed") return `That is after ${name} departs, so I expect to miss that connection.`;
   const was = c.minutesAfter === c.minutesBefore ? "" : ` (it was ${formatDuration(c.minutesBefore)})`;
@@ -76,7 +77,7 @@ function connectionLine(trip: Trip, impact: Impact): string | null {
 
 function itineraryLine(flight: Flight, impact: Impact, withRef: boolean): string {
   const ref = withRef && flight.bookingRef ? ` Booking ref ${flight.bookingRef}.` : "";
-  const head = `- ${flight.flightNumber}, ${route(flight)}:`;
+  const head = `- ${flightLabel(flight.flightNumber)}, ${route(flight)}:`;
   if (isArrivalUnknown(flight)) return `${head} cancelled, no new flight yet.${ref}`;
   const atRisk = impact.connection?.flightId === flight.id && impact.connection.status !== "ok";
   const tag = atRisk

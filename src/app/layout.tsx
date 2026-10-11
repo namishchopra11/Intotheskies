@@ -61,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AppOpening />
         <PullToRefresh>
         {/* One phone-width column everywhere, centred on larger screens. */}
-        <div className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col pb-[env(safe-area-inset-bottom)]">
+        <div className="app-column mx-auto flex min-h-dvh w-full max-w-[520px] flex-col pb-[env(safe-area-inset-bottom)]">
           {children}
         </div>
         {/* Reads the URL, so it streams in after the static shell. */}

@@ -234,7 +234,7 @@ Status: wired end to end. The library (`src/lib/solana/**`, `Trip.payoutAddress`
 `setPayoutAddress`, `SummaryOptions.fundsRequest`, `ShareSnapshot.fundsRequest`) is used by
 three screens:
 
-- `/` (trip menu): the "Solana address (optional)" field saves `Trip.payoutAddress` through
+- `/settings` ("Send help", shown when a trip is open): the "Solana address (optional)" field saves `Trip.payoutAddress` through
   `setPayoutAddress`. "Restart the demo trip" keeps it; "Clear this trip" removes it.
 - `/share/[id]`: the "Ask for help" section has an "Add a Send help button" toggle (disabled
   until an address is saved) and an amount field. It puts `fundsRequest` in the link.
@@ -263,10 +263,10 @@ Make no claims about legal rights or compensation amounts anywhere in the app.
 
 | Route | What it is |
 | --- | --- |
-| `/` | Everything about the trip: on-track view, then the flap board, the ripple timeline, Handled for you, Do this now and the checklist, share and listen. With no trip: Add your trip, Try the sample trip, saved trips. Also the trip menu (theme, voice, Solana address, Settings, edit the trip, restart or clear the demo trip) |
+| `/` | Everything about the trip: on-track view, then the flap board, the ripple timeline, Handled for you, Do this now and the checklist, share and listen. With no trip: Add your trip, Try the sample trip, saved trips. Also the trip menu (theme, Settings, edit the trip, restart or clear the demo trip) |
 | `/trip` | Enter or edit flights, hotels and rides by hand, or import them from pasted text |
 | `/login` | Demo sign-in (name and email kept on the phone) or Continue as guest |
-| `/settings` | Profile, what Layover may do by itself, notifications, theme, sign out |
+| `/settings` | Profile, what Layover may do by itself, notifications, theme, voice, Solana address, sign out |
 | `/share/[id]` | Build the update for people waiting: per-person drafts (Send to) and copy text or a link |
 | `/s` | Read-only shared update, data in the URL fragment |
 | `/ui-kit` | Design reference for the UI primitives (not linked from the app) |

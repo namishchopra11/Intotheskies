@@ -1,5 +1,6 @@
 import { cityName } from "@/lib/domain/airports";
 import { TIGHT_CONNECTION_MINUTES, lastLeg } from "@/lib/domain/impact";
+import { flightLabel } from "@/lib/domain/text";
 import { datePart, formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { Flight, ReminderPreferences, Ride, Stay, Trip } from "@/lib/types";
 
@@ -40,7 +41,7 @@ export function prepItems(trip: Trip, preferences?: ReminderPreferences): PrepIt
   const airlines = [...new Set(flights.map((f) => f.airline))];
   items.push({
     key: "checkin",
-    title: `Check in for ${list(flights.map((f) => f.flightNumber))}`,
+    title: `Check in for ${list(flights.map((f) => flightLabel(f.flightNumber)))}`,
     detail: `Save the boarding passes to your phone and get the ${list(airlines)} ${airlines.length === 1 ? "app" : "apps"}.`,
   });
 
@@ -113,7 +114,7 @@ export function arrivalPlan(trip: Trip): ArrivalStep[] {
       key: "land",
       time: timePart(landing),
       title: `Land in ${cityName(last.to)}`,
-      detail: `${last.flightNumber} at ${last.to}, ${formatDate(landing)}`,
+      detail: `${flightLabel(last.flightNumber)} at ${last.to}, ${formatDate(landing)}`,
     },
   ];
 
@@ -167,7 +168,7 @@ export function bookingCodes(trip: Trip): BookingCode[] {
   for (const f of flightsInOrder(trip)) {
     if (!f.bookingRef || seen.has(f.bookingRef)) continue;
     seen.add(f.bookingRef);
-    codes.push({ key: `flight:${f.id}`, label: f.airline, detail: f.flightNumber, code: f.bookingRef });
+    codes.push({ key: `flight:${f.id}`, label: f.airline, detail: flightLabel(f.flightNumber), code: f.bookingRef });
   }
   for (const s of trip.stays) {
     if (s.confirmation) codes.push({ key: `stay:${s.id}`, label: s.name, detail: "Hotel", code: s.confirmation });

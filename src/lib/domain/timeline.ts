@@ -2,6 +2,7 @@ import type { Flight, Stay, Trip } from "@/lib/types";
 import { taskId } from "./checklist";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, isArrivalUnknown, lastLeg, nextLeg } from "./impact";
 import { cityName } from "./airports";
+import { flightLabel } from "./text";
 import { datePart, formatDate, formatDuration, minutesBetween, timePart } from "./time";
 
 export type TimelineState = "ok" | "warn" | "bad" | "idle";
@@ -57,12 +58,12 @@ function flightNode(f: Flight): TimelineNode {
   const unknown = isArrivalUnknown(f);
   const late = o ? minutesBetween(o.arriveAt, f.arriveAt) : 0;
   const route = `${f.from} – ${f.to}`;
-  const base = { id: f.id, kind: "flight" as const, title: `${f.flightNumber} · ${route}` };
+  const base = { id: f.id, kind: "flight" as const, title: `${flightLabel(f.flightNumber)} · ${route}` };
   if (f.status === "cancelled" && unknown) {
     return { ...base, detail: "Cancelled. No new time yet.", state: "bad", time: "–:–", was: o && timePart(o.arriveAt) };
   }
   if (f.status === "rebooked") {
-    const was = o && o.flightNumber !== f.flightNumber ? `Was ${o.flightNumber}, ${timePart(o.departAt)}. ` : "";
+    const was = o && o.flightNumber !== f.flightNumber ? `Was ${flightLabel(o.flightNumber)}, ${timePart(o.departAt)}. ` : "";
     return { ...base, detail: `${was}Leaves ${timePart(f.departAt)}, lands ${timePart(f.arriveAt)}.`, state: "ok", time: timePart(f.arriveAt), was: o && o.arriveAt !== f.arriveAt ? timePart(o.arriveAt) : undefined };
   }
   if (late > 0) {
@@ -76,7 +77,7 @@ function connectionNode(a: Flight, b: Flight): TimelineNode {
   const city = cityName(b.from);
   const id = `${a.id}>${b.id}`;
   if (isArrivalUnknown(a)) {
-    return { id, kind: "connection", title: `Connection in ${city}`, detail: `${a.flightNumber} has no new arrival time, so ${b.flightNumber} is at risk.`, state: "bad", broken: true };
+    return { id, kind: "connection", title: `Connection in ${city}`, detail: `${flightLabel(a.flightNumber)} has no new arrival time, so ${flightLabel(b.flightNumber)} is at risk.`, state: "bad", broken: true };
   }
   const booked = b.original?.departAt ?? b.departAt;
   const gapBooked = minutesBetween(a.arriveAt, booked);
@@ -84,8 +85,8 @@ function connectionNode(a: Flight, b: Flight): TimelineNode {
     return {
       id,
       kind: "connection",
-      title: `Missed ${b.original?.flightNumber ?? b.flightNumber}`,
-      detail: `${a.flightNumber} lands ${timePart(a.arriveAt)}, ${formatDuration(-gapBooked)} after ${b.original?.flightNumber ?? b.flightNumber} left at ${timePart(booked)}.`,
+      title: `Missed ${flightLabel(b.original?.flightNumber ?? b.flightNumber)}`,
+      detail: `${flightLabel(a.flightNumber)} lands ${timePart(a.arriveAt)}, ${formatDuration(-gapBooked)} after ${flightLabel(b.original?.flightNumber ?? b.flightNumber)} left at ${timePart(booked)}.`,
       state: "bad",
       broken: true,
     };
@@ -96,7 +97,7 @@ function connectionNode(a: Flight, b: Flight): TimelineNode {
     id,
     kind: "connection",
     title: `${formatDuration(gap)} in ${city}`,
-    detail: tight ? `Tight for ${b.flightNumber}.` : `Enough time for ${b.flightNumber}.`,
+    detail: tight ? `Tight for ${flightLabel(b.flightNumber)}.` : `Enough time for ${flightLabel(b.flightNumber)}.`,
     state: tight ? "warn" : "ok",
   };
 }

@@ -11,7 +11,7 @@ until someone adds the keys and redeploys.
 
 ## What I tested, and where
 
-- **Live site:** `https://connectionkeeper.vercel.app`, built from `main` at `b577236` (I
+- **Live site:** `https://layoverapp.vercel.app`, built from `main` at `b577236` (I
   checked the deployment's commit against `origin/main`). Used for the three demo runs and
   one Listen call.
 - **Local production build** of this branch (`pnpm build`, `pnpm start`), with no API keys.
@@ -127,10 +127,10 @@ until someone adds the keys and redeploys.
 
 ### 8. Only one address is public (note, nothing to fix)
 
-`connectionkeeper.vercel.app` opens for anyone. The other addresses Vercel gives the project
+`layoverapp.vercel.app` opens for anyone. The other addresses Vercel gives the project
 (`connectionkeeper-claude-fd93.vercel.app` and the per-deployment ones) ask for a Vercel
 login. Shared links use whatever address the app is open on, so open the app at
-`connectionkeeper.vercel.app` on stage or the second device will hit a login page.
+`layoverapp.vercel.app` on stage or the second device will hit a login page.
 
 ### 9. Small things, not fixed
 
@@ -154,7 +154,7 @@ login. Shared links use whatever address the app is open on, so open the app at
 
 **Do this**
 
-- Open the app at `https://connectionkeeper.vercel.app`, not any other address.
+- Open the app at `https://layoverapp.vercel.app`, not any other address.
 - Start with menu, **Clear this trip**, then **Try the sample trip**.
 - Leave the three switches in Settings **on**. With them off there is no notification card
   and the hotel and pickup are not handled, so the screen will not match the script.

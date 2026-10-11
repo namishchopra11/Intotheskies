@@ -279,7 +279,7 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
               if (refreshing && event.target === event.currentTarget && event.animationName === "ck-ptr-cross") setReadyToSettle(true);
             }}
             style={{ transform: `translateX(${15 + Math.min(distance / THRESHOLD, 1) * 30}%)`, animationDuration: `${flightMs}ms` }}>
-            <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-dashed border-current opacity-40"
+            <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-current opacity-40"
               style={{ maskImage: "linear-gradient(to right, transparent, #000)", WebkitMaskImage: "linear-gradient(to right, transparent, #000)" }} />
             <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--signal)" stroke="currentColor"
               strokeWidth="1.25" strokeLinejoin="round" className="absolute left-0 top-1/2 -ml-3 -mt-3"

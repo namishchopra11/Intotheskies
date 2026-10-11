@@ -22,9 +22,15 @@ itself, and the update is ready to send to the person waiting.
 | --- | --- | --- | --- |
 | <img src="docs/screenshots/1-on-track.png" width="190" alt="Layover: the trip is on time, with a tight 55-minute connection in London flagged"> | <img src="docs/screenshots/2-new-plan.png" width="190" alt="London connection missed: the day rebuilds itself around the new 2:25 PM flight"> | <img src="docs/screenshots/3-share.png" width="190" alt="Share update: Text Marco, Email Mum and Text the hotel, each message already written"> | <img src="docs/screenshots/4-recipient.png" width="190" alt="The read-only page the recipient opens: Alex now lands in Rome at 6:00 PM"> |
 
+A 20-second cut (music, no voiceover; click the image to play):
+
+[![Layover in 20 seconds: the arrival time flips from 15:05 to 18:00 and the trip rebuilds itself](docs/video/layover-brag.jpg)](docs/video/layover-brag.mp4)
+
+The airline feed in the video is simulated, as it is in the demo.
+
 ## Try it
 
-Live: **https://connectionkeeper.vercel.app** (open it on a phone, tap **Continue as guest**,
+Live: **https://layoverapp.vercel.app** (open it on a phone, tap **Continue as guest**,
 then **Try the sample trip**).
 
 ## Run it

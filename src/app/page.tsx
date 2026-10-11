@@ -15,7 +15,6 @@ import {
   AppHeader,
   Badge,
   Button,
-  Field,
   Icon,
   NAV_FORWARD,
   PageTransition,
@@ -31,6 +30,7 @@ import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, findConnection, lastLeg, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
+import { flightLabel } from "@/lib/domain/text";
 import type { LoadNotice } from "@/lib/recoverTrip";
 import { finalArrival } from "@/lib/domain/timeline";
 import { useTripStore } from "@/lib/store";
@@ -687,7 +687,6 @@ function TripMenu({
           <span className="ck-label">Appearance</span>
           <ThemeToggle />
         </div>
-        {hasTrip && <PayoutAddress />}
         <div className="flex flex-col gap-3">
           {alerts === "default" && (
             <Button
@@ -792,43 +791,6 @@ function Confirm({
   );
 }
 
-/** Where an optional "Send help" request on a shared update pays out. Empty clears it. */
-function PayoutAddress() {
-  const saved = useTripStore((s) => s.trip?.payoutAddress);
-  const setPayoutAddress = useTripStore((s) => s.setPayoutAddress);
-  const [value, setValue] = useState(saved ?? "");
-  const [error, setError] = useState<string>();
-  const dirty = value.trim() !== (saved ?? "");
-  return (
-    <form
-      className="flex flex-col gap-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (setPayoutAddress(value)) setValue(value.trim());
-        else setError("Not a Solana address.");
-      }}
-    >
-      <Field
-        label="Solana address (optional)"
-        hint="For Send help. Devnet (test network) only."
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setError(undefined);
-        }}
-        error={error}
-        autoCapitalize="none"
-        autoCorrect="off"
-        spellCheck={false}
-        placeholder="Your wallet's public address"
-      />
-      <Button type="submit" variant="secondary" block disabled={!dirty} icon={!dirty && saved ? "check" : undefined}>
-        {!dirty && saved ? "Saved" : saved && value.trim() === "" ? "Remove address" : "Save address"}
-      </Button>
-    </form>
-  );
-}
-
 /** Said once after a saved trip could not be fully read, instead of silently showing "no trip". */
 function LoadNoticeBar({ notice, onDismiss }: { notice: LoadNotice; onDismiss: () => void }) {
   const text =
@@ -876,7 +838,7 @@ function bannerFor(d: Disruption, f: Flight): string {
 function headlineFor(d: Disruption, f: Flight, impact: Impact): string {
   const instead = `You're on the ${timePart(f.departAt)} instead.`;
   const rebooked = f.status === "rebooked";
-  const was = f.original?.flightNumber ?? f.flightNumber;
+  const was = flightLabel(f.original?.flightNumber ?? f.flightNumber);
   switch (d.type) {
     case "missed_connection":
       return `${cityName(f.from)} connection missed. ${rebooked ? instead : "You need a new flight."}`;
@@ -887,7 +849,7 @@ function headlineFor(d: Disruption, f: Flight, impact: Impact): string {
     case "delay":
     default: {
       const late = impact.delayMinutes;
-      const lead = late && late > 0 ? `${f.flightNumber} is ${formatDuration(late)} late.` : `${f.flightNumber} has new times.`;
+      const lead = late && late > 0 ? `${flightLabel(f.flightNumber)} is ${formatDuration(late)} late.` : `${flightLabel(f.flightNumber)} has new times.`;
       const c = impact.connection;
       if (!c) return lead;
       if (c.status === "missed") return `${lead} You'll likely miss your connection.`;

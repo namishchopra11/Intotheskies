@@ -10,7 +10,7 @@ import { nextDemoStep } from "./demoSteps";
 import { triggerFlightChange } from "./simulateChange";
 
 /**
- * For presenting the app: a "Next" pill in the bottom right that walks through every screen
+ * For presenting the app: a yellow "Next" circle beside the column (bottom right on a phone) that walks through every screen
  * in order (see demoSteps.ts), setting up whatever the next screen needs. Switch it off in
  * Settings → Demo. Mounted once, in the root layout.
  */
@@ -66,14 +66,12 @@ export function DemoNextButton() {
     <button
       type="button"
       onClick={run}
+      data-demo-next
+      title={step.label}
       aria-label={`Demo: next, ${step.label}`}
-      className="fixed right-4 bottom-[max(env(safe-area-inset-bottom),16px)] z-50 inline-flex h-11 max-w-[calc(100vw-96px)] cursor-pointer items-center gap-2 rounded-full border border-line bg-band pr-2 pl-4 text-[14px] font-semibold text-on-band shadow-[0_8px_24px_rgb(0_0_0/0.25)]"
+      className="fixed right-[max(16px,calc(50%-324px))] bottom-[max(env(safe-area-inset-bottom),16px)] z-50 inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-signal text-on-signal shadow-[0_8px_24px_rgb(0_0_0/0.25)]"
     >
-      <span className="font-num text-[11px] tracking-[0.08em] uppercase opacity-60">Next</span>
-      <span className="truncate">{step.label}</span>
-      <span aria-hidden="true" className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-signal text-on-signal">
-        <Icon name="arrow-right" size={16} strokeWidth={2.5} />
-      </span>
+      <Icon name="arrow-right" size={20} strokeWidth={2.5} />
     </button>
   );
 }
