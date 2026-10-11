@@ -343,6 +343,9 @@ function HandledForYou({ actions }: { actions: AutoAction[] }) {
           );
         })}
       </ul>
+      <p className="pt-2 text-[13px] leading-snug text-ink-2">
+        Simulated in this demo: no message is really sent to the airline, hotel or driver.
+      </p>
     </div>
   );
 }
