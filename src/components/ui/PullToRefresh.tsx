@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 const THRESHOLD = 52;
-// How long one crossing of the plane takes: the expected refresh time, within these limits.
+// The plane crosses once per refresh. It cruises for the expected refresh time (within these
+// limits), then flies out when the refresh really finishes, so the crossing lasts as long as
+// the refresh does.
 const FLIGHT_MIN_MS = 600;
 const FLIGHT_MAX_MS = 3000;
 const FLIGHT_DEFAULT_MS = 800;
+const LANDING_MS = 280;
+// Where the plane is along the column, in percent of its width: waiting at the left edge while
+// the strip is pulled, most of the way over while the refresh runs, then off the right edge.
+const GATE_X = 8;
+const CRUISE_X = 78;
+const EXIT_X = 108;
 const REFRESH_MS_KEY = "layover:refresh-ms";
 const SETTLE = "240ms cubic-bezier(0.22, 1, 0.36, 1)";
 
@@ -52,13 +60,15 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
   const [refreshing, setRefreshing] = useState(false);
   const [readyToSettle, setReadyToSettle] = useState(false);
   const [flightMs, setFlightMs] = useState(FLIGHT_DEFAULT_MS);
+  // 0 while the plane waits or cruises; otherwise how long its flight out takes.
+  const [landingMs, setLandingMs] = useState(0);
   const refreshingRef = useRef(false);
-  const pendingRef = useRef(false);
+  const sawPending = useRef(false);
   const pendingSince = useRef(0);
+  const takeoffAt = useRef(0);
 
   // Time each refresh so the next one's flight can be planned from it.
   useEffect(() => {
-    pendingRef.current = pending;
     if (pending) pendingSince.current = performance.now();
     else if (pendingSince.current) {
       recordRefreshMs(performance.now() - pendingSince.current);
@@ -66,15 +76,26 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
     }
   }, [pending]);
 
-  // The strip closes when the plane finishes a crossing with the refresh done. A refresh that
-  // outlasts the plan gets another crossing at the same speed.
+  // When the refresh finishes the plane flies out, and the strip closes behind it. A very quick
+  // refresh still gets a crossing long enough to see.
   useEffect(() => {
     if (!refreshing) return;
-    const landing = window.setInterval(() => {
-      if (!pendingRef.current) setReadyToSettle(true);
-    }, flightMs);
-    return () => window.clearInterval(landing);
-  }, [refreshing, flightMs]);
+    if (pending) {
+      sawPending.current = true;
+      return;
+    }
+    let settle = 0;
+    // Before the refresh has started, only land if it never does.
+    const land = window.setTimeout(() => {
+      const out = Math.max(LANDING_MS, FLIGHT_MIN_MS - (performance.now() - takeoffAt.current));
+      setLandingMs(out);
+      settle = window.setTimeout(() => setReadyToSettle(true), out);
+    }, sawPending.current ? 0 : FLIGHT_MAX_MS);
+    return () => {
+      window.clearTimeout(land);
+      window.clearTimeout(settle);
+    };
+  }, [refreshing, pending]);
 
   useEffect(() => {
     if (!refreshing || !readyToSettle || pending) return;
@@ -83,6 +104,8 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
     const finish = window.setTimeout(() => {
       setRefreshing(false);
       setReadyToSettle(false);
+      setLandingMs(0);
+      sawPending.current = false;
       refreshingRef.current = false;
     }, 280);
     return () => {
@@ -159,6 +182,7 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
         refreshingRef.current = true;
         buzz(20);
         setFlightMs(predictFlightMs());
+        takeoffAt.current = performance.now();
         setRefreshing(true);
         setReadyToSettle(false);
         setPulling(false);
@@ -260,18 +284,21 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (ready && pulling) buzz(10);
   }, [ready, pulling]);
+  const planeX = landingMs ? EXIT_X : refreshing ? CRUISE_X : GATE_X * Math.min(1, distance / THRESHOLD);
+  const planeMove = landingMs
+    ? `transform ${landingMs}ms cubic-bezier(0.5, 0, 0.9, 0.6)`
+    : refreshing ? `transform ${flightMs}ms cubic-bezier(0.2, 0.6, 0.35, 1)` : "none";
   return (
     <>
       <div className="pointer-events-none fixed inset-x-0 top-0 flex justify-center overflow-hidden"
         style={{ height: distance, opacity: Math.min(1, distance / 36), transition: pulling ? "none" : `height ${SETTLE}, opacity ${SETTLE}` }}>
-        {/* A plane on the phone-width column, crossing left to right while the strip is open. On
-            release it starts again from the left and crosses once in the time the refresh should take. */}
+        {/* A plane on the phone-width column. It waits at the left edge while the strip is pulled
+            and crosses left to right once, during the refresh. */}
         <div role="status" className="absolute inset-x-0 mx-auto h-9 max-w-[520px] overflow-hidden text-ink"
           style={{ top: 0, transform: `translateY(${Math.max(0, (distance - 36) / 2)}px)`, transition: pulling ? "none" : `transform ${SETTLE}` }}>
-          <div aria-hidden="true" key={refreshing ? "refresh" : "pull"}
-            className={`absolute inset-0 ${distance > 0 || refreshing ? "ck-ptr-fly" : ""}`}
-            style={{ transform: "translateX(50%)", animationDuration: `${flightMs}ms` }}>
-            <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-dashed border-current opacity-40"
+          <div aria-hidden="true" className="ck-ptr-fly absolute inset-0"
+            style={{ "--ptr-x": `${planeX}%`, transition: planeMove } as CSSProperties}>
+            <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-current opacity-40"
               style={{ maskImage: "linear-gradient(to right, transparent, #000)", WebkitMaskImage: "linear-gradient(to right, transparent, #000)" }} />
             <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--signal)" stroke="currentColor"
               strokeWidth="1.25" strokeLinejoin="round" className="absolute left-0 top-1/2 -ml-3 -mt-3"
