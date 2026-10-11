@@ -16,12 +16,13 @@ export function FlapBoard({
   was?: string;
   note?: string;
 }) {
-  const chars = (time ?? "--:--").split("");
-  const oldChars = (was ?? "").split("");
+  const [clock, period] = (time ?? "--:--").split(" ");
+  const chars = clock.split("");
+  const oldChars = (was ?? "").split(" ")[0].split("");
   return (
     <div className="flex flex-col gap-3 rounded-card bg-signal px-4 py-3.5 text-on-signal">
       <span className="font-num text-[11px] font-semibold tracking-[0.08em] uppercase">{label}</span>
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <p className="flex items-center gap-1" style={{ perspective: 400 }} aria-label={time ?? "No new time yet"}>
           {chars.map((c, i) =>
             c === ":" ? (
@@ -42,6 +43,7 @@ export function FlapBoard({
               </span>
             ),
           )}
+          {period && <span aria-hidden="true" className="ml-1 self-end pb-1 font-num text-[18px] font-semibold">{period}</span>}
         </p>
         <div className="flex flex-col items-end gap-0.5 text-right">
           {was && time !== was && <span className="font-num text-[15px] tabular-nums line-through opacity-70">{was}</span>}

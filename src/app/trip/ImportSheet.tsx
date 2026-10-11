@@ -1,5 +1,6 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useRef, useState } from "react";
 import { Button, Icon, Sheet, TextAreaField, cx, type IconName } from "@/components/ui";
 import { formatDateTime } from "@/lib/domain/time";
@@ -35,6 +36,7 @@ type Phase =
 
 /** Upload a screenshot, PDF or email; Claude reads it; the traveler picks what to add. */
 export function ImportSheet({ onClose }: { onClose: () => void }) {
+  const displayTime = useTimeFormat();
   const [files, setFiles] = useState<File[]>([]);
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<Phase>({ step: "input" });
@@ -106,7 +108,7 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">{entry.label}</span>
                       <span className="block text-[14px] text-ink-2">
-                        {entry.kind === "skipped" ? `${entry.reason} Add it by hand.` : summary(entry)}
+                        {entry.kind === "skipped" ? `${entry.reason} Add it by hand.` : displayTime(summary(entry))}
                       </span>
                     </span>
                     {entry.kind !== "skipped" && (

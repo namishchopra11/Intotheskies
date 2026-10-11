@@ -1,4 +1,4 @@
-import type { LocalDateTime } from "@/lib/types";
+import type { LocalDateTime, TimeFormat } from "@/lib/types";
 
 // Wall-clock helpers. Strings are parsed as if they were UTC so that no device
 // timezone or DST rule ever shifts them. Only compare times at the same place.
@@ -53,4 +53,18 @@ export function formatDuration(minutes: number): string {
   const h = Math.floor(abs / 60);
   const m = abs % 60;
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
+/** Display a wall-clock time without changing its date or timezone. */
+export function formatClockTime(clock: string, format: TimeFormat = "12h"): string {
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(clock)) return clock;
+  if (format === "24h") return clock;
+  const hour = Number(clock.slice(0, 2));
+  return `${hour % 12 || 12}:${clock.slice(3)} ${hour < 12 ? "AM" : "PM"}`;
+}
+
+/** Format clock times in generated travel copy; leave already formatted times alone. */
+export function formatTimeText(text: string, format: TimeFormat = "12h"): string {
+  return text.replace(/\b(?:[01]\d|2[0-3]):[0-5]\d\b(?!\s*[AP]M\b)/gi,
+    (clock) => formatClockTime(clock, format));
 }

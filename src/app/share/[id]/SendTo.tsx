@@ -1,5 +1,6 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useState } from "react";
 import { Button, Card, Icon, buttonClasses } from "@/components/ui";
 import { buildDrafts, sendLink, type Draft } from "@/lib/domain/messages";
@@ -17,10 +18,11 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * browser allows it.
  */
 export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: string }) {
+  const displayTime = useTimeFormat();
   const toggleTask = useTripStore((s) => s.toggleTask);
   const [opened, setOpened] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
-  const drafts = buildDrafts(trip, disruptionId);
+  const drafts = buildDrafts(trip, disruptionId).map((draft) => ({ ...draft, body: displayTime(draft.body) }));
   if (drafts.length === 0) return null;
 
   // Read the live store: toggleTask flips the state, so only tick tasks that are still open.
