@@ -107,6 +107,8 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
               className={cx(
                 "grid border-b border-line transition-[grid-template-rows,opacity,border-color] ease-out",
                 leaving[item.key] === "folding" ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]",
+                // Done reminders brought back by "Show done" settle in rather than pop.
+                showDone && isDone && "ck-rise",
               )}
               style={{ transitionDuration: `${FOLD_MS}ms` }}
             >
@@ -145,7 +147,7 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
         </button>
       )}
       {doneCount === items.length && !showDone && (
-        <p className="py-3 text-[15px] text-ok-fg">All set. Nothing left before you go.</p>
+        <p className="ck-rise py-3 text-[15px] text-ok-fg">All set. Nothing left before you go.</p>
       )}
     </section>
   );

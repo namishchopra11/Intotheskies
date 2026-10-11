@@ -5,6 +5,7 @@ export { AppHeader, BrandMark, SignalBar } from "./Brand";
 export { HomeLogo } from "./HomeLogo";
 export { Button, buttonClasses, type ButtonVariant } from "./Button";
 export { Card } from "./Card";
+export { Collapse } from "./Collapse";
 export { cx } from "./cx";
 export { FlapBoard } from "./FlapBoard";
 export { Field, SelectField, TextAreaField } from "./Field";

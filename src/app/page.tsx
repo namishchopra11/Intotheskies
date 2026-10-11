@@ -336,10 +336,26 @@ function FlightRow({ r }: { r: Row }) {
 
 /* ---------- Checklist ---------- */
 
+// How long a removed task takes to fold away.
+const TASK_FOLD_MS = 320;
+
 function SortingItOut({ disruption, contacts }: { disruption: Disruption; contacts: Contact[] }) {
   const displayTime = useTimeFormat();
   const toggleTask = useTripStore((s) => s.toggleTask);
   const removeTask = useTripStore((s) => s.removeTask);
+  // A removed task folds away first, then leaves the store.
+  const [removing, setRemoving] = useState<Set<string>>(new Set());
+  const remove = (taskId: string) => {
+    setRemoving((r) => new Set(r).add(taskId));
+    setTimeout(() => {
+      removeTask(disruption.id, taskId);
+      setRemoving((r) => {
+        const next = new Set(r);
+        next.delete(taskId);
+        return next;
+      });
+    }, TASK_FOLD_MS);
+  };
   const total = disruption.tasks.length;
   const done = disruption.tasks.filter((t) => t.done).length;
   return (
@@ -349,45 +365,55 @@ function SortingItOut({ disruption, contacts }: { disruption: Disruption; contac
         {disruption.tasks.map((t) => {
           const contact = t.contactId ? contacts.find((c) => c.id === t.contactId) : undefined;
           return (
-            <li key={t.id} className="flex items-center gap-1 border-b border-line">
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={t.done}
-                onClick={() => {
-                  haptic();
-                  toggleTask(disruption.id, t.id);
-                }}
-                data-done={t.done}
-                className="flex min-h-13 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left"
-              >
-                <TaskCircle />
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                  <span className="ck-task-text">{displayTime(t.title)}</span>
-                  {t.detail && <span className="text-[14px] leading-snug text-ink-2">{displayTime(t.detail)}</span>}
-                </span>
-                <span className={cx("ck-task-state text-[13px] font-semibold", t.done ? "text-ok-fg" : "text-ink-2")}>
-                  {t.done ? "Done" : "To do"}
-                </span>
-              </button>
-              {contact?.phone && <CallLink name={contact.name} phone={contact.phone} />}
-              {t.done && (
-                <button type="button" aria-label={`Undo task: ${displayTime(t.title)}`}
-                  onClick={() => toggleTask(disruption.id, t.id)}
-                  className="min-h-11 shrink-0 cursor-pointer rounded-control px-2 text-[13px] font-semibold text-ink-2 hover:bg-sunk">
-                  Undo
-                </button>
+            <li
+              key={t.id}
+              className={cx(
+                "ck-rise grid border-b border-line transition-[grid-template-rows,opacity,border-color] ease-out",
+                removing.has(t.id) ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]",
               )}
-              {t.source === "custom" && (
+              style={{ transitionDuration: `${TASK_FOLD_MS}ms` }}
+            >
+              <div className="flex min-h-0 items-center gap-1 overflow-hidden">
                 <button
                   type="button"
-                  aria-label={`Remove task: ${displayTime(t.title)}`}
-                  onClick={() => removeTask(disruption.id, t.id)}
-                  className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
+                  role="checkbox"
+                  aria-checked={t.done}
+                  onClick={() => {
+                    haptic();
+                    toggleTask(disruption.id, t.id);
+                  }}
+                  data-done={t.done}
+                  className="flex min-h-13 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left"
                 >
-                  <Icon name="x" size={18} />
+                  <TaskCircle />
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
+                    <span className="ck-task-text">{displayTime(t.title)}</span>
+                    {t.detail && <span className="text-[14px] leading-snug text-ink-2">{displayTime(t.detail)}</span>}
+                  </span>
+                  <span className={cx("ck-task-state text-[13px] font-semibold", t.done ? "text-ok-fg" : "text-ink-2")}>
+                    {t.done ? "Done" : "To do"}
+                  </span>
                 </button>
-              )}
+                {contact?.phone && <CallLink name={contact.name} phone={contact.phone} />}
+                {t.done && (
+                  <button type="button" aria-label={`Undo task: ${displayTime(t.title)}`}
+                    onClick={() => toggleTask(disruption.id, t.id)}
+                    className="ck-fade min-h-11 shrink-0 cursor-pointer rounded-control px-2 text-[13px] font-semibold text-ink-2 hover:bg-sunk">
+                    Undo
+                  </button>
+                )}
+                {t.source === "custom" && (
+                  <button
+                    type="button"
+                    aria-label={`Remove task: ${displayTime(t.title)}`}
+                    onClick={() => remove(t.id)}
+                    disabled={removing.has(t.id)}
+                    className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                )}
+              </div>
             </li>
           );
         })}
@@ -1038,7 +1064,7 @@ function Confirm({
   onConfirm: () => void;
 }) {
   return (
-    <div role="group" aria-label={title} className="flex flex-col gap-3 rounded-card border border-line-strong p-4">
+    <div role="group" aria-label={title} className="ck-rise flex flex-col gap-3 rounded-card border border-line-strong p-4">
       <p className="font-semibold">{title}</p>
       <p className="text-[14px] leading-snug text-ink-2">{body}</p>
       <div className="grid grid-cols-2 gap-3">

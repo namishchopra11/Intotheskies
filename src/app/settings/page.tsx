@@ -232,7 +232,7 @@ function Notifications() {
             variant="secondary"
             block
             icon="message"
-            className="mb-3"
+            className="ck-rise mb-3"
             onClick={async () => setPhone(await Notification.requestPermission())}
           >
             Allow phone alerts

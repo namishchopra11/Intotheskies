@@ -48,41 +48,44 @@ export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: strin
                   {d.name} <span className="font-normal text-ink-2">· {ROLE[d.kind]}</span>
                 </p>
                 {sent && (
-                  <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-ok-fg">
+                  <span className="ck-fade inline-flex items-center gap-1 text-[13px] font-semibold text-ok-fg">
                     <Icon name="check" size={14} strokeWidth={3} /> Opened
                   </span>
                 )}
               </div>
               <p className="line-clamp-3 text-[14px] leading-snug text-ink-2">{d.body}</p>
-              {link && editing !== d.id ? (
-                <>
-                  <a
-                    href={link.href}
-                    onClick={() => {
-                      tick(d.taskIds);
-                      setOpened((o) => new Set(o).add(d.id));
-                    }}
-                    className={buttonClasses({ variant: "secondary", size: "sm", block: true })}
-                  >
-                    <Icon name="message" size={18} />
-                    {link.channel === "text" ? `Text ${d.name}` : `Email ${d.name}`}
-                  </a>
-                  <p className="flex items-center justify-between gap-2 text-[13px] text-ink-2">
-                    <span className="truncate">
-                      {link.channel === "text" ? "By text to" : "By email to"} <span className="font-num">{to}</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditing(d.id)}
-                      className="min-h-11 shrink-0 cursor-pointer font-semibold text-ink-2 hover:text-ink"
+              {/* Switching between sending and editing the number or email crossfades. */}
+              <div key={link && editing !== d.id ? "send" : "edit"} className="ck-fade flex flex-col gap-2.5">
+                {link && editing !== d.id ? (
+                  <>
+                    <a
+                      href={link.href}
+                      onClick={() => {
+                        tick(d.taskIds);
+                        setOpened((o) => new Set(o).add(d.id));
+                      }}
+                      className={buttonClasses({ variant: "secondary", size: "sm", block: true })}
                     >
-                      Change
-                    </button>
-                  </p>
-                </>
-              ) : (
-                <ContactEditor trip={trip} draft={d} onDone={() => setEditing(null)} canCancel={Boolean(link)} />
-              )}
+                      <Icon name="message" size={18} />
+                      {link.channel === "text" ? `Text ${d.name}` : `Email ${d.name}`}
+                    </a>
+                    <p className="flex items-center justify-between gap-2 text-[13px] text-ink-2">
+                      <span className="truncate">
+                        {link.channel === "text" ? "By text to" : "By email to"} <span className="font-num">{to}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEditing(d.id)}
+                        className="min-h-11 shrink-0 cursor-pointer font-semibold text-ink-2 hover:text-ink"
+                      >
+                        Change
+                      </button>
+                    </p>
+                  </>
+                ) : (
+                  <ContactEditor trip={trip} draft={d} onDone={() => setEditing(null)} canCancel={Boolean(link)} />
+                )}
+              </div>
             </div>
           );
         })}
