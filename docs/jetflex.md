@@ -20,13 +20,29 @@ Optional: set `ANTHROPIC_API_KEY` on the server to let an AI model read the trip
 
 | Screen | What it does |
 | --- | --- |
-| Overview | Photo-backed hero with a natural-language box, quick-start form, empty-leg opportunities, stats computed from your saved trips |
-| Plan a Trip | Reads a request (rules, or an AI model if configured), ranks charter / empty leg / first class / hybrid for the same party and dates, flexibility and priority controls, route map, price-vs-time chart, "Why this recommendation?", excluded options |
-| My Trips | Save, reopen, compare two, remove; request history |
-| My Cabin | Persistent preferences and a cabin service brief with unsupported-preference flags |
-| TimeBack | Plan around a commitment: time needed there, arrive-by, home-by |
-| JetShield | Five simulated disruptions, an animated recovery sequence (plan, detect, search, rank, approval), ranked replacements, explicit approval, before-and-after with what is still protected |
-| Operator Intelligence | "For operators" pitch from the sample fleet, detected empty legs from schedule gaps, demand matching, a revenue view (expected to sell, unsold, withheld), price / publish / availability edits that change traveler search, operator CSV import, add-a-flight, fleet overview |
+| Overview | Photo-backed hero with a trip box ("Plan this trip"), three example chips, the "Try the Miami demo" tile, a quick-start form ("Compare options"), empty-leg opportunities ("Plan around this leg"), and stats computed from your saved trips |
+| Plan a Trip | Reads a request (rules, or an AI model if configured), ranks charter / empty leg / first class / hybrid for the same party and dates, flexibility and priority controls, route map, price-vs-time chart, "Why this recommendation?", options excluded by your constraints, "Save trip" |
+| My Trips | Save, reopen, compare two ("Compare"), remove; request history with "Run again" |
+| My Cabin | Persistent preferences, and "Generate brief": a cabin service brief for the operator, with unsupported-preference flags, copy and download |
+| TimeBack | Plan around a commitment: time needed there, arrive-by, home-by, an arrival cushion, and a goal (Balanced, Lowest cost, Most time at destination, Safest to make it) |
+| JetShield | Five simulated disruptions (Flight delayed, Aircraft unavailable, Weather cancellation, Connection missed, Ground transfer delayed), an animated recovery sequence (plan, detect, search, rank, approval) with "Skip animation" and "Replay", ranked replacements, "Review & approve" then "Approve in demo", before-and-after and what is still protected |
+| Operator Intelligence | "For operators" pitch from the sample fleet, stat strip, a revenue view (expected to sell, unsold, withheld, and what your edits changed), detected empty legs from schedule gaps with "Inspect", a Publish toggle, Available / Limited / Mark unavailable, "Set price", "Use suggested" and "Use model-optimal", demand matching, "Import operator CSV", "Add flight" and a fleet overview |
+
+Cross-cutting: phone-first layout (navigation behind the menu button, 44 px tap targets, a
+sticky Save bar on Plan a Trip), a single dark theme, and a "simulated" marker on every
+screen (left navigation on desktop, page footer on phones).
+
+### How it fails
+
+- No `ANTHROPIC_API_KEY`, a slow or failing model call, a non-JSON reply, or a reply that does
+  not validate: the sentence is read by the rules and the interface says "Read by plain rules
+  on your device". The parse route never returns a 5xx for model problems.
+- A sentence with no recognisable trip: the screen says so and keeps the current trip.
+- Damaged or hand-edited `localStorage`: unreadable entries are dropped field by field
+  (`sanitizePersisted` in `store.ts`) and the app starts with defaults; it never sits on the
+  loading skeleton. Blocked or full storage keeps working in memory.
+- A CSV with bad rows: each is rejected with its line and field; good rows are applied only
+  when you press the Apply button.
 
 ## Code map
 
@@ -79,6 +95,28 @@ timeout), or a reply that does not validate, it returns the rule-based parser's 
 `source: "regex"`. The key is read on the server only. The interface shows which reader
 produced the result. The model only turns a sentence into a trip request; ranking, pricing
 and recovery stay deterministic.
+
+## Two-minute demo
+
+Rehearsed with no API key set. On a phone, the navigation is behind the menu button at the
+top right. For the full timed three-minute version with expected numbers and a fallback list,
+use `docs/jetflex/demo-script.md`. Before you start (off the clock): menu, **Profile & settings**,
+**Reset demo data**.
+
+| Time | Do | Say |
+| --- | --- | --- |
+| 0:00 | **Overview**. Point at the "simulated" line (left navigation, or the footer on a phone). Click the **Try the Miami demo** tile, then **Plan this trip**. | "Private aviation inventory is opaque, and everything here is simulated: real airports, invented schedules and prices. I describe the trip in one sentence." |
+| 0:20 | **Plan a Trip**. Point at the four columns (Private charter, Empty leg, First class, Hybrid), the **Recommended** badge and **Saves vs charter**. Open **Why this recommendation?** | "Same party, same dates, four ways. The recommendation is an empty leg, and it says why and what you give up: the operator controls the timing." |
+| 0:45 | Click the name in the **Private charter** column, then **JetShield** (under **Selected itinerary**). | "Say this charter is the trip I want protected." |
+| 0:50 | **JetShield**. Pick **Aircraft unavailable**, click **Simulate disruption**, then **Skip animation**. | "I break it. It detects, searches the same pool, ranks, and waits for me." |
+| 1:10 | Point at the first option (**Best match**). Click **Review & approve**, then **Approve in demo**. Point at **Before and after** and **What is protected**. | "Nothing changes until I approve, and here approval only updates the simulated plan. It also checks the return and the party." |
+| 1:30 | **Operator Intelligence** (menu, or left navigation). Point at **Revenue view**. Under **Detected empty legs**, click **Inspect** on JX101 TEB to OPF. | "That replacement came from operators' schedules. This is their side: legs that must fly empty, what they cost and what they are worth." |
+| 1:45 | On the JX101 OPF to TEB row click **Mark unavailable**. Point at the line under **Revenue view** that says how your edits moved the numbers. | "The operator withdraws a leg and the numbers move. The traveler's search changes the same way." |
+| 1:55 | Optional: scroll to **Import operator CSV**, click **Load sample with errors**. | "An operator's file in; every unreadable row named by line." |
+| 2:00 | Close. | "Schedule gaps, empty legs, operator price, traveler ranking, recovery from the same pool. The inventory is simulated. The logic is the product." |
+
+If a step does not show what you expect, the usual cause is state left over from a rehearsal:
+**Profile & settings**, **Reset demo data**, and run it again.
 
 ## Docs
 
