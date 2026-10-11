@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, type PointerEvent, type ReactNode } from "react";
 import { Icon } from "./Icon";
 
 type SheetProps = {
@@ -22,6 +22,9 @@ const CLOSE_MS = 200;
 
 export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ pointer: number; start: number; y: number; time: number; distance: number; speed: number } | null>(null);
+  const ignoreHandleClick = useRef(false);
   const titleId = useId();
   // True while this sheet is meant to be showing. A close the sheet does itself on cleanup
   // happens while this is false, so it isn't reported as the user closing it.
@@ -56,6 +59,9 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
       };
     }
     delete d.dataset.closing;
+    panelRef.current?.style.removeProperty("--sheet-drag");
+    panelRef.current?.style.removeProperty("--sheet-close-y");
+    if (panelRef.current) delete panelRef.current.dataset.dragging;
     if (!d.open) d.showModal();
     active.current = true;
     const root = document.documentElement;
@@ -90,6 +96,41 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
     }, CLOSE_MS);
   };
 
+  const startDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!event.isPrimary || event.button !== 0 || leaving.current) return;
+    ignoreHandleClick.current = false;
+    drag.current = { pointer: event.pointerId, start: event.clientY, y: event.clientY, time: event.timeStamp, distance: 0, speed: 0 };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (panelRef.current) panelRef.current.dataset.dragging = "true";
+  };
+  const moveDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    const current = drag.current;
+    if (!current || current.pointer !== event.pointerId) return;
+    const elapsed = event.timeStamp - current.time;
+    current.speed = elapsed > 0 ? (event.clientY - current.y) / elapsed : 0;
+    current.y = event.clientY;
+    current.time = event.timeStamp;
+    current.distance = Math.max(0, event.clientY - current.start);
+    panelRef.current?.style.setProperty("--sheet-drag", `${current.distance}px`);
+  };
+  const endDrag = (event: PointerEvent<HTMLButtonElement>, cancelled = false) => {
+    const current = drag.current;
+    const panel = panelRef.current;
+    if (!current || current.pointer !== event.pointerId || !panel) return;
+    drag.current = null;
+    ignoreHandleClick.current = cancelled || current.distance > 6;
+    delete panel.dataset.dragging;
+    const height = panel.getBoundingClientRect().height;
+    const recentSpeed = event.timeStamp - current.time < 120 ? current.speed : 0;
+    const threshold = Math.min(100, Math.max(60, height * 0.22));
+    if (!cancelled && (current.distance >= threshold || (current.distance > 20 && recentSpeed > 0.6))) {
+      // Continue offscreen from the released position instead of jumping back before closing.
+      panel.style.setProperty("--sheet-close-y", `${Math.max(40, height - current.distance + 24)}px`);
+      requestClose();
+    } else panel.style.setProperty("--sheet-drag", "0px");
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
   return (
     <dialog
       ref={ref}
@@ -111,10 +152,13 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
         if (e.target === ref.current) requestClose();
       }}
     >
-      <div className="ck-sheet-panel flex max-h-[90dvh] flex-col rounded-t-sheet border border-b-0 border-line bg-surface">
-        <div className="flex justify-center pt-2.5" aria-hidden="true">
-          <span className="h-1.5 w-10 rounded-full bg-line-strong" />
-        </div>
+      <div ref={panelRef} className="ck-sheet-panel flex max-h-[90dvh] flex-col rounded-t-sheet border border-b-0 border-line bg-surface">
+        <button type="button" aria-label="Drag down or tap to close" className="flex h-7 w-full shrink-0 touch-none cursor-grab items-center justify-center rounded-t-sheet select-none active:cursor-grabbing"
+          onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={(event) => endDrag(event)}
+          onPointerCancel={(event) => endDrag(event, true)} onLostPointerCapture={(event) => endDrag(event, true)}
+          onClick={() => { if (!ignoreHandleClick.current) requestClose(); ignoreHandleClick.current = false; }}>
+          <span aria-hidden="true" className="h-1.5 w-10 rounded-full bg-line-strong" />
+        </button>
         <div className="flex items-center gap-2 py-1 pr-2 pl-5">
           <h2 id={titleId} className="flex-1 text-lg font-semibold">
             {title}

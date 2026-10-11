@@ -54,7 +54,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   };
 
   return (
-    <div role="radiogroup" aria-label="Appearance" className="inline-flex rounded-control bg-sunk p-1">
+    <div role="radiogroup" aria-label="Appearance" className={cx("rounded-control bg-sunk p-1", compact ? "inline-flex" : "grid w-full grid-cols-3")}>
       {OPTIONS.map((o, i) => {
         const active = pref === o.value;
         return (

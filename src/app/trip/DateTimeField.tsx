@@ -5,6 +5,7 @@ import { useId, useRef, useState } from "react";
 import { Icon, cx } from "@/components/ui";
 import { formatDate } from "@/lib/domain/time";
 import { formatDateInput, parseDate, parseTime, todayYMD } from "./dateInput";
+import { BookingDatePicker } from "./BookingDatePicker";
 
 type Props = {
   label: string;
@@ -31,7 +32,8 @@ const dayFirst = () => typeof navigator === "undefined" || !/^en-US$/i.test(navi
 export function DateTimeField({ label, hint, error, value, onChange, className }: Props) {
   const displayTime = useTimeFormat();
   const id = useId();
-  const picker = useRef<HTMLInputElement>(null);
+  const picker = useRef<HTMLButtonElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const initial = LOCAL.test(value) ? value : "";
   const [dateText, setDateText] = useState(initial ? formatDateInput(initial.slice(0, 10)) : "");
   const [timeText, setTimeText] = useState(initial ? displayTime(initial.slice(11)) : "");
@@ -79,35 +81,16 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
             className={cx(CONTROL, "pr-12", dateInvalid ? "border-bad" : "border-line-strong")}
           />
           <button
+            ref={picker}
             type="button"
-            aria-label={`Pick ${label.toLowerCase()} date from a calendar`}
-            onClick={() => {
-              const el = picker.current;
-              if (!el) return;
-              try {
-                el.showPicker();
-              } catch {
-                el.focus();
-              }
-            }}
+            aria-label={`Pick ${label.toLowerCase()} date and time from a calendar`}
+            aria-expanded={pickerOpen}
+            aria-controls={`${id}-picker`}
+            onClick={() => setPickerOpen((open) => !open)}
             className="absolute top-1/2 right-1 inline-flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
           >
             <Icon name="calendar" size={18} />
           </button>
-          <input
-            ref={picker}
-            type="date"
-            tabIndex={-1}
-            aria-hidden="true"
-            value={date ?? ""}
-            onChange={(e) => {
-              if (!e.target.value) return;
-              const text = formatDateInput(e.target.value);
-              setDateText(text);
-              emit(text, timeText);
-            }}
-            className="pointer-events-none absolute right-0 bottom-0 h-px w-px opacity-0"
-          />
         </div>
         <input
           aria-label={`${label} time`}
@@ -124,6 +107,18 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
           className={cx(CONTROL, "min-w-0 flex-[2_1_0]", timeInvalid ? "border-bad" : "border-line-strong")}
         />
       </div>
+      {pickerOpen && <div id={`${id}-picker`}>
+        <BookingDatePicker label={label} date={date ?? parseDate("today", todayYMD())!} time={time ?? "09:00"}
+          onCancel={() => { setPickerOpen(false); picker.current?.focus(); }}
+          onApply={(pickedDate, pickedTime) => {
+            const text = formatDateInput(pickedDate);
+            setDateText(text);
+            setTimeText(displayTime(pickedTime));
+            onChange(`${pickedDate}T${pickedTime}`);
+            setPickerOpen(false);
+            picker.current?.focus();
+          }} />
+      </div>}
       <p id={`${id}-read`} aria-live="polite" className="min-h-5 text-[13px] leading-snug text-ink-2">
         {dateUnread
           ? "Couldn't read that date. Try 17 Oct 2026."

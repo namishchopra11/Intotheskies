@@ -587,6 +587,14 @@ dialog.ck-sheet[open]::backdrop {
 dialog.ck-sheet[open] > .ck-sheet-panel {
   animation: ck-sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+.ck-sheet-panel {
+  translate: 0 var(--sheet-drag, 0px);
+  transition: translate 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ck-sheet-panel[data-dragging="true"] { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ck-sheet-panel { transition: none; }
+}
 /* Closing (Sheet.tsx sets data-closing, then closes the dialog when this has played). */
 dialog.ck-sheet[data-closing="true"]::backdrop {
   animation: ck-fade-out 200ms ease both;
@@ -602,7 +610,7 @@ dialog.ck-sheet[data-closing="true"] > .ck-sheet-panel {
 }
 @keyframes ck-sheet-down {
   to {
-    transform: translateY(40px);
+    transform: translateY(var(--sheet-close-y, 40px));
     opacity: 0;
   }
 }
