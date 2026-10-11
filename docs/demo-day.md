@@ -38,7 +38,8 @@ On the phone you present from:
 On the second phone (for the shared link and Send help):
 
 1. [ ] Phantom open, **Testnet Mode** on, **Helper** account selected.
-2. [ ] WhatsApp or Messages open on a chat with a teammate, to show the message arriving.
+2. [ ] Messages and Mail set up on the demo phone, so **Text Marco** and **Email Mum** open
+   straight into a filled-in message.
 
 ## At the table
 

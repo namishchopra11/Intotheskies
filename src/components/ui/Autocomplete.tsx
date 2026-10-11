@@ -91,7 +91,7 @@ export function Autocomplete<O extends AutocompleteOption>({
           id={listId}
           role="listbox"
           aria-label={`${label} suggestions`}
-          className="absolute inset-x-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-control border border-line-strong bg-surface py-1 shadow-[0_12px_32px_rgb(0_0_0/0.18)]"
+          className="ck-pop absolute inset-x-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-control border border-line-strong bg-surface py-1 shadow-[0_12px_32px_rgb(0_0_0/0.18)]"
         >
           {options.map((o, i) => (
             <li

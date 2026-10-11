@@ -1,5 +1,6 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { copyText } from "@/app/share/[id]/copyText";
 import { Icon, ProgressBar, cx } from "@/components/ui";
@@ -31,6 +32,7 @@ function today(): string {
 
 /** Three tiles: when you leave, how many flights, how long you stay. */
 export function AtAGlance({ trip, delay }: { trip: Trip; delay: number }) {
+  const displayTime = useTimeFormat();
   const flights = flightsInOrder(trip);
   const first = flights[0];
   if (!first) return null;
@@ -38,7 +40,7 @@ export function AtAGlance({ trip, delay }: { trip: Trip; delay: number }) {
   const stops = flights.slice(0, -1).map((f) => cityName(f.to));
   const stay = trip.stays[0];
   const tiles = [
-    { label: "Leave", big: leaves.days >= 0 && leaves.days <= 1 ? cap(leaves.label) : formatDate(first.departAt), small: leaves.days > 1 ? leaves.label : `${first.from} ${first.departAt.slice(11)}` },
+    { label: "Leave", big: leaves.days >= 0 && leaves.days <= 1 ? cap(leaves.label) : formatDate(first.departAt), small: leaves.days > 1 ? leaves.label : `${first.from} ${displayTime(first.departAt.slice(11))}` },
     { label: "Flights", big: `${flights.length} ${flights.length === 1 ? "flight" : "flights"}`, small: stops.length === 0 ? "Nonstop" : `Via ${stops.join(", ")}` },
     stay
       ? { label: "Stay", big: `${nights(stay)} ${nights(stay) === 1 ? "night" : "nights"}`, small: stay.name }
@@ -65,6 +67,7 @@ const STRIKE_MS = 520;
 const FOLD_MS = 320;
 
 export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
+  const displayTime = useTimeFormat();
   const togglePrep = useTripStore((s) => s.togglePrep);
   const [showDone, setShowDone] = useState(false);
   // Keys just ticked: still shown while they animate out. "folding" once the strike is done.
@@ -104,6 +107,8 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
               className={cx(
                 "grid border-b border-line transition-[grid-template-rows,opacity,border-color] ease-out",
                 leaving[item.key] === "folding" ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]",
+                // Done reminders brought back by "Show done" settle in rather than pop.
+                showDone && isDone && "ck-rise",
               )}
               style={{ transitionDuration: `${FOLD_MS}ms` }}
             >
@@ -123,8 +128,8 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
                     </span>
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                    <span className="ck-task-text">{item.title}</span>
-                    <span className="text-[14px] leading-snug text-ink-2">{item.detail}</span>
+                    <span className="ck-task-text">{displayTime(item.title)}</span>
+                    <span className="text-[14px] leading-snug text-ink-2">{displayTime(item.detail)}</span>
                   </span>
                 </button>
               </div>
@@ -142,7 +147,7 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
         </button>
       )}
       {doneCount === items.length && !showDone && (
-        <p className="py-3 text-[15px] text-ok-fg">All set. Nothing left before you go.</p>
+        <p className="ck-rise py-3 text-[15px] text-ok-fg">All set. Nothing left before you go.</p>
       )}
     </section>
   );
@@ -150,6 +155,7 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
 
 /** Landing, then the pickup and the hotel, with a warning where a step is tight. */
 export function WhenYouLand({ trip, delay }: { trip: Trip; delay: number }) {
+  const displayTime = useTimeFormat();
   const steps = arrivalPlan(trip);
   if (steps.length <= 1) return null; // just "land" says nothing the flights don't
   return (
@@ -160,14 +166,14 @@ export function WhenYouLand({ trip, delay }: { trip: Trip; delay: number }) {
             {i < steps.length - 1 && (
               <span aria-hidden="true" className="absolute top-9 bottom-[-10px] left-[27px] w-px bg-line-strong" />
             )}
-            <span className="w-[56px] shrink-0 pt-px font-num text-[15px] font-semibold tabular-nums">{s.time}</span>
+            <span className="w-[78px] shrink-0 pt-px font-num text-[15px] font-semibold tabular-nums">{displayTime(s.time)}</span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">{s.title}</span>
-              {s.detail && <span className="block text-[14px] leading-snug text-ink-2">{s.detail}</span>}
+              {s.detail && <span className="block text-[14px] leading-snug text-ink-2">{displayTime(s.detail)}</span>}
               {s.warn && (
                 <span className="mt-1 flex items-start gap-1.5 text-[14px] leading-snug text-warn-fg">
                   <Icon name="clock" size={16} className="mt-0.5" />
-                  {s.warn}
+                  {displayTime(s.warn)}
                 </span>
               )}
             </span>

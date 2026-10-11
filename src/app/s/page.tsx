@@ -1,8 +1,9 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useMemo, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { FundsRequest } from "@/components/trip/FundsRequest";
-import { Badge, BrandMark, Card, FLIGHT_STATUS_BADGE, Icon, type Tone } from "@/components/ui";
+import { BackButton, Badge, BrandMark, Card, FLIGHT_STATUS_BADGE, Icon, type Tone } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
@@ -22,14 +23,18 @@ type Stay = SnapStay;
 type Connection = SnapConnection;
 
 export default function SharedUpdatePage() {
+  const displayTime = useTimeFormat();
   const hash = useSyncExternalStore(subscribeHash, getHash, getServerHash);
   const snapshot = useMemo(() => (hash === null ? undefined : decodeShare(hash)), [hash]);
 
   return (
     <main className="flex flex-1 flex-col">
       <div className="flex items-center justify-between gap-3 bg-band px-5 pt-[max(env(safe-area-inset-top),12px)] pb-3 font-num text-[12px] tracking-[0.04em] text-on-band uppercase">
-        <span>Travel update</span>
-        {snapshot && <span className="text-signal">Snapshot · {snapshotAt(snapshot.disruption.createdAt)}</span>}
+        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
+          <BackButton onlyWithHistory className="-my-2 text-on-band hover:bg-transparent hover:opacity-80" />
+          Travel update
+        </span>
+        {snapshot && <span className="text-signal">Snapshot · {displayTime(snapshotAt(snapshot.disruption.createdAt))}</span>}
       </div>
       {snapshot === undefined ? <Loading /> : snapshot === null ? <BadLink /> : <Update s={snapshot} />}
     </main>
@@ -37,6 +42,7 @@ export default function SharedUpdatePage() {
 }
 
 function Update({ s }: { s: ShareSnapshot }) {
+  const displayTime = useTimeFormat();
   const first = s.travelerName.trim().split(/\s+/)[0] || s.travelerName;
   const changed = s.flights.find((f) => f.id === s.disruption.flightId);
   const final = s.flights[s.flights.length - 1];
@@ -52,9 +58,9 @@ function Update({ s }: { s: ShareSnapshot }) {
       <header className="ck-rise flex flex-col gap-2.5 px-5 pt-7 pb-5">
         <p className="text-[15px] text-ink-2">From {s.travelerName}</p>
         <h1 className="text-[32px] leading-[1.12] font-semibold tracking-[-0.01em]">
-          {story.title}
+          {displayTime(story.title)}
         </h1>
-        {story.detail && <p className="leading-normal text-ink-body">{story.detail}</p>}
+        {story.detail && <p className="leading-normal text-ink-body">{displayTime(story.detail)}</p>}
       </header>
 
       {final && final.status !== "cancelled" && <ArrivalCard f={final} style={stagger(1)} />}
@@ -87,7 +93,7 @@ function Update({ s }: { s: ShareSnapshot }) {
             {risks.map((stay) => (
               <li key={stay.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2 text-[15px]">
                 <Icon name="clock" size={20} strokeWidth={2.5} className="text-warn-fg" />
-                {stayRisk(first, stay, final, c)}
+                {displayTime(stayRisk(first, stay, final, c))}
               </li>
             ))}
             {s.openTasks.map((t, i) => (
@@ -111,7 +117,7 @@ function Update({ s }: { s: ShareSnapshot }) {
         <p className="flex items-start gap-2 text-[14px] leading-[1.45] text-ink-body">
           <Icon name="circle-alert" size={18} className="mt-px" />
           <span>
-            This page is a snapshot from {timeOnly(s.disruption.createdAt)} and won&apos;t update.
+            This page is a snapshot from {displayTime(timeOnly(s.disruption.createdAt))} and won&apos;t update.
             Check with {first} for anything newer.
           </span>
         </p>
@@ -147,6 +153,7 @@ function Section({
 
 /** The yellow card: when they land at their final stop, and how that moved. Same airport, so the maths is safe. */
 function ArrivalCard({ f, style }: { f: Flight; style?: CSSProperties }) {
+  const displayTime = useTimeFormat();
   const was = f.original?.arriveAt;
   const delta = was ? minutesBetween(was, f.arriveAt) : 0;
   const moved = Boolean(was) && delta !== 0;
@@ -154,19 +161,19 @@ function ArrivalCard({ f, style }: { f: Flight; style?: CSSProperties }) {
   return (
     <section
       aria-label="Arrival"
-      className="ck-rise mx-4 flex items-end justify-between gap-4 rounded-card bg-signal p-[18px] text-on-signal"
+      className="ck-rise mx-4 flex flex-wrap items-end justify-between gap-4 rounded-card bg-signal p-[18px] text-on-signal"
       style={style}
     >
       <div className="flex flex-col gap-0.5">
         <span className="font-num text-[12px] font-semibold tracking-[0.06em] uppercase">
           {moved ? "New arrival" : "Arrival"} · {f.to}
         </span>
-        <span className="font-num text-[48px] leading-none font-semibold tabular-nums">{timePart(f.arriveAt)}</span>
+        <span className="font-num text-[36px] leading-none font-semibold tabular-nums">{displayTime(timePart(f.arriveAt))}</span>
       </div>
       {moved && was && (
         <div className="flex flex-col items-end gap-0.5 text-[14px]">
           <span className="line-through">
-            was {sameDay ? timePart(was) : `${formatDate(was)} ${timePart(was)}`}
+            was {displayTime(sameDay ? timePart(was) : `${formatDate(was)} ${timePart(was)}`)}
           </span>
           <span className="font-semibold">
             {delta > 0 ? "+" : "−"}
@@ -188,6 +195,7 @@ function flightBadge(f: Flight, connection: Connection | null): { tone: Tone; la
 }
 
 function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection | null }) {
+  const displayTime = useTimeFormat();
   const b = flightBadge(f, connection);
   return (
     <div className="flex flex-col gap-1.5 px-4 py-3.5">
@@ -201,7 +209,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
         <p className="text-[15px] text-ink-2">Waiting for a new flight.</p>
       ) : (
         <p className="font-num text-[20px] font-medium tabular-nums">
-          {timePart(f.departAt)} → {timePart(f.arriveAt)}
+          {displayTime(timePart(f.departAt))} → {displayTime(timePart(f.arriveAt))}
         </p>
       )}
       {f.bookingRef && (
@@ -214,6 +222,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
 }
 
 function HotelStay({ stay }: { stay: Stay }) {
+  const displayTime = useTimeFormat();
   return (
     <div className="flex flex-col gap-1.5 px-4 py-3.5">
       <p className="text-[17px] leading-snug font-medium">{stay.name}</p>
@@ -223,7 +232,7 @@ function HotelStay({ stay }: { stay: Stay }) {
       </p>
       {stay.latestCheckIn && (
         <p className="text-[14px] text-ink-2">
-          Front desk open until <span className="font-num font-medium text-ink">{stay.latestCheckIn}</span>
+          Front desk open until <span className="font-num font-medium text-ink">{displayTime(stay.latestCheckIn)}</span>
         </p>
       )}
       {stay.confirmation && (

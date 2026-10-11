@@ -70,13 +70,15 @@ export function Field({
   className,
   id: idProp,
   type = "text",
+  endAdornment,
   ...input
-}: FieldBase & InputHTMLAttributes<HTMLInputElement>) {
+}: FieldBase & InputHTMLAttributes<HTMLInputElement> & { endAdornment?: ReactNode }) {
   const auto = useId();
   const id = idProp ?? auto;
   return (
     <Shell id={id} label={label} hint={hint} error={error} className={className}>
-      <input
+      <div className="relative">
+        <input
         id={id}
         type={type}
         aria-invalid={error ? true : undefined}
@@ -85,9 +87,12 @@ export function Field({
           CONTROL,
           error ? "border-bad" : "border-line-strong",
           TIME_TYPES.has(type) && "font-num tabular-nums",
+          Boolean(endAdornment) && "pr-14",
         )}
         {...input}
       />
+        {endAdornment && <div className="absolute inset-y-0 right-1 flex items-center">{endAdornment}</div>}
+      </div>
     </Shell>
   );
 }

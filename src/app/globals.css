@@ -346,6 +346,40 @@ body {
   margin-top: -8px;
 }
 
+/* Collapse.tsx: a section that unfolds under its toggle and folds back up when closed. */
+.ck-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 340ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 240ms ease;
+}
+.ck-collapse > * {
+  min-height: 0;
+  overflow: hidden;
+}
+.ck-collapse[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+/* Fully open: let focus rings and shadows past the edge again. */
+.ck-collapse[data-settled="true"] > * {
+  overflow: visible;
+}
+
+/* A list under a field (Autocomplete.tsx): drops a few pixels into place. */
+@keyframes ck-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+.ck-pop {
+  transform-origin: top center;
+  animation: ck-pop 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 /* NotificationBanner.tsx: drops in from above the screen, lifts away when dismissed. */
 @keyframes ck-notify-in {
   from {
@@ -449,7 +483,66 @@ body {
   animation: ck-flap 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+/* Small entrances replay when the login mode changes, while fields keep their values. */
+@keyframes ck-auth-signin {
+  from { opacity: 0.4; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ck-auth-create {
+  from { opacity: 0.4; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
+}
+.ck-auth-copy,
+.ck-auth-form[data-mode="signin"] {
+  animation: ck-auth-signin 300ms ease-out both;
+}
+.ck-auth-form[data-mode="create"] {
+  animation: ck-auth-create 300ms ease-out both;
+}
+
+/* One brief entrance per full app load, using the existing airport-sign logo. */
+@keyframes ck-opening-exit {
+  0%, 88% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@keyframes ck-opening-mark {
+  from { opacity: 0; transform: translateY(12px) scale(0.88) rotate(-8deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ck-opening-arrow {
+  0% { opacity: 0; transform: translateX(-58px); }
+  22%, 48% { opacity: 1; transform: translateX(0); }
+  76%, 100% { opacity: 0; transform: translateX(58px); }
+}
+@keyframes ck-opening-copy {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ck-opening-route {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.ck-opening {
+  animation: ck-opening-exit 2800ms ease-in-out both;
+}
+.ck-opening-mark {
+  animation: ck-opening-mark 550ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.ck-opening-mark svg {
+  animation: ck-opening-arrow 800ms 200ms ease-in-out 3 both;
+}
+.ck-opening-name {
+  animation: ck-opening-copy 450ms 180ms ease-out both;
+}
+.ck-opening-caption {
+  animation: ck-opening-copy 450ms 280ms ease-out both;
+}
+.ck-opening-route span {
+  animation: ck-opening-route 2200ms 200ms linear both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .ck-opening { display: none; }
   *,
   *::before,
   *::after {
@@ -473,12 +566,33 @@ dialog.ck-sheet {
 dialog.ck-sheet::backdrop {
   background: var(--scrim);
 }
+dialog.ck-sheet[open]::backdrop {
+  animation: ck-fade 220ms ease both;
+}
 dialog.ck-sheet[open] > .ck-sheet-panel {
   animation: ck-sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Closing (Sheet.tsx sets data-closing, then closes the dialog when this has played). */
+dialog.ck-sheet[data-closing="true"]::backdrop {
+  animation: ck-fade-out 200ms ease both;
+}
+dialog.ck-sheet[data-closing="true"] > .ck-sheet-panel {
+  animation: ck-sheet-down 200ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 @keyframes ck-sheet-up {
   from {
     transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes ck-sheet-down {
+  to {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+@keyframes ck-fade-out {
+  to {
     opacity: 0;
   }
 }

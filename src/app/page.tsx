@@ -1,6 +1,9 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { DayPlan } from "@/components/trip/DayPlan";
+import { TripCountdown } from "@/components/trip/TripCountdown";
 import { NextAction, haptic } from "@/components/trip/NextAction";
 import { AtAGlance, BeforeYouGo, BookingCodes, WhenYouLand } from "@/components/trip/OnTrackDetails";
 import { prepItems } from "@/components/trip/prep";
@@ -14,7 +17,6 @@ import {
   Button,
   CONNECTION_BADGE,
   Field,
-  FlapBoard,
   Icon,
   NAV_FORWARD,
   PageTransition,
@@ -22,7 +24,6 @@ import {
   Sheet,
   SignalBar,
   ThemeToggle,
-  Timeline,
   cx,
   type IconName,
   type Tone,
@@ -32,7 +33,7 @@ import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { LoadNotice } from "@/lib/recoverTrip";
-import { buildTimeline, finalArrival } from "@/lib/domain/timeline";
+import { finalArrival } from "@/lib/domain/timeline";
 import { useTripStore } from "@/lib/store";
 import type { AutoAction, Contact, Disruption, Flight, Ride, Stay, Trip } from "@/lib/types";
 
@@ -67,9 +68,9 @@ export default function TripStatusPage() {
               {menuButton}
             </span>
           }
-          onLogoClick={trip ? () => setLeaveOpen(true) : undefined}
         />
         {ready && loadNotice && <LoadNoticeBar notice={loadNotice} onDismiss={dismissLoadNotice} />}
+        {ready && trip && trip.flights.length > 0 && <TripCountdown trip={trip} />}
         {!ready ? (
           <Loading />
         ) : !trip ? (
@@ -79,7 +80,15 @@ export default function TripStatusPage() {
         ) : (
           <Status trip={trip} />
         )}
-        <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
+        <TripMenu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          hasTrip={Boolean(trip)}
+          onNewTrip={() => {
+            setMenuOpen(false);
+            setLeaveOpen(true);
+          }}
+        />
         <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
       </main>
     </PageTransition>
@@ -87,11 +96,11 @@ export default function TripStatusPage() {
 }
 
 function Status({ trip }: { trip: Trip }) {
+  const displayTime = useTimeFormat();
   const disruption = trip.disruptions[trip.disruptions.length - 1];
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
   const arrival = disruption ? finalArrival(trip, disruption.id) : null;
-  const timeline = disruption ? buildTimeline(trip, disruption.id) : [];
   const first = trip.flights[0];
   const last = trip.flights[trip.flights.length - 1];
   const eyebrow = [
@@ -113,30 +122,14 @@ function Status({ trip }: { trip: Trip }) {
       <section key={`head-${disruption.id}`} className="ck-rise flex flex-col gap-2 px-5 pt-[22px] pb-[18px]" style={rise(100)}>
         <p className="text-[14px] text-ink-2">{eyebrow}</p>
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
-          {headlineFor(disruption, changed, impact)}
+          {displayTime(headlineFor(disruption, changed, impact))}
         </h1>
       </section>
 
-      {arrival && (
-        <div key={`arrival-${disruption.id}`} className="ck-rise mx-4" style={rise(200)}>
-          <FlapBoard
-            label={`${arrival.unknown ? "Arrival" : "New arrival"} · ${cityName(arrival.flight.to)}`}
-            time={arrival.unknown ? null : timePart(arrival.arriveAt)}
-            was={timePart(arrival.was)}
-            note={
-              arrival.unknown
-                ? "No new time yet"
-                : arrival.delayMinutes
-                  ? `${formatDuration(Math.abs(arrival.delayMinutes))} ${arrival.delayMinutes > 0 ? "later" : "earlier"}`
-                  : "Unchanged"
-            }
-          />
-        </div>
-      )}
-
-      <div className="pt-6" key={`timeline-${disruption.id}`}>
-        <Timeline nodes={timeline} baseDelay={300} />
-      </div>
+      {/* What changed: the day as one list, the old booking struck through above the new one. */}
+      <section key={`plan-${disruption.id}`} aria-label="What changed" className="ck-rise" style={rise(160)}>
+        <DayPlan trip={trip} disruptionId={disruption.id} baseDelay={180} />
+      </section>
 
       {(disruption.actions ?? []).length > 0 && (
         <section key={`handled-${disruption.id}`} className="ck-rise px-5 pt-6" style={rise(650)}>
@@ -144,7 +137,7 @@ function Status({ trip }: { trip: Trip }) {
         </section>
       )}
 
-      <NextAction trip={trip} disruption={disruption} arrival={arrival}>
+      <NextAction disruption={disruption} arrival={arrival}>
         <SortingItOut disruption={disruption} contacts={trip.contacts} />
       </NextAction>
 
@@ -221,6 +214,7 @@ function withSeat(f: Flight) {
 }
 
 function FlightRow({ r }: { r: Row }) {
+  const displayTime = useTimeFormat();
   return (
     <div className={cx("flex flex-col gap-2 px-4 py-3.5", r.isNew && "bg-surface-2")}>
       <div className="flex items-center justify-between gap-2">
@@ -236,14 +230,14 @@ function FlightRow({ r }: { r: Row }) {
       >
         {r.struck && <span className="sr-only">Was </span>}
         <span>
-          {r.from} {timePart(r.departAt)}
+          {r.from} {displayTime(timePart(r.departAt))}
         </span>
         <span className={r.struck ? undefined : "text-ink-faint"} aria-hidden="true">
           →
         </span>
         <span className="sr-only">to</span>
         <span>
-          {r.to} {timePart(r.arriveAt)}
+          {r.to} {displayTime(timePart(r.arriveAt))}
         </span>
       </p>
     </div>
@@ -252,9 +246,26 @@ function FlightRow({ r }: { r: Row }) {
 
 /* ---------- Checklist ---------- */
 
+// How long a removed task takes to fold away.
+const TASK_FOLD_MS = 320;
+
 function SortingItOut({ disruption, contacts }: { disruption: Disruption; contacts: Contact[] }) {
+  const displayTime = useTimeFormat();
   const toggleTask = useTripStore((s) => s.toggleTask);
   const removeTask = useTripStore((s) => s.removeTask);
+  // A removed task folds away first, then leaves the store.
+  const [removing, setRemoving] = useState<Set<string>>(new Set());
+  const remove = (taskId: string) => {
+    setRemoving((r) => new Set(r).add(taskId));
+    setTimeout(() => {
+      removeTask(disruption.id, taskId);
+      setRemoving((r) => {
+        const next = new Set(r);
+        next.delete(taskId);
+        return next;
+      });
+    }, TASK_FOLD_MS);
+  };
   const total = disruption.tasks.length;
   const done = disruption.tasks.filter((t) => t.done).length;
   return (
@@ -264,38 +275,55 @@ function SortingItOut({ disruption, contacts }: { disruption: Disruption; contac
         {disruption.tasks.map((t) => {
           const contact = t.contactId ? contacts.find((c) => c.id === t.contactId) : undefined;
           return (
-            <li key={t.id} className="flex items-center gap-1 border-b border-line">
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={t.done}
-                onClick={() => {
-                  haptic();
-                  toggleTask(disruption.id, t.id);
-                }}
-                data-done={t.done}
-                className="flex min-h-13 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left"
-              >
-                <TaskCircle />
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                  <span className="ck-task-text">{t.title}</span>
-                  {t.detail && <span className="text-[14px] leading-snug text-ink-2">{t.detail}</span>}
-                </span>
-                <span className={cx("ck-task-state text-[13px] font-semibold", t.done ? "text-ok-fg" : "text-ink-2")}>
-                  {t.done ? "Done" : "To do"}
-                </span>
-              </button>
-              {contact?.phone && <CallLink name={contact.name} phone={contact.phone} />}
-              {t.source === "custom" && (
+            <li
+              key={t.id}
+              className={cx(
+                "ck-rise grid border-b border-line transition-[grid-template-rows,opacity,border-color] ease-out",
+                removing.has(t.id) ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]",
+              )}
+              style={{ transitionDuration: `${TASK_FOLD_MS}ms` }}
+            >
+              <div className="flex min-h-0 items-center gap-1 overflow-hidden">
                 <button
                   type="button"
-                  aria-label={`Remove task: ${t.title}`}
-                  onClick={() => removeTask(disruption.id, t.id)}
-                  className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
+                  role="checkbox"
+                  aria-checked={t.done}
+                  onClick={() => {
+                    haptic();
+                    toggleTask(disruption.id, t.id);
+                  }}
+                  data-done={t.done}
+                  className="flex min-h-13 min-w-0 flex-1 cursor-pointer items-center gap-3 py-2 text-left"
                 >
-                  <Icon name="x" size={18} />
+                  <TaskCircle />
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
+                    <span className="ck-task-text">{displayTime(t.title)}</span>
+                    {t.detail && <span className="text-[14px] leading-snug text-ink-2">{displayTime(t.detail)}</span>}
+                  </span>
+                  <span className={cx("ck-task-state text-[13px] font-semibold", t.done ? "text-ok-fg" : "text-ink-2")}>
+                    {t.done ? "Done" : "To do"}
+                  </span>
                 </button>
-              )}
+                {contact?.phone && <CallLink name={contact.name} phone={contact.phone} />}
+                {t.done && (
+                  <button type="button" aria-label={`Undo task: ${displayTime(t.title)}`}
+                    onClick={() => toggleTask(disruption.id, t.id)}
+                    className="ck-fade min-h-11 shrink-0 cursor-pointer rounded-control px-2 text-[13px] font-semibold text-ink-2 hover:bg-sunk">
+                    Undo
+                  </button>
+                )}
+                {t.source === "custom" && (
+                  <button
+                    type="button"
+                    aria-label={`Remove task: ${displayTime(t.title)}`}
+                    onClick={() => remove(t.id)}
+                    disabled={removing.has(t.id)}
+                    className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
+                  >
+                    <Icon name="x" size={18} />
+                  </button>
+                )}
+              </div>
             </li>
           );
         })}
@@ -307,6 +335,7 @@ function SortingItOut({ disruption, contacts }: { disruption: Disruption; contac
 
 /** What Layover already did by itself when the flight changed (see lib/domain/autoUpdates.ts). */
 function HandledForYou({ actions }: { actions: AutoAction[] }) {
+  const displayTime = useTimeFormat();
   if (actions.length === 0) return null;
   return (
     <div>
@@ -326,8 +355,8 @@ function HandledForYou({ actions }: { actions: AutoAction[] }) {
                 {!pending && <Icon name="check" size={14} strokeWidth={3.5} />}
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                <span>{a.title}</span>
-                {a.detail && <span className="text-[14px] leading-snug text-ink-2">{a.detail}</span>}
+                <span>{displayTime(a.title)}</span>
+                {a.detail && <span className="text-[14px] leading-snug text-ink-2">{displayTime(a.detail)}</span>}
               </span>
               <span className={cx("text-[13px] font-semibold", pending ? "text-warn-fg" : "text-ok-fg")}>
                 {pending ? "Waiting" : "Done"}
@@ -509,6 +538,7 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
 /* ---------- Stays and contacts (shown in every state) ---------- */
 
 function StaysSection({ stays, delay }: { stays: Stay[]; delay: number }) {
+  const displayTime = useTimeFormat();
   if (stays.length === 0) return null;
   return (
     <Section title="Where you're staying" delay={delay}>
@@ -525,13 +555,13 @@ function StaysSection({ stays, delay }: { stays: Stay[]; delay: number }) {
             <div>
               <dt className="ck-label">Check-in</dt>
               <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">
-                {timePart(s.checkIn)} <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(s.checkIn)}</span>
+                {displayTime(timePart(s.checkIn))} <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(s.checkIn)}</span>
               </dd>
             </div>
             {s.latestCheckIn && (
               <div>
                 <dt className="ck-label">Front desk until</dt>
-                <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">{s.latestCheckIn}</dd>
+                <dd className="mt-0.5 font-num text-[17px] font-medium tabular-nums">{displayTime(s.latestCheckIn)}</dd>
               </div>
             )}
           </dl>
@@ -542,6 +572,7 @@ function StaysSection({ stays, delay }: { stays: Stay[]; delay: number }) {
 }
 
 function RidesSection({ rides, delay }: { rides: Ride[]; delay: number }) {
+  const displayTime = useTimeFormat();
   if (rides.length === 0) return null;
   return (
     <Section title="Your rides" delay={delay}>
@@ -559,11 +590,11 @@ function RidesSection({ rides, delay }: { rides: Ride[]; delay: number }) {
           <div>
             <p className="ck-label">Pickup</p>
             <p className="mt-0.5 font-num text-[17px] font-medium tabular-nums">
-              {timePart(r.pickupAt)}{" "}
+              {displayTime(timePart(r.pickupAt))}{" "}
               {r.rescheduledFrom && (
                 <span className="text-[14px] font-normal text-ink-faint line-through">
                   <span className="sr-only">was </span>
-                  {timePart(r.rescheduledFrom)}
+                  {displayTime(timePart(r.rescheduledFrom))}
                 </span>
               )}{" "}
               <span className="font-sans text-[14px] font-normal text-ink-2">{formatDate(r.pickupAt)}</span>
@@ -765,7 +796,7 @@ function SavedTrips({ trips }: { trips: Trip[] }) {
   );
 }
 
-/** Logo tapped with a trip open: close it, keeping a copy or not, or stay. */
+/** "Start a new trip" in the menu: close this trip, keeping a copy or not, or stay. */
 function LeaveTripSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const saveAndCloseTrip = useTripStore((s) => s.saveAndCloseTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
@@ -775,11 +806,11 @@ function LeaveTripSheet({ open, onClose }: { open: boolean; onClose: () => void 
     window.scrollTo({ top: 0 });
   };
   return (
-    <Sheet open={open} onClose={onClose} title="Head back to the start?">
+    <Sheet open={open} onClose={onClose} title="Start a new trip?">
       <div className="flex flex-col gap-3 pt-1">
         <p className="mb-2 leading-snug text-ink-2">
-          This trip will close. Unless you save it, its flights, hotels and rides will be gone
-          for good.
+          This trip will close. Save it to reopen it later from the start screen, or its flights,
+          hotels and rides will be gone for good.
         </p>
         <Button variant="primary" block icon="check" onClick={() => leave(saveAndCloseTrip)}>
           Save it for later
@@ -820,10 +851,13 @@ function TripMenu({
   open,
   onClose: closeSheet,
   hasTrip,
+  onNewTrip,
 }: {
   open: boolean;
   onClose: () => void;
   hasTrip: boolean;
+  /** Opens the save-or-discard choice for the current trip. */
+  onNewTrip: () => void;
 }) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
@@ -859,12 +893,17 @@ function TripMenu({
               Allow phone notifications
             </Button>
           )}
-          <Button variant="secondary" block icon="user" href="/settings">
+          <Button variant="secondary" block icon="user" href="/settings" onClick={closeSheet}>
             Settings
           </Button>
           {hasTrip && (
-            <Button variant="secondary" block icon="pencil" href="/trip">
+            <Button variant="secondary" block icon="pencil" href="/trip" onClick={closeSheet}>
               Edit flights, hotels and rides
+            </Button>
+          )}
+          {hasTrip && (
+            <Button variant="secondary" block icon="plus" onClick={onNewTrip}>
+              Start a new trip
             </Button>
           )}
           {confirming ? (
@@ -935,7 +974,7 @@ function Confirm({
   onConfirm: () => void;
 }) {
   return (
-    <div role="group" aria-label={title} className="flex flex-col gap-3 rounded-card border border-line-strong p-4">
+    <div role="group" aria-label={title} className="ck-rise flex flex-col gap-3 rounded-card border border-line-strong p-4">
       <p className="font-semibold">{title}</p>
       <p className="text-[14px] leading-snug text-ink-2">{body}</p>
       <div className="grid grid-cols-2 gap-3">

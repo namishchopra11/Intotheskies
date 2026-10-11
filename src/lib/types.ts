@@ -107,6 +107,7 @@ export const PersonSchema = z.object({
   name: z.string(),
   role: PersonRoleSchema,
   phone: z.string().optional(),
+  // Used when there's no phone number: the update goes by email instead.
   email: z.string().optional(),
 });
 export type Person = z.infer<typeof PersonSchema>;
@@ -157,6 +158,8 @@ export const ProfileSchema = z.object({
   name: z.string(),
   email: z.string(),
   guest: z.boolean(),
+  // How they signed in. Google and Apple are simulated (app/login/SocialSignIn.tsx).
+  provider: z.enum(["email", "google", "apple"]).optional(),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
 
@@ -165,6 +168,9 @@ export const SpeechVoiceSchema = z.enum(["george", "sarah", "alice", "roger"]);
 
 // What Layover may do on its own when a flight changes (see lib/domain/autoUpdates.ts),
 // plus the traveler's preferences.
+export const TimeFormatSchema = z.enum(["12h", "24h"]);
+export type TimeFormat = z.infer<typeof TimeFormatSchema>;
+
 export const SettingsSchema = z.object({
   notifyHotel: z.boolean(),
   moveRides: z.boolean(),
@@ -174,6 +180,7 @@ export const SettingsSchema = z.object({
   // The "Next" button for presenting the app; while it's on, the flight changes only when
   // the presenter asks (see components/trip/DemoNextButton.tsx).
   demoControls: z.boolean(),
+  timeFormat: TimeFormatSchema.default("12h"),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 export const DEFAULT_SETTINGS: Settings = {
@@ -182,6 +189,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifications: true,
   voice: "george",
   demoControls: true,
+  timeFormat: "12h",
 };
 
 export const TripSchema = z.object({

@@ -1,9 +1,10 @@
 "use client";
 
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Button, Card, Field, Icon, PageHeader, Toggle, cx } from "@/components/ui";
+import { Button, Card, Collapse, Field, Icon, PageHeader, Toggle, cx } from "@/components/ui";
 import { sendUpdateTaskId } from "@/lib/domain/checklist";
 import { encodeShare } from "@/lib/domain/shareLink";
 import { DEFAULT_SUMMARY_OPTIONS, type SummaryOptions } from "@/lib/domain/summary";
@@ -32,6 +33,7 @@ function clockNow() {
 }
 
 export default function SharePage() {
+  const displayTime = useTimeFormat();
   const { id } = useParams<{ id: string }>();
   const ready = useStoreReady();
   const trip = useTripStore((s) => s.trip);
@@ -49,8 +51,8 @@ export default function SharePage() {
 
   const disruption = trip?.disruptions.find((d) => d.id === id);
   const lines = useMemo(
-    () => (trip && disruption ? buildMessage(trip, disruption.id, options) : []),
-    [trip, disruption, options],
+    () => (trip && disruption ? buildMessage(trip, disruption.id, options).map((line) => ({ ...line, text: displayTime(line.text) })) : []),
+    [trip, disruption, options, displayTime],
   );
   const message = messageText(lines);
 
@@ -59,7 +61,7 @@ export default function SharePage() {
   if (!trip || !disruption) {
     return (
       <main className="flex flex-1 flex-col">
-        <PageHeader title="Nothing to share yet" back={{ href: "/", label: "Back to trip" }} />
+        <PageHeader title="Nothing to share yet" />
         <div className="px-4 pt-2">
           <Card className="text-ink-2">
             This update isn&apos;t on this phone. Changes from the simulated airline feed show up on
@@ -121,7 +123,7 @@ export default function SharePage() {
 
   return (
     <main className="ck-screen-in flex flex-1 flex-col">
-      <PageHeader title="Share the new plan" back={{ href: "/", label: "Back to trip" }} />
+      <PageHeader title="Share the new plan" />
 
       <SendTo trip={trip} disruptionId={disruption.id} />
 
@@ -176,7 +178,7 @@ export default function SharePage() {
                 : "Add your Solana address from the trip menu first."
             }
           />
-          {fundsOn && (
+          <Collapse open={fundsOn}>
             <Field
               className="pb-3"
               label="Amount in USDC"
@@ -194,14 +196,14 @@ export default function SharePage() {
               }}
               error={amountError}
             />
-          )}
+          </Collapse>
         </Card>
         {!trip.payoutAddress && (
           <Link href="/" className="mt-2 inline-flex min-h-11 items-center px-1 text-[14px] font-medium underline underline-offset-4">
             Go to your trip to add one
           </Link>
         )}
-        {fundsOn && (
+        <Collapse open={fundsOn}>
           <p className="mt-2 flex items-start gap-2 px-1 text-[14px] leading-snug text-ink-2">
             <Icon name="info" size={18} className="mt-px" />
             <span>
@@ -210,7 +212,7 @@ export default function SharePage() {
                 : "Enter an amount, or the link is shared without the button."}
             </span>
           </p>
-        )}
+        </Collapse>
       </section>
 
       <div className="mt-auto flex flex-col gap-3 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),26px)]">

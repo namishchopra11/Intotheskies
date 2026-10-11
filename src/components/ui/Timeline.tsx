@@ -1,3 +1,6 @@
+"use client";
+
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import type { CSSProperties } from "react";
 import type { TimelineNode, TimelineState } from "@/lib/domain/timeline";
 import { cx } from "./cx";
@@ -15,6 +18,7 @@ const KIND_ICON: Partial<Record<TimelineNode["kind"], IconName>> = { flight: "pl
 
 /** The trip as a vertical rail. Each node enters a beat after the one above, so a change ripples down. */
 export function Timeline({ nodes, baseDelay = 0 }: { nodes: TimelineNode[]; baseDelay?: number }) {
+  const displayTime = useTimeFormat();
   return (
     <ol aria-label="Your trip, step by step" className="flex flex-col px-5">
       {nodes.map((n, i) => {
@@ -27,9 +31,9 @@ export function Timeline({ nodes, baseDelay = 0 }: { nodes: TimelineNode[]; base
             className="ck-rise flex gap-3"
             style={{ animationDelay: `${baseDelay + i * 110}ms` } as CSSProperties}
           >
-            <span className="w-11 shrink-0 pt-1 text-right font-num text-[13px] tabular-nums">
-              {n.was && <span className="block text-ink-faint line-through">{n.was}</span>}
-              {n.time && <span className={cx("block font-medium", n.state === "ok" ? "text-ink" : s.text)}>{n.time}</span>}
+            <span className="w-[68px] shrink-0 pt-1 text-right font-num text-[13px] tabular-nums">
+              {n.was && <span className="block text-ink-faint line-through">{displayTime(n.was)}</span>}
+              {n.time && <span className={cx("block font-medium", n.state === "ok" ? "text-ink" : s.text)}>{displayTime(n.time)}</span>}
             </span>
             <span className="relative flex w-7 shrink-0 flex-col items-center">
               <span className={cx("inline-flex h-7 w-7 items-center justify-center rounded-full border-2 transition-colors duration-500", s.marker)}>
@@ -48,7 +52,7 @@ export function Timeline({ nodes, baseDelay = 0 }: { nodes: TimelineNode[]; base
                 <span className={cx(n.kind === "flight" && "font-num text-[14px]")}>{n.title}</span>
                 <span className="sr-only"> — {s.word}</span>
               </p>
-              <p className="text-[14px] leading-snug text-ink-2">{n.detail}</p>
+              <p className="text-[14px] leading-snug text-ink-2">{displayTime(n.detail)}</p>
             </div>
           </li>
         );

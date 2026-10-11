@@ -58,7 +58,19 @@ export function FlightWatcher() {
 
   if (!alert || alert.path !== pathname) return null;
   const { change } = alert;
-  return <NotificationBanner key={change.disruptionId} title={change.title} lines={change.lines} onOpen={open} onDismiss={dismiss} />;
+  // "Simulated change · BA 286 is delayed": the banner shows the change as the title and says
+  // "Simulated" in its small label, so the title fits on one line.
+  const simulated = change.title.match(/^Simulated (?:flight )?change · (.+)$/);
+  return (
+    <NotificationBanner
+      key={change.disruptionId}
+      title={simulated ? capitalize(simulated[1]) : change.title}
+      meta={simulated ? "Simulated" : "now"}
+      lines={change.lines}
+      onOpen={open}
+      onDismiss={dismiss}
+    />
+  );
 }
 
 /** A buzz, and a system notification too when the person has allowed them. */
@@ -76,3 +88,5 @@ function notifyDevice(change: FlightAlertContent) {
     // some browsers only allow notifications from a service worker
   }
 }
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

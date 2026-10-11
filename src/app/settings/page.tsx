@@ -7,7 +7,7 @@ import { SPEECH_VOICES } from "@/components/trip/speechVoices";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { Button, Card, Field, PageHeader, PageTransition, SelectField, Sheet, ThemeToggle, Toggle } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
-import { SpeechVoiceSchema, type Profile } from "@/lib/types";
+import { SpeechVoiceSchema, TimeFormatSchema, type Profile } from "@/lib/types";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,7 +18,7 @@ export default function SettingsPage() {
   return (
     <PageTransition>
       <main className="flex flex-1 flex-col">
-        <PageHeader variant="bar" title="Settings" back={{ href: "/", label: "Back to trip status" }} />
+        <PageHeader variant="bar" title="Settings" />
         {ok && profile && (
           <div className="flex flex-col gap-7 px-4 pb-[max(env(safe-area-inset-bottom),28px)]">
             <Account profile={profile} />
@@ -27,6 +27,7 @@ export default function SettingsPage() {
             <Group title="Appearance">
               <ThemeToggle />
             </Group>
+            <TimeDisplay />
             <ListenVoice />
             <Demo />
             <YourData />
@@ -53,7 +54,14 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 function Account({ profile }: { profile: Profile }) {
   const updateProfile = useTripStore((s) => s.updateProfile);
   const signOut = useTripStore((s) => s.signOut);
+  // A guest's trips can't be put away for later, so logging out deletes them: ask first.
+  const guestHasTrips = useTripStore((s) => profile.guest && (s.trip !== null || s.savedTrips.length > 0));
+  const [confirmGuestLogout, setConfirmGuestLogout] = useState(false);
   const router = useRouter();
+  const logOut = () => {
+    signOut();
+    router.replace("/login");
+  };
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
   const [saved, setSaved] = useState(false);
@@ -73,7 +81,11 @@ function Account({ profile }: { profile: Profile }) {
           <span className="min-w-0 flex-1">
             <span className="block truncate font-semibold">{profile.guest ? "Guest" : profile.name || "Your account"}</span>
             <span className="block truncate text-[14px] text-ink-2">
-              {profile.guest ? "Not signed in" : profile.email}
+              {profile.guest
+                ? "Not signed in"
+                : profile.provider === "google" || profile.provider === "apple"
+                  ? `${profile.email} · via ${profile.provider === "google" ? "Google" : "Apple"} (demo)`
+                  : profile.email}
             </span>
           </span>
         </div>
@@ -82,10 +94,8 @@ function Account({ profile }: { profile: Profile }) {
           <Button
             variant="primary"
             block
-            onClick={() => {
-              signOut();
-              router.push("/login#create");
-            }}
+            // Stays signed in as a guest until the new account exists, so the trip carries over.
+            onClick={() => router.push("/login#create")}
           >
             Create an account
           </Button>
@@ -119,14 +129,43 @@ function Account({ profile }: { profile: Profile }) {
           variant="secondary"
           block
           icon="arrow-right"
-          onClick={() => {
-            signOut();
-            router.replace("/login");
-          }}
+          onClick={() => (guestHasTrips ? setConfirmGuestLogout(true) : logOut())}
         >
           Log out
         </Button>
       </Card>
+
+      <Sheet open={confirmGuestLogout} onClose={() => setConfirmGuestLogout(false)} title="Log out of guest mode?">
+        <div className="flex flex-col gap-3 pt-1">
+          <p className="mb-2 leading-snug text-ink-2">
+            Guest trips aren&apos;t kept after you log out, so this trip and any saved trips will be deleted. Create
+            an account first to keep them.
+          </p>
+          <Button
+            variant="primary"
+            block
+            onClick={() => {
+              setConfirmGuestLogout(false);
+              router.push("/login#create");
+            }}
+          >
+            Create an account
+          </Button>
+          <Button
+            variant="danger"
+            block
+            onClick={() => {
+              setConfirmGuestLogout(false);
+              logOut();
+            }}
+          >
+            Log out and delete
+          </Button>
+          <Button variant="ghost" block onClick={() => setConfirmGuestLogout(false)}>
+            Stay logged in
+          </Button>
+        </div>
+      </Sheet>
     </Group>
   );
 }
@@ -193,7 +232,7 @@ function Notifications() {
             variant="secondary"
             block
             icon="message"
-            className="mb-3"
+            className="ck-rise mb-3"
             onClick={async () => setPhone(await Notification.requestPermission())}
           >
             Allow phone alerts
@@ -293,6 +332,28 @@ function YourData() {
           </Button>
         </div>
       </Sheet>
+    </Group>
+  );
+}
+
+function TimeDisplay() {
+  const timeFormat = useTripStore((s) => s.settings.timeFormat);
+  const updateSettings = useTripStore((s) => s.updateSettings);
+  return (
+    <Group title="Time display">
+      <Card>
+        <SelectField label="Time format" hint="Choose how times appear throughout your trip."
+          value={timeFormat}
+          onChange={(e) => {
+            const next = TimeFormatSchema.safeParse(e.target.value);
+            if (next.success) updateSettings({ timeFormat: next.data });
+          }}
+          options={[
+            { value: "12h", label: "12-hour (2:25 PM)" },
+            { value: "24h", label: "24-hour (14:25)" },
+          ]}
+        />
+      </Card>
     </Group>
   );
 }

@@ -86,12 +86,13 @@ export const sampleTrip: Trip = {
       notes: "Front desk closes at 22:00. Call ahead for a late arrival.",
     },
   ],
-  // The people waiting on Alex. Marco is the driver booked for the Rome arrival. Numbers are
-  // made up and left out here on purpose: the draft screen falls back to WhatsApp's own
-  // contact picker, so a demo never texts a real number.
+  // The people waiting on Alex. Marco is the driver booked for the Rome arrival. The share
+  // screen texts whoever has a phone number and emails whoever has only an email, so Marco
+  // gets an undialable Rome number (the same +39 06 0000 range as the hotel) and Mum a
+  // reserved example.com address: a demo never reaches a real person.
   people: [
-    { id: "person-marco", name: "Marco", role: "pickup" },
-    { id: "person-mum", name: "Mum", role: "family" },
+    { id: "person-marco", name: "Marco", role: "pickup", phone: "+39 06 0000 0191" },
+    { id: "person-mum", name: "Mum", role: "family", email: "mum@example.com" },
   ],
   disruptions: [],
 };

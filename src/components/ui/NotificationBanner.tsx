@@ -7,6 +7,8 @@ import { Icon } from "./Icon";
 type NotificationBannerProps = {
   title: string;
   lines: string[];
+  /** The small label beside the title, like a phone notification's time. */
+  meta?: string;
   /** Tapping the card. */
   onOpen: () => void;
   onDismiss: () => void;
@@ -18,7 +20,7 @@ type NotificationBannerProps = {
  * A banner that drops in from the top of the screen, like a phone notification.
  * Tap to open, swipe up or press the cross to dismiss.
  */
-export function NotificationBanner({ title, lines, onOpen, onDismiss, autoHideMs = 5000 }: NotificationBannerProps) {
+export function NotificationBanner({ title, lines, meta = "now", onOpen, onDismiss, autoHideMs = 5000 }: NotificationBannerProps) {
   const [leaving, setLeaving] = useState(false);
   const [dragY, setDragY] = useState(0);
   const start = useRef<number | null>(null);
@@ -67,34 +69,30 @@ export function NotificationBanner({ title, lines, onOpen, onDismiss, autoHideMs
         }}
         onFocus={() => (paused.current = true)}
       >
-        <div className="flex items-start gap-3 rounded-[18px] border border-line bg-surface p-3.5 shadow-[0_12px_32px_rgb(0_0_0/0.22)]">
+        {/* Compact, like a phone notification: one title line and at most two lines of text.
+            The full story is one tap away on the plan. */}
+        <div className="flex items-center gap-2.5 rounded-[16px] border border-line bg-surface py-2 pr-1 pl-2.5 shadow-[0_10px_28px_rgb(0_0_0/0.22)]">
           <button
             type="button"
             onClick={() => !moved.current && leave(onOpen)}
-            className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-left"
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
           >
-            <BrandMark size={38} className="rounded-[9px]" />
+            <BrandMark size={30} className="rounded-[7px]" />
             <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 font-num text-[11px] font-semibold tracking-[0.06em] text-ink-2 uppercase">
-                Layover
-                <span aria-hidden="true">·</span>
-                <span className="font-normal tracking-normal normal-case">now</span>
+              <span className="flex items-baseline gap-2">
+                <span className="min-w-0 flex-1 truncate text-[14px] leading-snug font-semibold text-ink">{title}</span>
+                <span className="shrink-0 text-[12px] text-ink-2">{meta}</span>
               </span>
-              <span className="mt-0.5 block text-[15px] leading-snug font-semibold text-ink">{title}</span>
-              <span className="mt-1 flex flex-col gap-0.5 text-[14px] leading-snug text-ink-body">
-                {lines.map((l, i) => (
-                  <span key={i}>{l}</span>
-                ))}
-              </span>
+              <span className="line-clamp-2 text-[13px] leading-snug text-ink-body">{lines.join(" ")}</span>
             </span>
           </button>
           <button
             type="button"
             aria-label="Dismiss"
             onClick={() => leave(onDismiss)}
-            className="-mt-1.5 -mr-1.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-sunk"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-sunk"
           >
-            <Icon name="x" size={18} />
+            <Icon name="x" size={16} />
           </button>
         </div>
       </div>

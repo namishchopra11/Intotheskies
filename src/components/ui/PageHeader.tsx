@@ -1,17 +1,15 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
-import { Icon } from "./Icon";
+import { BackButton } from "./BackButton";
+import { HomeLogo } from "./HomeLogo";
 
 type PageHeaderProps = {
   title: string;
   /** Small line above the title, e.g. "Alex Morgan · San Francisco → Rome · Sat 17 Oct". */
   eyebrow?: string;
-  /** Back link. In the "bar" variant it is an icon-only button and `label` is its accessible name. */
-  back?: { href: string; label: string };
   /** Something on the right of the title row, e.g. a ThemeToggle or small Button. */
   action?: ReactNode;
   /**
-   * "bar" (default): a compact row (back arrow and an 18px title) for a step inside a flow, like Share.
+   * "bar" (default): the logo row, then a 22px title, for a step inside a flow, like Share.
    * "title": a large headline that says what happened, with an optional eyebrow and body.
    */
   variant?: "title" | "bar";
@@ -21,40 +19,34 @@ type PageHeaderProps = {
 
 const TOP = "pt-[max(env(safe-area-inset-top),12px)]";
 
-/** The top of every screen, so they all start the same way. */
-export function PageHeader({ title, eyebrow, back, action, variant = "bar", children }: PageHeaderProps) {
+/**
+ * The top of every screen, so they all start the same way: a Back chevron and the Layover
+ * logo top left (the logo always goes home), then the screen's title.
+ */
+export function PageHeader({ title, eyebrow, action, variant = "bar", children }: PageHeaderProps) {
+  const logoRow = (
+    <div className={`flex min-h-[68px] items-center justify-between pr-3 pb-1 pl-5 ${TOP}`}>
+      <div className="flex items-center gap-1">
+        <BackButton />
+        <HomeLogo />
+      </div>
+      {variant === "bar" && action && <div className="shrink-0">{action}</div>}
+    </div>
+  );
+
   if (variant === "bar") {
     return (
-      <header className={`flex items-center gap-1 pr-4 pb-3 pl-2 ${TOP}`}>
-        {back && (
-          <Link
-            href={back.href}
-            transitionTypes={["nav-back"]}
-            aria-label={back.label}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink hover:bg-sunk"
-          >
-            <Icon name="chevron-left" size={22} />
-          </Link>
-        )}
-        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{title}</h1>
-        {action && <div className="shrink-0">{action}</div>}
+      <header>
+        {logoRow}
+        <h1 className="truncate px-5 pb-3 text-[22px] leading-tight font-semibold tracking-[-0.01em]">{title}</h1>
       </header>
     );
   }
 
   return (
-    <header className={`px-5 pb-4 ${TOP}`}>
-      {back && (
-        <Link
-          href={back.href}
-          transitionTypes={["nav-back"]}
-          className="-ml-3 mb-1 inline-flex min-h-11 items-center gap-1 rounded-control pr-3 pl-1 font-medium text-ink-2 hover:text-ink"
-        >
-          <Icon name="chevron-left" size={22} />
-          {back.label}
-        </Link>
-      )}
-      <div className="flex items-start gap-3">
+    <header className="pb-4">
+      {logoRow}
+      <div className="flex items-start gap-3 px-5">
         <div className="min-w-0 flex-1">
           {eyebrow && <p className="mb-2 text-[14px] text-ink-2">{eyebrow}</p>}
           <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-balance">
@@ -63,7 +55,7 @@ export function PageHeader({ title, eyebrow, back, action, variant = "bar", chil
         </div>
         {action && <div className="shrink-0 pt-0.5">{action}</div>}
       </div>
-      {children && <div className="mt-2 text-ink-2">{children}</div>}
+      {children && <div className="mt-2 px-5 text-ink-2">{children}</div>}
     </header>
   );
 }

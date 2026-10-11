@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandMark, Button, Field, Icon, cx } from "@/components/ui";
+import { BackButton, Button, Field, HomeLogo, Icon, cx } from "@/components/ui";
 import { useStoreReady, useTripStore } from "@/lib/store";
+import type { Profile } from "@/lib/types";
+import { SocialSignIn } from "./SocialSignIn";
 
 type Mode = "signin" | "create";
 
@@ -34,12 +36,16 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [tried, setTried] = useState(false);
 
-  // Settings links here as /login#create for guests who want an account.
+  // Settings links here as /login#create for guests who want an account. Next keeps this page
+  // alive between visits, so set the tab every time it's shown and drop what was typed.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (window.location.hash === "#create") setMode("create");
+    setMode(window.location.hash === "#create" ? "create" : "signin");
+    setPassword("");
+    setTried(false);
   }, []);
 
   // Already signed in (not as a guest): nothing to do here.
@@ -59,8 +65,13 @@ export default function LoginPage() {
   const submit = () => {
     setTried(true);
     if (errors.name || errors.email || errors.password) return;
-    signIn({ name: creating ? name : nameFromEmail(email), email, guest: false });
+    signIn({ name: creating ? name : nameFromEmail(email), email, guest: false, provider: "email" });
     setPassword("");
+    router.replace("/");
+  };
+
+  const social = (profile: Profile) => {
+    signIn(profile);
     router.replace("/");
   };
 
@@ -71,12 +82,12 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 flex-col px-5 pt-[max(env(safe-area-inset-top),28px)] pb-[max(env(safe-area-inset-bottom),24px)]">
-      <div className="ck-rise flex items-center gap-2.5 text-[17px] font-semibold">
-        <BrandMark size={30} className="rounded-[6px]" />
-        Layover
+      <div className="ck-rise flex items-center gap-1">
+        <BackButton onlyWithHistory />
+        <HomeLogo />
       </div>
 
-      <section className="ck-rise pt-10 pb-6">
+      <section key={mode} className="ck-auth-copy pt-10 pb-6">
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
           {creating ? "Create your account" : "Welcome to Layover"}
         </h1>
@@ -87,7 +98,20 @@ export default function LoginPage() {
         </p>
       </section>
 
-      <div role="tablist" aria-label="Log in or create an account" className="mb-5 grid grid-cols-2 gap-1 rounded-control bg-sunk p-1">
+      <SocialSignIn onSignIn={social} />
+
+      <div className="my-5 flex items-center gap-3 text-[13px] text-ink-2" aria-hidden="true">
+        <span className="h-px flex-1 bg-line" />
+        or use your email
+        <span className="h-px flex-1 bg-line" />
+      </div>
+
+      <div role="tablist" aria-label="Log in or create an account" className="relative mb-5 grid grid-cols-2 rounded-control bg-sunk p-1">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-[8px] bg-surface shadow-sm transition-transform duration-300 ease-out"
+          style={{ transform: creating ? "translateX(100%)" : "translateX(0)" }}
+        />
         {(["signin", "create"] as const).map((m) => (
           <button
             key={m}
@@ -97,10 +121,11 @@ export default function LoginPage() {
             onClick={() => {
               setMode(m);
               setTried(false);
+              setShowPassword(false);
             }}
             className={cx(
-              "min-h-11 cursor-pointer rounded-[8px] text-[15px] font-semibold",
-              mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-2",
+              "relative min-h-11 cursor-pointer rounded-[8px] text-[15px] font-semibold transition-colors duration-300",
+              mode === m ? "text-ink" : "text-ink-2",
             )}
           >
             {m === "signin" ? "Log in" : "Create account"}
@@ -109,16 +134,26 @@ export default function LoginPage() {
       </div>
 
       <form
-        className="flex flex-col gap-4"
+        className="ck-auth-form flex flex-col gap-4"
+        data-mode={mode}
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
       >
-        {creating && (
-          <Field label="Your name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} error={shown.name} />
-        )}
+        <div
+          aria-hidden={!creating}
+          inert={!creating}
+          className={cx(
+            "grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out",
+            creating ? "grid-rows-[1fr] opacity-100" : "-mb-4 grid-rows-[0fr] opacity-0",
+          )}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <Field label="Your name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} error={shown.name} disabled={!creating} />
+          </div>
+        </div>
         <Field
           label="Email"
           type="email"
@@ -131,12 +166,25 @@ export default function LoginPage() {
         />
         <Field
           label="Password"
-          type="password"
+          id="login-password"
+          type={showPassword ? "text" : "password"}
           autoComplete={creating ? "new-password" : "current-password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={shown.password}
           hint={creating ? `At least ${MIN_PASSWORD} characters.` : undefined}
+          endAdornment={
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-controls="login-password"
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <Icon name={showPassword ? "eye-off" : "eye"} size={20} />
+            </button>
+          }
         />
         <Button type="submit" variant="primary" size="lg" block chip="arrow-right" className="mt-2">
           {creating ? "Create account" : "Log in"}
@@ -154,7 +202,8 @@ export default function LoginPage() {
 
       <p className="mt-auto flex items-start gap-2 pt-8 text-[13px] leading-snug text-ink-2">
         <Icon name="lock" size={16} className="mt-px" />
-        Demo login: your name and email stay on this phone, and your password is never saved.
+        Demo login: Apple and Google sign-in are simulated, your name and email stay on this phone,
+        and your password is never saved.
       </p>
     </main>
   );

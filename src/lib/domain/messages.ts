@@ -78,14 +78,18 @@ export function buildDrafts(trip: Trip, disruptionId: string): Draft[] {
 
 const digits = (phone?: string) => phone?.replace(/\D/g, "") ?? "";
 
-/** Links that open the person's own messaging app with the text filled in. */
-export function channelLinks(draft: Draft) {
+export type SendLink = { channel: "text" | "email"; href: string };
+
+/**
+ * How this update reaches them, picked from the contact details saved for them: a text if
+ * there's a phone number, otherwise an email. Opens Messages or Mail with it filled in (the
+ * app can't send by itself). null when there's neither, so the screen can ask for one.
+ */
+export function sendLink(draft: Draft): SendLink | null {
   const text = encodeURIComponent(draft.body);
   const num = digits(draft.phone);
-  return {
-    whatsapp: `https://wa.me/${num}?text=${text}`, // no number: WhatsApp's own contact picker opens
-    sms: `sms:${num ? `+${num}` : ""}?&body=${text}`, // "?&body=" works on both iOS and Android
-    // "@" stays readable; everything else in the address is encoded so it can't end the recipient early.
-    mail: `mailto:${encodeURIComponent(draft.email?.trim() ?? "").replace(/%40/g, "@")}?subject=${encodeURIComponent(draft.subject)}&body=${text}`,
-  };
+  if (num) return { channel: "text", href: `sms:+${num}?&body=${text}` }; // "?&body=" works on iOS and Android
+  const to = draft.email?.trim();
+  if (to) return { channel: "email", href: `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(draft.subject)}&body=${text}` };
+  return null;
 }

@@ -160,9 +160,10 @@ and the hotel, each with the new arrival time.
 **POINT** at the hotel message (it has the booking confirmation) and Mum's (it has no
 booking numbers).
 
-**TAP** **WhatsApp** on Mum's message. WhatsApp opens with the text filled in (the sample
-trip has no numbers for Marco or Mum, so pick the chat yourself). **Nothing is
-sent from here.** Go back.
+**TAP** **Email Mum** on Mum's message. Mail opens addressed to her with the update filled
+in. Marco's says **Text Marco** instead: each message goes the way that person's saved
+details allow (a phone number means a text, otherwise an email). **Nothing is sent from
+here.** Go back.
 
 The **Mum · family** node on the home screen is now green: the loop is closed.
 

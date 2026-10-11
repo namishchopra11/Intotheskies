@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cx } from "./cx";
 import { Icon } from "./Icon";
+import { HomeLogo } from "./HomeLogo";
 
 /** The logo: an arrow on a small sign. Ink square with a yellow arrow (inverted in dark mode). */
 export function BrandMark({ size = 24, className }: { size?: number; className?: string }) {
@@ -19,30 +20,13 @@ export function BrandMark({ size = 24, className }: { size?: number; className?:
 }
 
 /**
- * App header for top-level screens: logo and name on the left, an optional action on the right.
- * With `onLogoClick`, the logo becomes a button (e.g. back to the start screen).
+ * App header for the home screen: the logo (always home) on the left, an optional action on
+ * the right. Other screens get the same logo row from PageHeader.
  */
-export function AppHeader({ action, onLogoClick }: { action?: ReactNode; onLogoClick?: () => void }) {
-  const brand = (
-    <>
-      <BrandMark />
-      Layover
-    </>
-  );
+export function AppHeader({ action }: { action?: ReactNode }) {
   return (
     <header className="flex min-h-[68px] items-center justify-between pt-[max(env(safe-area-inset-top),12px)] pr-3 pb-3 pl-5">
-      {onLogoClick ? (
-        <button
-          type="button"
-          onClick={onLogoClick}
-          aria-label="Layover, back to the start screen"
-          className="-ml-2 inline-flex min-h-11 cursor-pointer items-center gap-2.5 rounded-control px-2 text-[15px] font-semibold hover:bg-sunk"
-        >
-          {brand}
-        </button>
-      ) : (
-        <span className="inline-flex items-center gap-2.5 text-[15px] font-semibold">{brand}</span>
-      )}
+      <HomeLogo />
       {action}
     </header>
   );

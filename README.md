@@ -62,8 +62,9 @@ pnpm build   # production build
 3. See the new arrival on the board, the trip as a rail that shows what is affected,
    **Handled for you** (the hotel told and the airport pickup moved, both simulated), and
    one **Do this now** task.
-4. Tap **Share the new plan**, then **WhatsApp**, **Text** or **Email** on a person's
-   message. The app opens with the text filled in (nothing is sent from here).
+4. Tap **Share the new plan**, then the send button on a person's message. It texts them if
+   a phone number is saved for them, otherwise emails them: Messages or Mail opens with the
+   update filled in (nothing is sent from here).
 5. Open a shared link. It is a read-only page that needs no app and no account.
 
 To replay it, open the menu (top right) and choose **Restart the demo trip** (then confirm).

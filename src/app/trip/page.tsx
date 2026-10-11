@@ -48,7 +48,7 @@ export default function TripEditPage() {
   return (
     <PageTransition>
       <main className="flex flex-1 flex-col">
-        <PageHeader variant="bar" title="Your trip" back={{ href: "/", label: "Back to trip status" }} />
+        <PageHeader variant="bar" title="Your trip" />
         {!ready ? null : trip ? <Bookings trip={trip} /> : <StartTrip />}
       </main>
     </PageTransition>
@@ -59,7 +59,6 @@ function StartTrip() {
   const startTrip = useTripStore((s) => s.startTrip);
   const signedInName = useTripStore((s) => s.profile?.name ?? "");
   const [name, setName] = useState("");
-  const [traveler, setTraveler] = useState(signedInName);
   const [tried, setTried] = useState(false);
 
   return (
@@ -74,7 +73,7 @@ function StartTrip() {
         onSubmit={(e) => {
           e.preventDefault();
           setTried(true);
-          if (name.trim() && traveler.trim()) leaveStartTrip(() => startTrip({ name, travelerName: traveler }));
+          if (name.trim()) leaveStartTrip(() => startTrip({ name, travelerName: signedInName }));
         }}
       >
         <Field
@@ -83,15 +82,6 @@ function StartTrip() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           error={tried && !name.trim() ? "Required." : undefined}
-        />
-        <Field
-          label="Your name"
-          placeholder="Alex Morgan"
-          autoComplete="name"
-          value={traveler}
-          onChange={(e) => setTraveler(e.target.value)}
-          error={tried && !traveler.trim() ? "Required." : undefined}
-          hint="Used in the update you send to people waiting for you."
         />
         <div className="mt-auto pt-6 pb-[max(env(safe-area-inset-bottom),24px)]">
           <Button type="submit" variant="primary" size="lg" block chip="arrow-right">
@@ -391,8 +381,7 @@ function EntrySheet<T extends { id: string }>({
 function DetailsSheet({ trip, onClose }: { trip: Trip; onClose: () => void }) {
   const updateTripDetails = useTripStore((s) => s.updateTripDetails);
   const [name, setName] = useState(trip.name);
-  const [traveler, setTraveler] = useState(trip.travelerName);
-  const valid = name.trim() && traveler.trim();
+  const valid = name.trim();
 
   return (
     <Sheet
@@ -405,7 +394,7 @@ function DetailsSheet({ trip, onClose }: { trip: Trip; onClose: () => void }) {
           block
           disabled={!valid}
           onClick={() => {
-            updateTripDetails({ name, travelerName: traveler });
+            updateTripDetails({ name, travelerName: trip.travelerName });
             onClose();
           }}
         >
@@ -415,7 +404,6 @@ function DetailsSheet({ trip, onClose }: { trip: Trip; onClose: () => void }) {
     >
       <div className="flex flex-col gap-4 pt-2">
         <Field label="Trip name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Field label="Your name" autoComplete="name" value={traveler} onChange={(e) => setTraveler(e.target.value)} />
       </div>
     </Sheet>
   );

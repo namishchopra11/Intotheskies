@@ -27,6 +27,16 @@
         "export PATH=$HOME/.local/node/bin:$PATH; pnpm build && pnpm exec next start -H 0.0.0.0 -p 3100"
       ],
       "port": 3100
+    },
+    {
+      "name": "web-dev",
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=$HOME/.local/node/bin:$PATH; pnpm exec next dev -p ${PORT:-3000}"
+      ],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }
