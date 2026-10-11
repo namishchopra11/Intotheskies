@@ -91,6 +91,37 @@ None blocks the demo. All of these are small.
 
 ---
 
+## Will's Layover branch (`design-share`, not merged yet)
+
+Tested on Saturday evening by running the branch on a Mac at phone width. The AI import and
+ElevenLabs need API keys that were not on that Mac, so their failures there are expected. These
+two problems are not:
+
+### A. Listen has no backup voice (Boris)
+
+- **What I did:** tapped **Listen to summary** with no ElevenLabs key available.
+- **What I expected:** the phone's built-in voice reads the summary, as it does on `main`.
+- **What happened:** red text, "Listen isn't set up yet. The team needs to add the ElevenLabs
+  API key." No sound. The built-in voice fallback (`speechSynthesis`) is gone from
+  `useSpeech.ts`.
+- **Why it matters:** if the key is missing, the venue wifi drops, or ElevenLabs credits run
+  out on stage, Listen does nothing. The playbook says it should always fall back to the
+  built-in voice.
+
+### B. Error messages are written for developers (Will, Boris)
+
+- **What happened:** Import shows "Import isn't set up yet: add ANTHROPIC_API_KEY to .env.local
+  and restart." Listen shows "The team needs to add the ElevenLabs API key."
+- **What to do:** say it the way a traveler would understand, for example "Import isn't
+  available right now. You can add your trip by hand." Also check that both keys are set in
+  Vercel before the demo.
+
+### Still to test on this branch
+
+Share and the link, Send help, Settings, log out and back in, and adding a trip by hand.
+
+---
+
 ## Fixed since my first pass
 
 - The shared message and the recipient page no longer include the traveler's own to-dos (for
