@@ -57,7 +57,7 @@ function flightAction(flight: Flight, disruptionId: string): AutoAction {
     return {
       ...base,
       status: "pending",
-      title: `Waiting for ${flight.airline} to confirm a new flight`,
+      title: `Waiting for ${flight.airline} to rebook you`,
       detail: "Your hotel and pickup get the new time as soon as there is one.",
     };
   }
@@ -65,11 +65,11 @@ function flightAction(flight: Flight, disruptionId: string): AutoAction {
     return {
       ...base,
       status: "done",
-      title: `${flight.airline} rebooked you on ${flight.flightNumber}`,
+      title: `Rebooked on ${flight.flightNumber}`,
       detail: times,
     };
   }
-  return { ...base, status: "done", title: `Updated ${flight.flightNumber} to its new times`, detail: times };
+  return { ...base, status: "done", title: `Updated ${flight.flightNumber} times`, detail: times };
 }
 
 /**
@@ -106,7 +106,7 @@ export function planAutoUpdates(
       actions.push({
         ...base,
         status: "done",
-        title: `Told ${stay.name} you may arrive late`,
+        title: "Told the hotel you may be late",
         detail: "Asked them to hold your room until you have a new arrival time.",
       });
       continue;
@@ -116,7 +116,7 @@ export function planAutoUpdates(
     actions.push({
       ...base,
       status: "done",
-      title: `Told ${stay.name} your new arrival`,
+      title: `Told the hotel you land at ${timePart(newLanding)}${day}`,
       detail: `You now land in ${city} at ${timePart(newLanding)}${day}. Asked them to hold your room.${desk}`,
     });
   }
@@ -128,7 +128,7 @@ export function planAutoUpdates(
       actions.push({
         ...base,
         status: "pending",
-        title: `Put your ${ride.provider} pickup on hold`,
+        title: "Put your pickup on hold",
         detail: `They get a new pickup time as soon as you have a new flight.`,
       });
       continue;
@@ -140,7 +140,7 @@ export function planAutoUpdates(
     actions.push({
       ...base,
       status: "done",
-      title: `Moved your ${ride.provider} pickup to ${timePart(moved.pickupAt)}`,
+      title: `Moved your pickup to ${timePart(moved.pickupAt)}`,
       detail: `Was ${timePart(was)}${datePart(moved.pickupAt) === datePart(was) ? "" : ` on ${formatDate(was)}`}. ${ride.provider} has the new time.`,
     });
   }

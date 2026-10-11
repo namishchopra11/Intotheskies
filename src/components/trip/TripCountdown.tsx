@@ -66,7 +66,7 @@ export function TripCountdown({ trip }: { trip: Trip }) {
   const { days } = daysUntil(first.departAt, today(now));
   const label = cancelled
     ? "Waiting for a new flight"
-    : live ? `${first.flightNumber} leaves in ${live.label}`
+    : live ? `${first.flightNumber} · ${live.label}`
     : departure !== null ? countdownLabel(departure, now)
     : days < 0 ? "Trip started"
     : days === 0 ? "Leaving today"

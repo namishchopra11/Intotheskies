@@ -102,17 +102,8 @@ function Status({ trip }: { trip: Trip }) {
   const changed = disruption && trip.flights.find((f) => f.id === disruption.flightId);
   const impact = disruption && changed ? computeImpact(trip, changed.id) : null;
   const arrival = disruption ? finalArrival(trip, disruption.id) : null;
-  const first = trip.flights[0];
-  const last = trip.flights[trip.flights.length - 1];
-  const eyebrow = [
-    trip.travelerName,
-    first && last && `${cityName(first.from)} → ${cityName(last.to)}`,
-    first && formatDate(first.departAt),
-  ]
-    .filter(Boolean)
-    .join(" · ");
 
-  if (!disruption || !changed || !impact) return <OnTrack trip={trip} eyebrow={eyebrow} />;
+  if (!disruption || !changed || !impact) return <OnTrack trip={trip} />;
 
   return (
     <>
@@ -348,9 +339,7 @@ function HandledForYou({ actions }: { actions: AutoAction[] }) {
                 {!pending && <Icon name="check" size={14} strokeWidth={3.5} />}
               </span>
               <span className="min-w-0 flex-1 text-[15px]">{displayTime(a.title)}</span>
-              <span className={cx("text-[13px] font-semibold", pending ? "text-warn-fg" : "text-ok-fg")}>
-                {pending ? "Waiting" : "Done"}
-              </span>
+              {pending && <span className="text-[13px] font-semibold text-warn-fg">Waiting</span>}
             </li>
           );
         })}
@@ -448,7 +437,7 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
 
 /* ---------- On track: nothing has changed yet ---------- */
 
-function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
+function OnTrack({ trip }: { trip: Trip }) {
   const count = trip.flights.length;
   const tight = tightLayover(trip);
   const done = new Set(trip.prepDone ?? []);
@@ -459,15 +448,14 @@ function OnTrack({ trip, eyebrow }: { trip: Trip; eyebrow: string }) {
         aside={
           <span className="inline-flex items-center gap-2">
             <span aria-hidden="true" className="ck-pulse h-2 w-2 rounded-full bg-current" />
-            Watching · simulated feed
+            Simulated feed
           </span>
         }
       >
-        {tight ? "On time · tight connection" : "All flights on time"}
+        {tight ? "Tight connection" : "On time"}
       </SignalBar>
 
       <section className="ck-rise flex flex-col gap-2 px-5 pt-[22px] pb-[18px]" style={rise(100)}>
-        <p className="text-[14px] text-ink-2">{eyebrow}</p>
         <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em]">
           {tight
             ? tight.gap < 0

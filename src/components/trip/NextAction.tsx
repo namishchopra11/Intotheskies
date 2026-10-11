@@ -20,7 +20,7 @@ export function haptic() {
 
 /**
  * "Do this first": the first unfinished task with one clear action. The card and full list sit
- * behind "All tasks". Generated tasks are already in order of urgency, so no sorting here.
+ * behind "To do". Generated tasks are already in order of urgency, so no sorting here.
  */
 export function NextAction({
   disruption,

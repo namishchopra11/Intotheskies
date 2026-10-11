@@ -64,9 +64,6 @@ function StartTrip() {
 
   return (
     <div id={START_TRIP_ID} className="flex flex-1 flex-col">
-      <p className="px-5 pb-4 text-ink-2">
-        Add your flights, hotel and rides. When something changes, Layover shows what it affects.
-      </p>
       <ImportCard />
       <p className="ck-label px-5 pt-7 pb-1">Or type it in</p>
       <form
@@ -91,7 +88,6 @@ function StartTrip() {
           value={traveler}
           onChange={(e) => setTraveler(e.target.value)}
           error={tried && !traveler.trim() ? "Required." : undefined}
-          hint="Used in the update you send to people waiting for you."
         />
         <div className="mt-auto pt-6 pb-[max(env(safe-area-inset-bottom),24px)]">
           <Button type="submit" variant="primary" size="lg" block chip="arrow-right">

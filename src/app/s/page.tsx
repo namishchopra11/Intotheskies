@@ -34,7 +34,7 @@ export default function SharedUpdatePage() {
           <BackButton onlyWithHistory className="-my-2 text-on-band hover:bg-transparent hover:opacity-80" />
           Travel update
         </span>
-        {snapshot && <span className="text-signal">Snapshot · {displayTime(snapshotAt(snapshot.disruption.createdAt))}</span>}
+        {snapshot && <span className="text-signal">{displayTime(timeOnly(snapshot.disruption.createdAt))}</span>}
       </div>
       {snapshot === undefined ? <Loading /> : snapshot === null ? <BadLink /> : <Update s={snapshot} />}
     </main>
@@ -65,7 +65,7 @@ function Update({ s }: { s: ShareSnapshot }) {
 
       {final && final.status !== "cancelled" && <ArrivalCard f={final} style={stagger(1)} />}
 
-      <Section title="Revised itinerary" className="pt-7" style={stagger(2)}>
+      <Section title="Flights" className="pt-7" style={stagger(2)}>
         <ol className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
           {s.flights.map((f) => (
             <li key={f.id}>
@@ -88,7 +88,7 @@ function Update({ s }: { s: ShareSnapshot }) {
       )}
 
       {(risks.length > 0 || s.openTasks.length > 0) && (
-        <Section title="Still being sorted" className="pt-6" gap="gap-2.5" style={stagger(4)}>
+        <Section title="Still sorting" className="pt-6" gap="gap-2.5" style={stagger(4)}>
           <ul className="flex flex-col">
             {risks.map((stay) => (
               <li key={stay.id} className="flex min-h-13 items-center gap-3 border-b border-line py-2 text-[15px]">
@@ -114,12 +114,8 @@ function Update({ s }: { s: ShareSnapshot }) {
 
       <div className="min-h-6 flex-1" aria-hidden="true" />
       <footer className="flex flex-col gap-3.5 border-t border-line px-5 pt-6 pb-[max(env(safe-area-inset-bottom),28px)]">
-        <p className="flex items-start gap-2 text-[14px] leading-[1.45] text-ink-body">
-          <Icon name="circle-alert" size={18} className="mt-px" />
-          <span>
-            This page is a snapshot from {displayTime(timeOnly(s.disruption.createdAt))} and won&apos;t update.
-            Check with {first} for anything newer.
-          </span>
+        <p className="text-[13px] text-ink-2">
+          Snapshot from {displayTime(timeOnly(s.disruption.createdAt))}. Won&apos;t update.
         </p>
         <span className="inline-flex items-center gap-2 text-[13px] text-ink-2">
           <BrandMark size={18} className="rounded-[3px]" />
@@ -206,7 +202,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
         <Badge tone={b.tone}>{b.label}</Badge>
       </div>
       {f.status === "cancelled" ? (
-        <p className="text-[15px] text-ink-2">Waiting for a new flight.</p>
+        <p className="text-[15px] text-ink-2">Waiting for a new flight</p>
       ) : (
         <p className="font-num text-[20px] font-medium tabular-nums">
           {displayTime(timePart(f.departAt))} → {displayTime(timePart(f.arriveAt))}
@@ -214,7 +210,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
       )}
       {f.bookingRef && (
         <p className="text-[13px] text-ink-2">
-          Booking reference <span className="font-num font-medium text-ink">{f.bookingRef}</span>
+          Ref <span className="font-num font-medium text-ink">{f.bookingRef}</span>
         </p>
       )}
     </div>
@@ -232,12 +228,12 @@ function HotelStay({ stay }: { stay: Stay }) {
       </p>
       {stay.latestCheckIn && (
         <p className="text-[14px] text-ink-2">
-          Front desk open until <span className="font-num font-medium text-ink">{displayTime(stay.latestCheckIn)}</span>
+          Desk until <span className="font-num font-medium text-ink">{displayTime(stay.latestCheckIn)}</span>
         </p>
       )}
       {stay.confirmation && (
         <p className="text-[13px] text-ink-2">
-          Confirmation <span className="font-num font-medium text-ink">{stay.confirmation}</span>
+          Ref <span className="font-num font-medium text-ink">{stay.confirmation}</span>
         </p>
       )}
     </div>
@@ -245,13 +241,6 @@ function HotelStay({ stay }: { stay: Stay }) {
 }
 
 // createdAt is a real ISO timestamp, so it is shown in the reader's own time.
-function snapshotAt(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "recently";
-  const day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
-  return `${timeOnly(iso)} ${day.replace(",", "")}`;
-}
-
 function timeOnly(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "earlier";
@@ -265,12 +254,8 @@ function BadLink() {
         <span className="inline-flex h-11 w-11 items-center justify-center rounded-card bg-sunk text-ink-2">
           <Icon name="link" size={22} />
         </span>
-        <h1 className="text-[24px] leading-tight font-semibold">This link didn&apos;t come through</h1>
-        <p className="text-ink-2">
-          Part of it may have been cut off when it was copied or forwarded, so the trip details
-          can&apos;t be shown.
-        </p>
-        <p className="text-ink-2">Ask the person who sent it to send the link again.</p>
+        <h1 className="text-[24px] leading-tight font-semibold">This link is broken</h1>
+        <p className="text-ink-2">Ask for it again.</p>
       </Card>
     </div>
   );

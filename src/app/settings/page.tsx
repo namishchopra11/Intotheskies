@@ -31,10 +31,7 @@ export default function SettingsPage() {
             <ListenVoice />
             <Demo />
             <YourData />
-            <p className="px-1 text-[13px] leading-snug text-ink-2">
-              Layover keeps your trips on this phone. Confirmations you import are sent to Claude, Anthropic&apos;s AI,
-              to be read.
-            </p>
+            <p className="px-1 text-[12px] text-ink-2">Trips stay on this phone. Imports are read by Claude.</p>
           </div>
         )}
       </main>
@@ -137,10 +134,7 @@ function Account({ profile }: { profile: Profile }) {
 
       <Sheet open={confirmGuestLogout} onClose={() => setConfirmGuestLogout(false)} title="Log out of guest mode?">
         <div className="flex flex-col gap-3 pt-1">
-          <p className="mb-2 leading-snug text-ink-2">
-            Guest trips aren&apos;t kept after you log out, so this trip and any saved trips will be deleted. Create
-            an account first to keep them.
-          </p>
+          <p className="mb-2 leading-snug text-ink-2">Guest trips are deleted when you log out.</p>
           <Button
             variant="primary"
             block
@@ -180,20 +174,16 @@ function AutoUpdates() {
           checked={settings.notifyHotel}
           onChange={(notifyHotel) => updateSettings({ notifyHotel })}
           label="Tell my hotel"
-          description="Send your hotel the new arrival time and ask them to hold the room."
+          description="New arrival time, hold the room."
         />
         <Toggle
           checked={settings.moveRides}
           onChange={(moveRides) => updateSettings({ moveRides })}
           label="Move my pickups"
-          description="Shift airport pickups to match your new landing time."
+          description="Match your new landing time."
         />
       </Card>
-      <p className="px-1 text-[13px] leading-snug text-ink-2">
-        Your flights are always watched (in this demo, through a simulated airline feed, and no
-        message really reaches a hotel or driver). Anything switched off is added to your to-do
-        list instead.
-      </p>
+      <p className="px-1 text-[12px] text-ink-2">Simulated: nothing is really sent. Off means it goes on your to-do list.</p>
     </Group>
   );
 }
@@ -215,12 +205,12 @@ function Notifications() {
 
   // The browser's own permission can only be changed in its settings, so say where things stand.
   const description = !on
-    ? "Off. Your trip still updates when a flight changes, but you won't get an alert."
+    ? "Off"
     : {
-        granted: "On. You'll see an alert in the app and on your phone when a flight changes.",
-        denied: "On in the app. Phone alerts are blocked for this site in your browser settings.",
-        default: "On in the app. Allow phone alerts to get them when the app isn't open.",
-        unsupported: "On. You'll see an alert in the app when a flight changes.",
+        granted: "App and phone",
+        denied: "App only. Phone alerts blocked in browser.",
+        default: "App only",
+        unsupported: "App only",
       }[phone];
 
   return (
@@ -248,11 +238,10 @@ function ListenVoice() {
   const voice = useTripStore((s) => s.settings.voice);
   const updateSettings = useTripStore((s) => s.updateSettings);
   return (
-    <Group title="Listen to summary">
+    <Group title="Listen">
       <Card>
         <SelectField
           label="Voice"
-          hint="Used when you press Listen to summary."
           value={voice}
           onChange={(e) => {
             const next = SpeechVoiceSchema.safeParse(e.target.value);
@@ -278,8 +267,8 @@ function Demo() {
           label="Demo controls"
           description={
             on
-              ? "Shows a Next button that walks through every screen. Flights change only when you press it."
-              : "Off. Flights change on their own a few seconds after a trip loads."
+              ? "Next button walks through the demo."
+              : "Flights change on their own."
           }
         />
       </Card>
@@ -312,10 +301,7 @@ function YourData() {
 
       <Sheet open={confirming} onClose={() => setConfirming(false)} title={guest ? "Delete your data?" : "Delete your account?"}>
         <div className="flex flex-col gap-3 pt-1">
-          <p className="mb-2 leading-snug text-ink-2">
-            This deletes {guest ? "your" : "your account details,"} trips, saved trips and settings from this phone and
-            logs you out. It can&apos;t be undone.
-          </p>
+          <p className="mb-2 leading-snug text-ink-2">Deletes everything on this phone. Can&apos;t be undone.</p>
           <Button
             variant="danger"
             block
@@ -342,7 +328,7 @@ function TimeDisplay() {
   return (
     <Group title="Time display">
       <Card>
-        <SelectField label="Time format" hint="Choose how times appear throughout your trip."
+        <SelectField label="Time format"
           value={timeFormat}
           onChange={(e) => {
             const next = TimeFormatSchema.safeParse(e.target.value);

@@ -63,7 +63,7 @@ export function prepItems(trip: Trip): PrepItem[] {
     if (gap >= 0 && gap < TIGHT_CONNECTION_MINUTES * 1.5) {
       items.push({
         key: `connection:${b.id}`,
-        title: `Plan the ${cityName(b.from)} connection`,
+        title: `Plan your ${cityName(b.from)} connection`,
         detail: `${formatDuration(gap)} to change planes. Look up how transfers work at ${b.from} and sit near the front if you can.`,
       });
     }
