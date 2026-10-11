@@ -53,7 +53,7 @@ export type TripState = {
    * account gets its own back when it signs in again. Guests have no entry: their trip is
    * deleted when they log out.
    */
-  accounts: Record<string, { trip: Trip | null; savedTrips: Trip[] }>;
+  accounts: Record<string, { trip: Trip | null; savedTrips: Trip[]; name?: string }>;
 
   /**
    * Demo sign-in: keeps the name and email on this phone. Never pass a password here.
@@ -184,7 +184,8 @@ export const useTripStore = create<TripState>()(
             const accounts = { ...state.accounts };
             if (key) {
               if (erase) delete accounts[key];
-              else accounts[key] = { trip: state.trip, savedTrips: state.savedTrips };
+              // The name too, so logging back in with just the email still greets them by it.
+              else accounts[key] = { trip: state.trip, savedTrips: state.savedTrips, name: state.profile?.name };
             }
             return {
               profile: null,
@@ -413,8 +414,9 @@ export const useTripStore = create<TripState>()(
         const accounts: TripState["accounts"] = {};
         const rawAccounts = p?.accounts && typeof p.accounts === "object" ? (p.accounts as Record<string, unknown>) : {};
         for (const [key, value] of Object.entries(rawAccounts)) {
-          const v = value as { trip?: unknown; savedTrips?: unknown } | null;
+          const v = value as { trip?: unknown; savedTrips?: unknown; name?: unknown } | null;
           accounts[key] = {
+            ...(typeof v?.name === "string" && v.name ? { name: v.name } : {}),
             trip: v?.trip ? recoverTrip(v.trip).trip : null,
             savedTrips: (Array.isArray(v?.savedTrips) ? v.savedTrips : []).flatMap((t) => {
               const r = recoverTrip(t).trip;

@@ -5,6 +5,7 @@ import { useMemo, useSyncExternalStore, type CSSProperties, type ReactNode } fro
 import { FundsRequest } from "@/components/trip/FundsRequest";
 import { BackButton, Badge, BrandMark, Card, FLIGHT_STATUS_BADGE, Icon, type Tone } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
+import { lastLeg } from "@/lib/domain/impact";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import { connectionState, stayRisk, storyFor, type SnapConnection, type SnapFlight, type SnapStay } from "./story";
@@ -43,9 +44,13 @@ export default function SharedUpdatePage() {
 
 function Update({ s }: { s: ShareSnapshot }) {
   const displayTime = useTimeFormat();
-  const first = s.travelerName.trim().split(/\s+/)[0] || s.travelerName;
-  const changed = s.flights.find((f) => f.id === s.disruption.flightId);
-  const final = s.flights[s.flights.length - 1];
+  // A trip imported without a passenger name has none: never start a sentence with "'s".
+  const first = s.travelerName.trim().split(/\s+/)[0] || "Your traveler";
+  // In the order they're flown: a trip's flights can be saved in any order.
+  const flights = [...s.flights].sort((a, b) => a.departAt.localeCompare(b.departAt));
+  const changed = flights.find((f) => f.id === s.disruption.flightId);
+  // Where this journey ends now (on a round trip, not the flight home).
+  const final = changed ? lastLeg(flights, changed) : flights.at(-1);
   const c = s.impact.connection;
   const story = storyFor(s, first, changed, final, c);
   const stagger = (i: number) => ({ animationDelay: `${i * 110}ms` });
@@ -56,7 +61,7 @@ function Update({ s }: { s: ShareSnapshot }) {
   return (
     <div className="flex flex-1 flex-col">
       <header className="ck-rise flex flex-col gap-2.5 px-5 pt-7 pb-5">
-        <p className="text-[15px] text-ink-2">From {s.travelerName}</p>
+        {s.travelerName.trim() && <p className="text-[15px] text-ink-2">From {s.travelerName}</p>}
         <h1 className="text-[32px] leading-[1.12] font-semibold tracking-[-0.01em]">
           {displayTime(story.title)}
         </h1>
@@ -67,7 +72,7 @@ function Update({ s }: { s: ShareSnapshot }) {
 
       <Section title="Flights" className="pt-7" style={stagger(2)}>
         <ol className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
-          {s.flights.map((f) => (
+          {flights.map((f) => (
             <li key={f.id}>
               <ItineraryFlight f={f} connection={c?.flightId === f.id ? c : null} />
             </li>
@@ -197,7 +202,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
     <div className="flex flex-col gap-1.5 px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <p className="min-w-0 text-[14px] text-ink-2">
-          {cityName(f.from)} → {cityName(f.to)} · <span className="whitespace-nowrap">{f.flightNumber}</span>
+          {cityName(f.from)} – {cityName(f.to)} · <span className="whitespace-nowrap">{f.flightNumber}</span>
         </p>
         <Badge tone={b.tone}>{b.label}</Badge>
       </div>
@@ -205,7 +210,7 @@ function ItineraryFlight({ f, connection }: { f: Flight; connection: Connection 
         <p className="text-[15px] text-ink-2">Waiting for a new flight</p>
       ) : (
         <p className="font-num text-[20px] font-medium tabular-nums">
-          {displayTime(timePart(f.departAt))} → {displayTime(timePart(f.arriveAt))}
+          {displayTime(timePart(f.departAt))} – {displayTime(timePart(f.arriveAt))}
         </p>
       )}
       {f.bookingRef && (
@@ -224,7 +229,7 @@ function HotelStay({ stay }: { stay: Stay }) {
       <p className="text-[17px] leading-snug font-medium">{stay.name}</p>
       <p className="text-[14px] text-ink-2">{stay.address}</p>
       <p className="text-[15px]">
-        {formatDate(stay.checkIn)} → {formatDate(stay.checkOut)}
+        {formatDate(stay.checkIn)} – {formatDate(stay.checkOut)}
       </p>
       {stay.latestCheckIn && (
         <p className="text-[14px] text-ink-2">

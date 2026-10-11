@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationBanner } from "@/components/ui";
+import { formatTimeText } from "@/lib/domain/time";
 import { useStoreReady, useTripStore } from "@/lib/store";
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import { FLIGHT_CHANGE_EVENT, triggerFlightChange, type FlightAlertContent } from "./simulateChange";
 
 // How long after a trip appears before the "airline" pushes the change.
@@ -23,6 +25,7 @@ export function FlightWatcher() {
   const disruptions = useTripStore((s) => s.trip?.disruptions.length ?? 0);
   const pathname = usePathname();
   const router = useRouter();
+  const displayTime = useTimeFormat();
   // The banner belongs to the screen it appeared on; it doesn't follow the traveler to /share.
   const [alert, setAlert] = useState<{ change: FlightAlertContent; path: string } | null>(null);
 
@@ -64,9 +67,9 @@ export function FlightWatcher() {
   return (
     <NotificationBanner
       key={change.disruptionId}
-      title={simulated ? capitalize(simulated[1]) : change.title}
+      title={displayTime(simulated ? capitalize(simulated[1]) : change.title)}
       meta={simulated ? "Simulated" : "now"}
-      lines={change.lines}
+      lines={change.lines.map(displayTime)}
       onOpen={open}
       onDismiss={dismiss}
     />
@@ -82,7 +85,8 @@ function notifyDevice(change: FlightAlertContent) {
   }
   try {
     if ("Notification" in window && Notification.permission === "granted" && document.visibilityState !== "visible") {
-      new Notification(change.title, { body: change.lines.join("\n"), tag: "ck-change", icon: "/favicon.ico" });
+      const format = useTripStore.getState().settings.timeFormat;
+      new Notification(change.title, { body: formatTimeText(change.lines.join("\n"), format), tag: "ck-change", icon: "/favicon.ico" });
     }
   } catch {
     // some browsers only allow notifications from a service worker

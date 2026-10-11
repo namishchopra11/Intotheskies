@@ -91,7 +91,8 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
     if (phase.step !== "review") return;
     const store = useTripStore.getState();
     if (!store.trip) {
-      store.startTrip({ name: phase.tripName ?? "My trip", travelerName: phase.travelerName ?? "" });
+      // No passenger name on the confirmation: the signed-in traveler's name, editable later.
+      store.startTrip({ name: phase.tripName ?? "My trip", travelerName: phase.travelerName ?? store.profile?.name ?? "" });
     }
     phase.items.forEach((entry, i) => {
       if (!picked.has(i) || entry.kind === "skipped") return;
@@ -288,9 +289,9 @@ function summary(entry: Exclude<ImportItem, { kind: "skipped" }>): string {
   const t = formatDateTime;
   switch (entry.kind) {
     case "flight":
-      return `${entry.item.airline} · ${t(entry.item.departAt)} → ${t(entry.item.arriveAt)}`;
+      return `${entry.item.airline} · ${t(entry.item.departAt)} – ${t(entry.item.arriveAt)}`;
     case "stay":
-      return `${t(entry.item.checkIn)} → ${t(entry.item.checkOut)}`;
+      return `${t(entry.item.checkIn)} – ${t(entry.item.checkOut)}`;
     case "ride":
       return `Pickup ${t(entry.item.pickupAt)}`;
   }

@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SpeechVoice } from "./speechVoices";
 
+// A WAV file with no samples: played on the tap, before the real audio has arrived.
+const SILENT_WAV = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+
 /**
  * Requests ElevenLabs audio through our server; the API key never reaches the browser.
  * If that fails for any reason, the browser's built-in voice reads the text instead.
@@ -71,6 +74,10 @@ export function useSpeech(voice: SpeechVoice) {
     controller.current = pending;
     const player = new Audio();
     audio.current = player;
+    // iPhones only let audio start from the tap itself, and the summary arrives after a fetch.
+    // Starting a silent clip now unlocks this player so it can play the summary later.
+    player.src = SILENT_WAV;
+    player.play().catch(() => {});
     const timeout = setTimeout(() => pending.abort(), 25_000);
     try {
       const cacheKey = `${voice}:${text}`;

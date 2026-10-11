@@ -1,6 +1,6 @@
 import type { Flight, Stay, Trip } from "@/lib/types";
 import { taskId } from "./checklist";
-import { TIGHT_CONNECTION_MINUTES, computeImpact, isArrivalUnknown } from "./impact";
+import { TIGHT_CONNECTION_MINUTES, computeImpact, isArrivalUnknown, lastLeg, nextLeg } from "./impact";
 import { cityName } from "./airports";
 import { datePart, formatDate, formatDuration, minutesBetween, timePart } from "./time";
 
@@ -30,12 +30,15 @@ export type FinalArrival = {
 
 const byDeparture = (a: Flight, b: Flight) => a.departAt.localeCompare(b.departAt);
 
-/** Where the traveler now lands: the last flight, unknown if a cancel or missed link leaves no new plan. */
+/**
+ * Where the traveler now lands: the end of the journey the changed flight is on (not a
+ * flight home days later), unknown if a cancel or missed link leaves no new plan.
+ */
 export function finalArrival(trip: Trip, disruptionId: string): FinalArrival | null {
   const d = trip.disruptions.find((x) => x.id === disruptionId);
   const changed = d && trip.flights.find((f) => f.id === d.flightId);
-  const last = [...trip.flights].sort(byDeparture).at(-1);
-  if (!changed || !last) return null;
+  if (!changed) return null;
+  const last = lastLeg(trip.flights, changed);
   const c = computeImpact(trip, changed.id).connection;
   const onward = c && trip.flights.find((f) => f.id === c.flightId);
   const unknown = isArrivalUnknown(changed) || isArrivalUnknown(last) || (c?.status === "missed" && !onward?.original);
@@ -53,7 +56,7 @@ function flightNode(f: Flight): TimelineNode {
   const o = f.original;
   const unknown = isArrivalUnknown(f);
   const late = o ? minutesBetween(o.arriveAt, f.arriveAt) : 0;
-  const route = `${f.from} → ${f.to}`;
+  const route = `${f.from} – ${f.to}`;
   const base = { id: f.id, kind: "flight" as const, title: `${f.flightNumber} · ${route}` };
   if (f.status === "cancelled" && unknown) {
     return { ...base, detail: "Cancelled. No new time yet.", state: "bad", time: "–:–", was: o && timePart(o.arriveAt) };
@@ -141,7 +144,7 @@ export function buildTimeline(trip: Trip, disruptionId: string): TimelineNode[] 
     }
     nodes.push(node);
     const next = flights[i + 1];
-    if (next && next.from === f.to) nodes.push(connectionNode(f, next));
+    if (next && nextLeg(flights, f)?.id === next.id) nodes.push(connectionNode(f, next));
   });
 
   const landed = arrival.flight.original?.arriveAt ?? arrival.arriveAt;

@@ -14,6 +14,15 @@ function run(scenario: Scenario, trip: Trip = sampleTrip) {
 const kinds = (n: ReturnType<typeof buildTimeline>) => n.map((x) => `${x.kind}:${x.state}`);
 // Without the booked transfer, Layover has no ride to move, so the pickup is a task for the traveler.
 const noRides: Trip = { ...sampleTrip, rides: [] };
+// The sample with the flights home four days later, saved out of order.
+const roundTrip: Trip = {
+  ...sampleTrip,
+  flights: [
+    { id: "home-2", airline: "British Airways", flightNumber: "BA 287", from: "LHR", to: "SFO", departAt: "2026-10-21T16:30", arriveAt: "2026-10-21T19:40", bookingRef: "K7QM2X", status: "scheduled" },
+    ...[...sampleTrip.flights].reverse(),
+    { id: "home-1", airline: "ITA Airways", flightNumber: "AZ 204", from: "FCO", to: "LHR", departAt: "2026-10-21T13:00", arriveAt: "2026-10-21T14:50", bookingRef: "W4HT9P", status: "scheduled" },
+  ],
+};
 
 describe("buildTimeline", () => {
   beforeEach(() => useTripStore.getState().resetTrip());
@@ -86,5 +95,17 @@ describe("buildTimeline", () => {
 
   it("returns nothing for an unknown disruption", () => {
     expect(buildTimeline(sampleTrip, "nope")).toEqual([]);
+  });
+});
+
+describe("a round trip", () => {
+  beforeEach(() => useTripStore.getState().resetTrip());
+
+  it("lands where the changed journey ends, not on the flight home", () => {
+    const { trip, id, nodes } = run("missed", roundTrip);
+    expect(finalArrival(trip, id)?.flight.flightNumber).toBe("AZ 207");
+    // Rome to London days later is not a connection.
+    expect(nodes.filter((n) => n.kind === "connection").map((n) => n.title)).toEqual(["Missed AZ 201", "1h 40m in London"]);
+    expect(nodes.some((n) => n.kind === "stay")).toBe(true);
   });
 });

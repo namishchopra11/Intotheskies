@@ -29,7 +29,7 @@ import {
 } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
-import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
+import { TIGHT_CONNECTION_MINUTES, computeImpact, findConnection, lastLeg, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { LoadNotice } from "@/lib/recoverTrip";
 import { finalArrival } from "@/lib/domain/timeline";
@@ -126,7 +126,7 @@ function Status({ trip }: { trip: Trip }) {
         </section>
       )}
 
-      <NextAction disruption={disruption} arrival={arrival}>
+      <NextAction disruption={disruption} arrival={arrival} contacts={trip.contacts}>
         <SortingItOut disruption={disruption} contacts={trip.contacts} />
       </NextAction>
 
@@ -448,8 +448,11 @@ function RideCard({ r }: { r: Ride }) {
     <div className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">{r.provider}</p>
+        <p className="truncate text-[14px] text-ink-2">
+          {r.from} – {r.to}
+        </p>
         <p className="mt-0.5 font-num text-[14px] tabular-nums">
-          Pickup {displayTime(timePart(r.pickupAt))}{" "}
+          Pickup {displayTime(timePart(r.pickupAt))} {formatDate(r.pickupAt)}{" "}
           {r.rescheduledFrom && (
             <span className="text-ink-faint line-through">
               <span className="sr-only">was </span>
@@ -472,17 +475,7 @@ function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: numb
         {contacts.map((c) => (
           <li key={c.id} className="flex min-h-13 items-center gap-2 py-1.5 pr-2 pl-4">
             <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{c.name}</span>
-            {c.url && isWebUrl(c.url) && (
-              <a
-                href={c.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${c.name} website`}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
-              >
-                <Icon name="link" size={18} />
-              </a>
-            )}
+            {/* Every contact gets the same one action, a call. No website links: most contacts have none. */}
             {c.phone && <CallLink name={c.name} phone={c.phone} />}
           </li>
         ))}
@@ -491,21 +484,14 @@ function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: numb
   );
 }
 
-/** Only http(s) links are rendered, so a hand-edited saved value can't smuggle in another scheme. */
-function isWebUrl(url: string): boolean {
-  try {
-    const { protocol } = new URL(url);
-    return protocol === "https:" || protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
-/** The first layover that is already short or negative as booked, measured at its one airport. */
+/** The first layover that is already short as booked, measured at its one airport. */
 function tightLayover(trip: Trip): { gap: number; airport: string } | null {
-  for (let i = 0; i + 1 < trip.flights.length; i++) {
-    const gap = minutesBetween(trip.flights[i].arriveAt, trip.flights[i + 1].departAt);
-    if (gap < TIGHT_CONNECTION_MINUTES) return { gap, airport: trip.flights[i + 1].from };
+  // In the order they're flown, and only real connections (not the flight home days later).
+  for (const f of [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt))) {
+    const next = findConnection(trip, f);
+    if (!next) continue;
+    const gap = minutesBetween(f.arriveAt, next.departAt);
+    if (gap < TIGHT_CONNECTION_MINUTES) return { gap, airport: next.from };
   }
   return null;
 }
@@ -583,11 +569,12 @@ function SavedTrips({ trips }: { trips: Trip[] }) {
     <Section title="Saved trips" delay={280}>
       <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
         {trips.map((t) => {
-          const first = t.flights[0];
-          const last = t.flights[t.flights.length - 1];
+          // Where the trip goes: the first flight flown and the end of its journey.
+          const first = [...t.flights].sort((a, b) => a.departAt.localeCompare(b.departAt))[0];
+          const last = first && lastLeg(t.flights, first);
           const meta = [
             t.travelerName,
-            first && `${cityName(first.from)} → ${cityName(last.to)}`,
+            first && `${cityName(first.from)} – ${cityName(last.to)}`,
             first && formatDate(first.departAt),
           ].filter(Boolean);
           return (

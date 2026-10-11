@@ -2,12 +2,12 @@
 
 import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useId, useState, type ReactNode } from "react";
-import { Button, Card, Collapse, Icon, cx } from "@/components/ui";
+import { Button, Card, Collapse, Icon, buttonClasses, cx } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import type { FinalArrival } from "@/lib/domain/timeline";
 import { timePart } from "@/lib/domain/time";
 import { useTripStore } from "@/lib/store";
-import type { Disruption } from "@/lib/types";
+import type { Contact, Disruption } from "@/lib/types";
 
 /** A short tap-back on phones that support it. */
 export function haptic() {
@@ -25,10 +25,12 @@ export function haptic() {
 export function NextAction({
   disruption,
   arrival,
+  contacts,
   children,
 }: {
   disruption: Disruption;
   arrival: FinalArrival | null;
+  contacts: Contact[];
   children: ReactNode;
 }) {
   const displayTime = useTimeFormat();
@@ -38,6 +40,8 @@ export function NextAction({
   const [lastDoneId, setLastDoneId] = useState<string | null>(null);
   const lastDone = disruption.tasks.find((t) => t.id === lastDoneId && t.done);
   const task = disruption.tasks.find((t) => !t.done);
+  // Same call as the task's row in the list below.
+  const contact = task?.contactId ? contacts.find((c) => c.id === task.contactId) : undefined;
   const markDone = () => {
     haptic();
     if (task) {
@@ -88,10 +92,22 @@ export function NextAction({
             </div>
           </div>
           {task && (
-            <Button variant="secondary" size="sm" block icon="check" className="mt-4"
-              aria-label={`Mark done: ${task.title}`} onClick={markDone}>
-              Done
-            </Button>
+            <div className="mt-4 flex gap-2.5">
+              {contact?.phone && (
+                <a
+                  href={`tel:${contact.phone.replace(/\s+/g, "")}`}
+                  aria-label={`Call ${contact.name}`}
+                  className={buttonClasses({ variant: "secondary", size: "sm", className: "flex-1" })}
+                >
+                  <Icon name="phone" size={18} />
+                  Call
+                </a>
+              )}
+              <Button variant="secondary" size="sm" block icon="check" className="flex-1"
+                aria-label={`Mark done: ${task.title}`} onClick={markDone}>
+                Done
+              </Button>
+            </div>
           )}
           {lastDone && (
             <div className="ck-rise mt-2 flex items-center justify-between gap-3 text-[13px]" role="status">

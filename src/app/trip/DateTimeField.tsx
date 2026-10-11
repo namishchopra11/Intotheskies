@@ -48,6 +48,10 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
 
   const dateUnread = dateText.trim() !== "" && !date;
   const timeUnread = timeText.trim() !== "" && !time;
+  // An error with both boxes read is about the value itself ("check-out after check-in").
+  const ruleError = Boolean(error && date && time);
+  const dateInvalid = dateUnread || Boolean(error && !date) || ruleError;
+  const timeInvalid = timeUnread || Boolean(error && !time) || ruleError;
   const describedBy = [hint && `${id}-hint`, `${id}-read`, error && `${id}-error`].filter(Boolean).join(" ");
 
   return (
@@ -71,8 +75,8 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
             }}
             // Tidy what was typed into one clear form once the box is left.
             onBlur={() => date && setDateText(formatDateInput(date))}
-            aria-invalid={dateUnread || (error && !date) ? true : undefined}
-            className={cx(CONTROL, "pr-12", dateUnread || (error && !date) ? "border-bad" : "border-line-strong")}
+            aria-invalid={dateInvalid || undefined}
+            className={cx(CONTROL, "pr-12", dateInvalid ? "border-bad" : "border-line-strong")}
           />
           <button
             type="button"
@@ -116,8 +120,8 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
             emit(dateText, e.target.value);
           }}
           onBlur={() => time && setTimeText(displayTime(time))}
-          aria-invalid={timeUnread || (error && !time) ? true : undefined}
-          className={cx(CONTROL, "min-w-0 flex-[2_1_0]", timeUnread || (error && !time) ? "border-bad" : "border-line-strong")}
+          aria-invalid={timeInvalid || undefined}
+          className={cx(CONTROL, "min-w-0 flex-[2_1_0]", timeInvalid ? "border-bad" : "border-line-strong")}
         />
       </div>
       <p id={`${id}-read`} aria-live="polite" className="min-h-5 text-[13px] leading-snug text-ink-2">
@@ -129,7 +133,7 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
               ? `${formatDate(`${date}T00:00`)} ${date.slice(0, 4)}${time ? ` at ${displayTime(time)}` : ""}`
               : ""}
       </p>
-      {error && (date === null || time === null) && !dateUnread && !timeUnread && (
+      {error && !dateUnread && !timeUnread && (
         <p id={`${id}-error`} className="flex items-start gap-1.5 text-[14px] text-bad-fg">
           <Icon name="circle-x" size={16} strokeWidth={2} className="mt-0.5" />
           {error}

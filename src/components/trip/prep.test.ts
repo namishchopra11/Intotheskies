@@ -5,12 +5,10 @@ import { arrivalPlan, bookingCodes, daysUntil, nights, prepItems } from "./prep"
 describe("before-you-go reminders", () => {
   const keys = prepItems(sampleTrip).map((i) => i.key);
 
-  it("builds reminders from the trip's own bookings", () => {
-    expect(keys).toContain("checkin:flight-sfo-lhr");
-    expect(keys).toContain("checkin:flight-lhr-fco");
-    expect(keys).toContain("ride:ride-fco");
-    expect(keys).toContain("hotel:stay-rome");
-    expect(keys).toContain("insurance"); // no insurance contact on the sample trip
+  it("keeps it to five reminders built from the trip's own bookings", () => {
+    expect(keys).toEqual(["documents", "checkin", "connection:flight-lhr-fco", "arrival", "share-plans"]);
+    const checkin = prepItems(sampleTrip).find((i) => i.key === "checkin");
+    expect(checkin?.title).toBe("Check in for BA 286 and AZ 201");
   });
 
   it("flags the 55-minute London connection", () => {

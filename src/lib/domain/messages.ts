@@ -69,14 +69,18 @@ export function buildDrafts(trip: Trip, disruptionId: string): Draft[] {
       name: stay.name,
       phone,
       subject: `Late arrival, booking ${stay.confirmation}`,
-      body: `Hello, this is ${me}, booking ${stay.confirmation}. My flights have changed. ${arrival}${stay.latestCheckIn ? ` I know the front desk closes at ${stay.latestCheckIn}.` : ""} Please keep my room, and tell me how to get in if I'm late.`,
+      body: `Hello, ${me.trim() ? `this is ${me.trim()}, ` : "about "}booking ${stay.confirmation}. My flights have changed. ${arrival}${stay.latestCheckIn ? ` I know the front desk closes at ${stay.latestCheckIn}.` : ""} Please keep my room, and tell me how to get in if I'm late.`,
       taskIds: hotelTasks.filter((id) => id.endsWith(`:${stay.id}`)),
     });
   }
   return drafts;
 }
 
-const digits = (phone?: string) => phone?.replace(/\D/g, "") ?? "";
+/** The number to dial: digits only, keeping a leading "+" only if it was typed (a local number has none). */
+const dialable = (phone?: string) => {
+  const num = phone?.replace(/\D/g, "") ?? "";
+  return num && phone!.trim().startsWith("+") ? `+${num}` : num;
+};
 
 export type SendLink = { channel: "text" | "email"; href: string };
 
@@ -87,8 +91,8 @@ export type SendLink = { channel: "text" | "email"; href: string };
  */
 export function sendLink(draft: Draft): SendLink | null {
   const text = encodeURIComponent(draft.body);
-  const num = digits(draft.phone);
-  if (num) return { channel: "text", href: `sms:+${num}?&body=${text}` }; // "?&body=" works on iOS and Android
+  const num = dialable(draft.phone);
+  if (num) return { channel: "text", href: `sms:${num}?&body=${text}` }; // "?&body=" works on iOS and Android
   const to = draft.email?.trim();
   if (to) return { channel: "email", href: `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(draft.subject)}&body=${text}` };
   return null;

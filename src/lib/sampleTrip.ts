@@ -69,14 +69,12 @@ export const sampleTrip: Trip = {
       kind: "airline",
       name: "British Airways",
       phone: "+44 20 7946 0123",
-      url: "https://www.britishairways.com",
     },
     {
       id: "contact-ita",
       kind: "airline",
       name: "ITA Airways",
       phone: "+39 06 0000 0177",
-      url: "https://www.ita-airways.com",
     },
     {
       id: "contact-hotel",
@@ -84,6 +82,12 @@ export const sampleTrip: Trip = {
       name: "Hotel Aventino Garden",
       phone: "+39 06 0000 0142",
       notes: "Front desk closes at 22:00. Call ahead for a late arrival.",
+    },
+    {
+      id: "contact-ride",
+      kind: "other",
+      name: "Roma Airport Transfers",
+      phone: "+39 06 0000 0190",
     },
   ],
   // The people waiting on Alex. Marco is the driver booked for the Rome arrival. The share

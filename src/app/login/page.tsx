@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton, Button, Field, HomeLogo, Icon, cx } from "@/components/ui";
-import { useStoreReady, useTripStore } from "@/lib/store";
+import { accountKey, useStoreReady, useTripStore } from "@/lib/store";
 import type { Profile } from "@/lib/types";
 import { SocialSignIn } from "./SocialSignIn";
 
@@ -65,7 +65,10 @@ export default function LoginPage() {
   const submit = () => {
     setTried(true);
     if (errors.name || errors.email || errors.password) return;
-    signIn({ name: creating ? name : nameFromEmail(email), email, guest: false, provider: "email" });
+    // Logging back in: the name this account had on this phone, else one made from the email.
+    const key = accountKey({ name: "", email, guest: false, provider: "email" });
+    const known = key ? useTripStore.getState().accounts[key]?.name : undefined;
+    signIn({ name: creating ? name : known || nameFromEmail(email), email, guest: false, provider: "email" });
     setPassword("");
     router.replace("/");
   };

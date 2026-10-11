@@ -235,6 +235,24 @@ describe("generateChecklist", () => {
     expect(keysFor("rebooked")).toEqual(expect.arrayContaining(["confirm_new_booking", "check_bags"]));
   });
 
+  it("links every airline task to its airline and the pickup task to the ride company", () => {
+    const withRide: Trip = {
+      ...baseTrip,
+      rides: [{ id: "r1", provider: "Roma Airport Transfers", pickupAt: "2026-10-17T15:45", from: "FCO", to: "Hotel" }],
+      contacts: [...baseTrip.contacts, { id: "c-ride", kind: "other", name: "Roma Airport Transfers", phone: "+39 06 5550 0190" }],
+    };
+    const airlineKeys = ["confirm_new_times", "confirm_new_booking", "ask_rebooking_options", "go_to_transfer_desk",
+      "check_bags", "ask_entitlements", "get_it_in_writing", "rebook_onward"];
+    for (const type of ["delay", "cancellation", "missed_connection", "rebooked"] as DisruptionType[]) {
+      const revised = type === "delay" ? { arriveAt: "2026-10-17T11:20" } : {};
+      for (const t of report(withRide, FIRST, type, revised).disruption.tasks) {
+        const key = t.id.split(":")[1];
+        if (airlineKeys.includes(key)) expect(t.contactId, key).toMatch(/^c-(ba|ita)$/);
+        if (key === "rearrange_pickup") expect(t.contactId).toBe("c-ride");
+      }
+    }
+  });
+
   it("adds the insurer task only when an insurance contact is saved", () => {
     expect(titles(delayFirst(45).disruption).some((t) => /insurer/i.test(t))).toBe(false);
     const insured: Trip = {
