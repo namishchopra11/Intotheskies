@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Field, HomeLogo, Icon, cx } from "@/components/ui";
+import { BackButton, Button, Field, HomeLogo, Icon, cx } from "@/components/ui";
 import { useStoreReady, useTripStore } from "@/lib/store";
 import type { Profile } from "@/lib/types";
 import { SocialSignIn } from "./SocialSignIn";
@@ -82,7 +82,8 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 flex-col px-5 pt-[max(env(safe-area-inset-top),28px)] pb-[max(env(safe-area-inset-bottom),24px)]">
-      <div className="ck-rise">
+      <div className="ck-rise flex items-center gap-1">
+        <BackButton onlyWithHistory />
         <HomeLogo />
       </div>
 

@@ -3,7 +3,7 @@
 import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useMemo, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { FundsRequest } from "@/components/trip/FundsRequest";
-import { Badge, BrandMark, Card, FLIGHT_STATUS_BADGE, Icon, type Tone } from "@/components/ui";
+import { BackButton, Badge, BrandMark, Card, FLIGHT_STATUS_BADGE, Icon, type Tone } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { decodeShare, type ShareSnapshot } from "@/lib/domain/shareLink";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
@@ -30,7 +30,10 @@ export default function SharedUpdatePage() {
   return (
     <main className="flex flex-1 flex-col">
       <div className="flex items-center justify-between gap-3 bg-band px-5 pt-[max(env(safe-area-inset-top),12px)] pb-3 font-num text-[12px] tracking-[0.04em] text-on-band uppercase">
-        <span>Travel update</span>
+        <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
+          <BackButton onlyWithHistory className="-my-2 text-on-band hover:bg-transparent hover:opacity-80" />
+          Travel update
+        </span>
         {snapshot && <span className="text-signal">Snapshot · {displayTime(snapshotAt(snapshot.disruption.createdAt))}</span>}
       </div>
       {snapshot === undefined ? <Loading /> : snapshot === null ? <BadLink /> : <Update s={snapshot} />}

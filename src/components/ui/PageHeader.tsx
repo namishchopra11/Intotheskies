@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BackButton } from "./BackButton";
 import { HomeLogo } from "./HomeLogo";
 
 type PageHeaderProps = {
@@ -19,13 +20,16 @@ type PageHeaderProps = {
 const TOP = "pt-[max(env(safe-area-inset-top),12px)]";
 
 /**
- * The top of every screen, so they all start the same way: the Layover logo top left (it
- * always goes home, so it doubles as the way back), then the screen's title.
+ * The top of every screen, so they all start the same way: a Back chevron and the Layover
+ * logo top left (the logo always goes home), then the screen's title.
  */
 export function PageHeader({ title, eyebrow, action, variant = "bar", children }: PageHeaderProps) {
   const logoRow = (
     <div className={`flex min-h-[68px] items-center justify-between pr-3 pb-1 pl-5 ${TOP}`}>
-      <HomeLogo />
+      <div className="flex items-center gap-1">
+        <BackButton />
+        <HomeLogo />
+      </div>
       {variant === "bar" && action && <div className="shrink-0">{action}</div>}
     </div>
   );
