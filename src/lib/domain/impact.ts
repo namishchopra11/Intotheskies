@@ -43,18 +43,47 @@ export function isArrivalUnknown(flight: Flight): boolean {
   );
 }
 
+/** The parts of a flight that connections are worked out from (a trip's or a shared link's). */
+type Leg = {
+  id: string;
+  from: string;
+  to: string;
+  departAt: string;
+  arriveAt: string;
+  original?: { departAt: string; arriveAt: string };
+};
+
 /**
- * The onward flight booked after `flight`: the earliest departure from the airport it
- * arrives at, within a day of its originally booked arrival. Null if there is none.
+ * The onward leg booked after `flight` among `flights`: the earliest departure from the
+ * airport it arrives at, within a day of its originally booked arrival. Null if there is none.
  */
-export function findConnection(trip: Trip, flight: Flight): Flight | null {
+export function nextLeg<F extends Leg>(flights: F[], flight: F): F | null {
   const bookedArrival = flight.original?.arriveAt ?? flight.arriveAt;
-  const candidates = trip.flights
+  const candidates = flights
     .filter((f) => f.id !== flight.id && f.from === flight.to)
     .map((f) => ({ f, gap: minutesBetween(bookedArrival, f.original?.departAt ?? f.departAt) }))
     .filter(({ gap }) => gap >= 0 && gap <= MAX_CONNECTION_MINUTES)
     .sort((a, b) => a.gap - b.gap);
   return candidates[0]?.f ?? null;
+}
+
+/**
+ * The last leg of the journey `flight` is part of, following booked connections. On a round
+ * trip that is where the outward journey ends, not the flight home days later.
+ */
+export function lastLeg<F extends Leg>(flights: F[], flight: F): F {
+  let last = flight;
+  const seen = new Set([flight.id]);
+  for (let next = nextLeg(flights, flight); next && !seen.has(next.id); next = nextLeg(flights, next)) {
+    seen.add(next.id);
+    last = next;
+  }
+  return last;
+}
+
+/** The onward flight booked after `flight`, or null. */
+export function findConnection(trip: Trip, flight: Flight): Flight | null {
+  return nextLeg(trip.flights, flight);
 }
 
 function connectionStatus(minutesAfter: number | null): ConnectionStatus {
@@ -87,12 +116,7 @@ export function computeImpact(trip: Trip, flightId: string): Impact {
   }
 
   // Follow the booked connections to the flight that actually lands where the traveler sleeps.
-  let last = flight;
-  const seen = new Set([flight.id]);
-  for (let next = onward; next && !seen.has(next.id); next = findConnection(trip, next)) {
-    seen.add(next.id);
-    last = next;
-  }
+  const last = lastLeg(trip.flights, flight);
   const bookedFinalDate = datePart(last.original?.arriveAt ?? last.arriveAt);
   const stays = trip.stays.filter((s) => {
     const daysAfterLanding = minutesBetween(`${bookedFinalDate}T00:00`, `${datePart(s.checkIn)}T00:00`) / 1440;

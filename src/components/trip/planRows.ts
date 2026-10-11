@@ -1,5 +1,5 @@
 import { cityName } from "@/lib/domain/airports";
-import { isArrivalUnknown } from "@/lib/domain/impact";
+import { isArrivalUnknown, lastLeg, nextLeg } from "@/lib/domain/impact";
 import { datePart, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import { buildTimeline, finalArrival, type TimelineNode } from "@/lib/domain/timeline";
 import type { Flight, Trip } from "@/lib/types";
@@ -60,8 +60,9 @@ function asBookedPeople(trip: Trip): Pick<TimelineNode, "kind" | "title" | "deta
 export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[] {
   const flights = [...trip.flights].sort(byDeparture);
   const d = disruptionId === null ? undefined : trip.disruptions.find((x) => x.id === disruptionId);
-  // With no change yet (null), the day as booked: the last flight's arrival stands.
-  const last = flights.at(-1);
+  // With no change yet (null), the day as booked: the first journey's arrival stands (on a
+  // round trip, where the traveler is going, not the flight home).
+  const last = flights[0] && lastLeg(flights, flights[0]);
   const arrival =
     disruptionId === null
       ? last && { flight: last, arriveAt: last.arriveAt, unknown: false }
@@ -70,10 +71,18 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
   const nodes = d ? buildTimeline(trip, d.id) : asBookedPeople(trip);
   const rows: PlanRow[] = [];
 
+  // The flights after the changed one on its journey: they hang on it while it has no new time.
+  const downstream = new Set<string>();
+  const changed = d && flights.find((f) => f.id === d.flightId);
+  for (let n = changed && nextLeg(flights, changed); n && !downstream.has(n.id); n = nextLeg(flights, n)) {
+    downstream.add(n.id);
+  }
+
   flights.forEach((f, i) => {
     const prev = flights[i - 1];
     const next = flights[i + 1];
-    const connectsIn = prev && prev.to === f.from;
+    // A connection is a booked onward leg from the same airport within a day, not the flight home.
+    const connectsIn = prev && nextLeg(flights, prev)?.id === f.id;
     const o = f.original;
     const replaced = o && (o.flightNumber !== f.flightNumber || f.status === "rebooked" || f.status === "cancelled");
 
@@ -111,7 +120,7 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
       const late = lateBy(f);
       const verb = connectsIn ? "Fly to" : "Leave";
       const place = connectsIn ? cityName(f.to) : cityName(f.from);
-      const unconfirmed = arrival.unknown && f.status === "scheduled" && i > 0;
+      const unconfirmed = arrival.unknown && f.status === "scheduled" && downstream.has(f.id);
       rows.push({
         id: f.id,
         time: timePart(f.departAt),
@@ -129,8 +138,8 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
     }
 
     // The landing, and the time until the next flight from the same airport.
-    const unknown = isArrivalUnknown(f) || (arrival.unknown && f.status === "scheduled" && i > 0);
-    const onward = next && next.from === f.to ? next : null;
+    const unknown = isArrivalUnknown(f) || (arrival.unknown && f.status === "scheduled" && downstream.has(f.id));
+    const onward = next && nextLeg(flights, f)?.id === next.id ? next : null;
     let detail: string | undefined;
     let status: PlanRow["status"];
     if (unknown) status = { tone: "warn", text: "No new arrival time yet" };
@@ -203,5 +212,8 @@ export function buildDayPlan(trip: Trip, disruptionId: string | null): PlanRow[]
     });
   }
   end.sort((a, b) => a.at.localeCompare(b.at));
-  return [...rows, ...end.map(({ at, ...row }) => (void at, row))];
+  // Right after that landing: on a round trip the flights home come after the hotel.
+  const landedAt = rows.findIndex((r) => r.id === `${arrival.flight.id}-land`) + 1 || rows.length;
+  rows.splice(landedAt, 0, ...end.map(({ at, ...row }) => (void at, row)));
+  return rows;
 }

@@ -1,6 +1,6 @@
 import { DEFAULT_SETTINGS, type AutoAction, type Flight, type Ride, type Settings, type Stay, type Trip } from "@/lib/types";
 import { cityName } from "./airports";
-import { computeImpact, findConnection, isArrivalUnknown } from "./impact";
+import { computeImpact, isArrivalUnknown, lastLeg } from "./impact";
 import { addMinutes, datePart, formatDate, minutesBetween, timePart } from "./time";
 
 /**
@@ -21,17 +21,6 @@ export type AutoPlan = {
 /** A pickup this long before or after the booked landing is treated as meeting that flight. */
 const PICKUP_WINDOW_BEFORE = 60;
 const PICKUP_WINDOW_AFTER = 6 * 60;
-
-/** The last flight in the chain of booked connections starting at `flight`. */
-function finalLeg(trip: Trip, flight: Flight): Flight {
-  let last = flight;
-  const seen = new Set([flight.id]);
-  for (let next = findConnection(trip, flight); next && !seen.has(next.id); next = findConnection(trip, next)) {
-    seen.add(next.id);
-    last = next;
-  }
-  return last;
-}
 
 /** Stays whose check-in is on the landing day or the day after (same rule as computeImpact). */
 function staysAfter(trip: Trip, bookedLanding: string): Stay[] {
@@ -95,7 +84,7 @@ export function planAutoUpdates(
   else shift = impact.connection.status === "missed" ? null : 0;
   if (shift === 0) return { actions, rides: [] };
 
-  const last = impact.connection ? finalLeg(trip, flight) : flight;
+  const last = impact.connection ? lastLeg(trip.flights, flight) : flight;
   const bookedLanding = last.original?.arriveAt ?? last.arriveAt;
   const newLanding = shift === null ? null : addMinutes(bookedLanding, shift);
   const city = cityName(last.to);

@@ -70,7 +70,8 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
     if (phase.step !== "review") return;
     const store = useTripStore.getState();
     if (!store.trip) {
-      store.startTrip({ name: phase.tripName ?? "My trip", travelerName: phase.travelerName ?? "" });
+      // No passenger name on the confirmation: the signed-in traveler's name, editable later.
+      store.startTrip({ name: phase.tripName ?? "My trip", travelerName: phase.travelerName ?? store.profile?.name ?? "" });
     }
     phase.items.forEach((entry, i) => {
       if (!picked.has(i) || entry.kind === "skipped") return;

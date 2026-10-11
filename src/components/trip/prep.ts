@@ -1,5 +1,5 @@
 import { cityName } from "@/lib/domain/airports";
-import { TIGHT_CONNECTION_MINUTES } from "@/lib/domain/impact";
+import { TIGHT_CONNECTION_MINUTES, lastLeg } from "@/lib/domain/impact";
 import { datePart, formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { Flight, Ride, Stay, Trip } from "@/lib/types";
 
@@ -26,7 +26,8 @@ export function prepItems(trip: Trip): PrepItem[] {
   const flights = flightsInOrder(trip);
   if (flights.length === 0) return [];
   const first = flights[0];
-  const last = flights[flights.length - 1];
+  // Where the trip goes: the end of the first journey, not the flight home.
+  const last = lastLeg(flights, first);
   const items: PrepItem[] = [];
 
   items.push({
@@ -99,8 +100,8 @@ const SHORT_PICKUP_MINUTES = 60;
 /** Landing at the final airport, then the pickup and the hotel check-in that follow it. */
 export function arrivalPlan(trip: Trip): ArrivalStep[] {
   const flights = flightsInOrder(trip);
-  const last = flights.at(-1);
-  if (!last) return [];
+  if (flights.length === 0) return [];
+  const last = lastLeg(flights, flights[0]);
   const landing = last.arriveAt;
   const steps: ArrivalStep[] = [
     {

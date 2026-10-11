@@ -48,3 +48,40 @@ describe("buildDayPlan", () => {
     expect(buildDayPlan(useTripStore.getState().trip!, "nope")).toEqual([]);
   });
 });
+
+describe("buildDayPlan on a round trip saved out of order", () => {
+  const roundTrip = () => ({
+    ...structuredClone(sampleTrip),
+    flights: [
+      { id: "home-2", airline: "British Airways", flightNumber: "BA 287", from: "LHR", to: "SFO", departAt: "2026-10-21T16:30", arriveAt: "2026-10-21T19:40", bookingRef: "K7QM2X", status: "scheduled" as const },
+      ...[...sampleTrip.flights].reverse(),
+      { id: "home-1", airline: "ITA Airways", flightNumber: "AZ 204", from: "FCO", to: "LHR", departAt: "2026-10-21T13:00", arriveAt: "2026-10-21T14:50", bookingRef: "W4HT9P", status: "scheduled" as const },
+    ],
+  });
+
+  it("puts the pickup and hotel after the Rome landing, and the flights home after them", () => {
+    const rows = buildDayPlan(roundTrip(), null);
+    expect(rows.map((r) => r.title)).toEqual([
+      "Leave San Francisco · BA 286",
+      "Land in London",
+      "Fly to Rome · AZ 201",
+      "Land in Rome",
+      "Your pickup",
+      "Hotel front desk closes",
+      "Leave Rome · AZ 204",
+      "Land in London",
+      "Fly to San Francisco · BA 287",
+      "Land in San Francisco",
+    ]);
+    // Four days in Rome is a stay, not a layover.
+    expect(rows.find((r) => r.id === "flight-lhr-fco-land")?.detail).toBe("Marco's picking you up");
+  });
+
+  it("only marks the changed journey as waiting on a new flight", () => {
+    useTripStore.setState({ trip: roundTrip() });
+    const change = simulateFlightChange("cancelled")!;
+    const rows = buildDayPlan(useTripStore.getState().trip!, change.disruptionId);
+    expect(rows.find((r) => r.id === "flight-lhr-fco")?.status?.text).toBe("Depends on a new flight");
+    expect(rows.find((r) => r.id === "home-1")?.status).toBeUndefined();
+  });
+});

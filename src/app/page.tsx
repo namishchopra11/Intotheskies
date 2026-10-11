@@ -29,7 +29,7 @@ import {
 } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
-import { TIGHT_CONNECTION_MINUTES, computeImpact, type Impact } from "@/lib/domain/impact";
+import { TIGHT_CONNECTION_MINUTES, computeImpact, findConnection, lastLeg, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
 import type { LoadNotice } from "@/lib/recoverTrip";
 import { finalArrival } from "@/lib/domain/timeline";
@@ -484,11 +484,14 @@ function ContactsSection({ contacts, delay }: { contacts: Contact[]; delay: numb
   );
 }
 
-/** The first layover that is already short or negative as booked, measured at its one airport. */
+/** The first layover that is already short as booked, measured at its one airport. */
 function tightLayover(trip: Trip): { gap: number; airport: string } | null {
-  for (let i = 0; i + 1 < trip.flights.length; i++) {
-    const gap = minutesBetween(trip.flights[i].arriveAt, trip.flights[i + 1].departAt);
-    if (gap < TIGHT_CONNECTION_MINUTES) return { gap, airport: trip.flights[i + 1].from };
+  // In the order they're flown, and only real connections (not the flight home days later).
+  for (const f of [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt))) {
+    const next = findConnection(trip, f);
+    if (!next) continue;
+    const gap = minutesBetween(f.arriveAt, next.departAt);
+    if (gap < TIGHT_CONNECTION_MINUTES) return { gap, airport: next.from };
   }
   return null;
 }
@@ -566,8 +569,9 @@ function SavedTrips({ trips }: { trips: Trip[] }) {
     <Section title="Saved trips" delay={280}>
       <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
         {trips.map((t) => {
-          const first = t.flights[0];
-          const last = t.flights[t.flights.length - 1];
+          // Where the trip goes: the first flight flown and the end of its journey.
+          const first = [...t.flights].sort((a, b) => a.departAt.localeCompare(b.departAt))[0];
+          const last = first && lastLeg(t.flights, first);
           const meta = [
             t.travelerName,
             first && `${cityName(first.from)} – ${cityName(last.to)}`,

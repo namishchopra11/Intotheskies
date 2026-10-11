@@ -49,6 +49,8 @@ describe("buildDrafts", () => {
     const text = sendLink({ ...list[0], phone: "+39 06 0000 0199", email: "marco@example.com" });
     expect(text?.channel).toBe("text");
     expect(text?.href).toMatch(/^sms:\+390600000199\?&body=/);
+    // A local number keeps no "+": "+02079460000" would not dial.
+    expect(sendLink({ ...list[0], phone: "020 7946 0000" })?.href).toMatch(/^sms:02079460000\?&body=/);
     const mail = sendLink({ ...list[0], phone: undefined, email: "marco@example.com" });
     expect(mail?.channel).toBe("email");
     expect(mail?.href).toMatch(/^mailto:marco%40example\.com\?subject=/);

@@ -6,6 +6,7 @@ import { Autocomplete, Button, Card, Field, Icon, PageHeader, PageTransition, Sh
 import { newId } from "@/lib/id";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useTripStore } from "@/lib/store";
+import { useTimeFormat } from "@/lib/useTimeFormat";
 import type { Trip } from "@/lib/types";
 import { FLIGHT, RIDE, STAY, validate, type Draft, type EntryKind } from "./entries";
 import { DateTimeField } from "./DateTimeField";
@@ -196,6 +197,7 @@ function Section<T extends { id: string }>({
   onAdd: () => void;
   onEdit: (id: string) => void;
 }) {
+  const displayTime = useTimeFormat();
   return (
     <section className="ck-rise flex flex-col gap-2.5 px-4 pt-7" style={rise(delay)}>
       <h2 className="ck-label px-1">{title}</h2>
@@ -213,7 +215,7 @@ function Section<T extends { id: string }>({
               </span>
               <span className="min-w-0 flex-1">
                 <span className={cx("block truncate font-semibold", kind.mono && "font-num")}>{kind.title(item)}</span>
-                <span className="block truncate text-[14px] text-ink-2">{kind.subtitle(item)}</span>
+                <span className="block truncate text-[14px] text-ink-2">{displayTime(kind.subtitle(item))}</span>
               </span>
               <Icon name="chevron-right" size={18} className="text-ink-3" />
             </button>

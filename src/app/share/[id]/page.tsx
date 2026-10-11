@@ -107,7 +107,7 @@ export default function SharePage() {
       return;
     }
     try {
-      await navigator.share({ title: `Update from ${trip.travelerName}`, text: message, url: link() });
+      await navigator.share({ title: trip.travelerName.trim() ? `Update from ${trip.travelerName}` : "Travel update", text: message, url: link() });
       confirm("shared");
     } catch (e) {
       // Closing the share sheet is not an error.

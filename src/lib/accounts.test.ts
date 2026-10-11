@@ -38,6 +38,12 @@ describe("each account keeps its own trips", () => {
     expect(state().savedTrips).toHaveLength(1);
   });
 
+  it("remembers a logged-out account's name for when it logs back in", () => {
+    state().signIn({ ...alex, name: "Alex Morgan" });
+    state().signOut();
+    expect(state().accounts[accountKey(alex)!]?.name).toBe("Alex Morgan");
+  });
+
   it("keeps different accounts apart", () => {
     state().signIn(alex);
     state().loadSampleTrip();
