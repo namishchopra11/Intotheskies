@@ -19,7 +19,7 @@ words are in `docs/pitch.md`.
 
 On the phone you present from:
 
-1. [ ] Open **https://layoverapp.vercel.app** in the browser you will use.
+1. [ ] Open **https://layoverapp.vercel.app/login** in the browser you will use.
 2. [ ] Tap **Continue as guest** if the sign-in screen shows.
 3. [ ] Menu (top right) > **Clear this trip** > **Clear trip**, so you start clean.
 4. [ ] Do one full practice run: **Try the sample trip**, wait for the change, **Mark done**,

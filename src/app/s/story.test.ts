@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ShareSnapshot } from "@/lib/domain/shareLink";
-import { connectionState, stayRisk, storyFor, whyLine, type SnapConnection, type SnapFlight, type SnapStay } from "./story";
+import { NO_NAME, connectionState, stayRisk, storyFor, whyLine, type SnapConnection, type SnapFlight, type SnapStay } from "./story";
 
 const flight = (over: Partial<SnapFlight>): SnapFlight => ({
   id: "f1",
@@ -121,6 +121,9 @@ describe("stayRisk", () => {
     );
     expect(stayRisk("Alex", stay(), flight({ status: "cancelled" }), null)).toBe(
       "Check-in at Hotel Aventino is on hold until Alex has a new flight.",
+    );
+    expect(stayRisk(NO_NAME, stay(), flight({ status: "cancelled" }), null)).toBe(
+      "Check-in at Hotel Aventino is on hold until there's a new flight.",
     );
   });
 });
