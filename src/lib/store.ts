@@ -420,7 +420,7 @@ export const useTripStore = create<TripState>()(
       name: STORAGE_KEY,
       version: 2,
       storage: createJSONStorage(() =>
-        typeof window === "undefined" ? noopStorage : safeStorage(() => window.localStorage, (saved) => useFeedback.getState().savedResult(saved)),
+        typeof window === "undefined" ? noopStorage : safeStorage(() => window.localStorage),
       ),
       partialize: (state) => ({
         trip: state.trip,

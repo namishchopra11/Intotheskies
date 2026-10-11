@@ -78,6 +78,9 @@ function StartTrip() {
       >
         <Field
           label="Trip name"
+          spellCheck
+          autoCorrect="on"
+          autoCapitalize="sentences"
           placeholder="Rome via London"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -430,7 +433,7 @@ function DetailsSheet({ trip, onClose }: { trip: Trip; onClose: () => void }) {
       }
     >
       <div className="flex flex-col gap-4 pt-2">
-        <Field label="Trip name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label="Trip name" spellCheck autoCorrect="on" autoCapitalize="sentences" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
     </Sheet>
   );

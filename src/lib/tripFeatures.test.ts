@@ -119,13 +119,15 @@ describe("reminder preferences", () => {
   });
 });
 
-describe("save feedback", () => {
+describe("storage write results", () => {
   it("reports success only after a storage write and distinguishes blocked storage", () => {
-    const storage = safeStorage(() => ({ getItem: () => null, setItem: () => {}, removeItem: () => {} }), useFeedback.getState().savedResult);
+    const outcomes: boolean[] = [];
+    const report = (saved: boolean) => { outcomes.push(saved); };
+    const storage = safeStorage(() => ({ getItem: () => null, setItem: () => {}, removeItem: () => {} }), report);
     storage.setItem("test", "{}");
-    expect(useFeedback.getState().saved?.durable).toBe(true);
-    const blocked = safeStorage(() => { throw new Error("Storage blocked"); }, useFeedback.getState().savedResult);
+    expect(outcomes).toEqual([true]);
+    const blocked = safeStorage(() => { throw new Error("Storage blocked"); }, report);
     blocked.setItem("test", "{}");
-    expect(useFeedback.getState().saved?.durable).toBe(false);
+    expect(outcomes).toEqual([true, false]);
   });
 });
