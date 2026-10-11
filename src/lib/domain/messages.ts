@@ -11,6 +11,7 @@ export type Draft = {
   kind: "pickup" | "hotel" | "family";
   name: string;
   phone?: string;
+  email?: string;
   subject: string;
   body: string;
   /** Checklist tasks that count as done once this draft is opened in a messaging app. */
@@ -47,6 +48,7 @@ export function buildDrafts(trip: Trip, disruptionId: string): Draft[] {
       kind: pickup ? "pickup" : "family",
       name: p.name,
       phone: p.phone,
+      email: p.email,
       subject: "Change of plans",
       body: pickup
         ? `Hi ${p.name}, my flights have changed. ${arrival} Can you adjust the pickup? I'll message again when I'm on the ground.`
@@ -83,6 +85,7 @@ export function channelLinks(draft: Draft) {
   return {
     whatsapp: `https://wa.me/${num}?text=${text}`, // no number: WhatsApp's own contact picker opens
     sms: `sms:${num ? `+${num}` : ""}?&body=${text}`, // "?&body=" works on both iOS and Android
-    mail: `mailto:?subject=${encodeURIComponent(draft.subject)}&body=${text}`,
+    // "@" stays readable; everything else in the address is encoded so it can't end the recipient early.
+    mail: `mailto:${encodeURIComponent(draft.email?.trim() ?? "").replace(/%40/g, "@")}?subject=${encodeURIComponent(draft.subject)}&body=${text}`,
   };
 }

@@ -2,12 +2,12 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { Autocomplete, Button, Card, Field, Icon, PageHeader, PageTransition, Sheet, cx, type IconName } from "@/components/ui";
+import { Autocomplete, Button, Card, Field, Icon, PageHeader, PageTransition, SelectField, Sheet, cx, type IconName } from "@/components/ui";
 import { newId } from "@/lib/id";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useTripStore } from "@/lib/store";
 import type { Trip } from "@/lib/types";
-import { FLIGHT, RIDE, STAY, validate, type Draft, type EntryKind } from "./entries";
+import { FLIGHT, PERSON, RIDE, STAY, validate, type Draft, type EntryKind } from "./entries";
 import { DateTimeField } from "./DateTimeField";
 import { ImportSheet } from "./ImportSheet";
 import { START_TRIP_ID, leaveStartTrip } from "./leaveStartTrip";
@@ -107,6 +107,7 @@ type Editing =
   | { kind: "flight"; id?: string }
   | { kind: "stay"; id?: string }
   | { kind: "ride"; id?: string }
+  | { kind: "person"; id?: string }
   | { kind: "details" };
 
 function Bookings({ trip }: { trip: Trip }) {
@@ -115,6 +116,7 @@ function Bookings({ trip }: { trip: Trip }) {
   const [editing, setEditing] = useState<Editing | null>(null);
   const close = () => setEditing(null);
   const rides = trip.rides ?? [];
+  const people = trip.people ?? [];
   const empty = trip.flights.length + trip.stays.length + rides.length === 0;
 
   return (
@@ -162,8 +164,18 @@ function Bookings({ trip }: { trip: Trip }) {
         onAdd={() => setEditing({ kind: "ride" })}
         onEdit={(id) => setEditing({ kind: "ride", id })}
       />
+      <Section
+        delay={390}
+        icon="user"
+        title="Who's waiting"
+        hint="Add the people expecting you. Each one gets a message ready to send when a flight changes."
+        items={people}
+        kind={PERSON}
+        onAdd={() => setEditing({ kind: "person" })}
+        onEdit={(id) => setEditing({ kind: "person", id })}
+      />
 
-      <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),24px)]" style={rise(390)}>
+      <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),24px)]" style={rise(470)}>
         <Button variant="primary" size="lg" block chip="arrow-right" disabled={empty} onClick={() => router.push("/")}>
           Done
         </Button>
@@ -179,6 +191,9 @@ function Bookings({ trip }: { trip: Trip }) {
       {editing?.kind === "ride" && (
         <EntrySheet kind={RIDE} items={rides} id={editing.id} onClose={close} onSave={store.upsertRide} onRemove={store.removeRide} />
       )}
+      {editing?.kind === "person" && (
+        <EntrySheet kind={PERSON} items={people} id={editing.id} onClose={close} onSave={store.upsertPerson} onRemove={store.removePerson} />
+      )}
     </div>
   );
 }
@@ -187,6 +202,7 @@ function Section<T extends { id: string }>({
   delay,
   icon,
   title,
+  hint,
   items,
   kind,
   onAdd,
@@ -195,6 +211,8 @@ function Section<T extends { id: string }>({
   delay: number;
   icon: IconName;
   title: string;
+  /** One line under the title, for a section whose purpose isn't obvious from its name. */
+  hint?: string;
   items: T[];
   kind: EntryKind<T>;
   onAdd: () => void;
@@ -203,6 +221,7 @@ function Section<T extends { id: string }>({
   return (
     <section className="ck-rise flex flex-col gap-2.5 px-4 pt-7" style={rise(delay)}>
       <h2 className="ck-label px-1">{title}</h2>
+      {hint && <p className="-mt-1 px-1 text-[14px] leading-snug text-ink-2">{hint}</p>}
       {items.length > 0 && (
         <Card as="div" padding="none" className="divide-y divide-line-soft overflow-hidden">
           {items.map((item) => (
@@ -217,7 +236,9 @@ function Section<T extends { id: string }>({
               </span>
               <span className="min-w-0 flex-1">
                 <span className={cx("block truncate font-semibold", kind.mono && "font-num")}>{kind.title(item)}</span>
-                <span className="block truncate text-[14px] text-ink-2">{kind.subtitle(item)}</span>
+                <span className={cx("block text-[14px] text-ink-2", kind.wrapSubtitle ? "break-words" : "truncate")}>
+                  {kind.subtitle(item)}
+                </span>
               </span>
               <Icon name="chevron-right" size={18} className="text-ink-3" />
             </button>
@@ -300,6 +321,17 @@ function EntrySheet<T extends { id: string }>({
               hint={f.hint}
               value={draft[f.key] ?? ""}
               onChange={(v) => setField(f.key, v)}
+              error={errors[f.key]}
+              className="w-full"
+            />
+          ) : f.type === "select" ? (
+            <SelectField
+              key={f.key}
+              label={f.label}
+              hint={f.hint}
+              options={f.options ?? []}
+              value={draft[f.key] ?? ""}
+              onChange={(e) => setField(f.key, e.target.value)}
               error={errors[f.key]}
               className="w-full"
             />

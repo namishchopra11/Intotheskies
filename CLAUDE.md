@@ -69,7 +69,7 @@ without the suffix.
   detail?, targetId? (something Layover did by itself; see `autoUpdates.ts`)
 - `Disruption`: id, type (`delay | cancellation | missed_connection | rebooked`),
   flightId, createdAt, tasks, actions? (`AutoAction[]`)
-- `Person`: id, name, role (`pickup | family | other`), phone? (someone waiting on the
+- `Person`: id, name, role (`pickup | family | other`), phone?, email? (someone waiting on the
   traveler; `Trip.people` is optional so older saved trips still load; recovery keeps the
   readable ones). `buildTimeline(trip, disruptionId)` in `src/lib/domain/timeline.ts`
   (the home screen's ripple rail) and `buildDrafts(trip, disruptionId)` in
@@ -114,6 +114,7 @@ to `/login`, which also offers "Continue as guest"). Actions (get them with
 | `upsertStay` | `(stay: Stay) => void` |
 | `removeStay` | `(stayId: string) => void` |
 | `upsertRide` / `removeRide` | `(ride: Ride) => void` / `(rideId: string) => void` |
+| `upsertPerson` / `removePerson` | `(person: Person) => void` / `(personId: string) => void` (the "Who's waiting" section on `/trip`) |
 | `upsertContact` | `(contact: Contact) => void` |
 | `removeContact` | `(contactId: string) => void` |
 | `setPayoutAddress` | `(address: string) => boolean` (trims; `""` clears; `false` and no change if not a Solana address) |

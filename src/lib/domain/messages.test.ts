@@ -53,6 +53,26 @@ describe("buildDrafts", () => {
     expect(channelLinks({ ...list[0], phone: undefined }).whatsapp).toMatch(/^https:\/\/wa\.me\/\?text=/);
   });
 
+  it("gives a trip with no people its first Send-to draft once someone is added", () => {
+    const bare: Trip = { ...structuredClone(sampleTrip), people: undefined };
+    expect(drafts(bare).list.map((d) => d.kind)).toEqual(["hotel"]);
+
+    useTripStore.setState({ trip: bare });
+    useTripStore.getState().upsertPerson({ id: "p1", name: "Sam", role: "family", email: "sam@example.com" });
+    simulateFlightChange("missed");
+    const trip = useTripStore.getState().trip!;
+    const list = buildDrafts(trip, trip.disruptions[0].id);
+    expect(list.map((d) => d.kind)).toEqual(["family", "hotel"]);
+    expect(list[0]).toMatchObject({ name: "Sam", email: "sam@example.com" });
+  });
+
+  it("puts the person's email in the mail link, and leaves the recipient blank without one", () => {
+    const { list } = drafts();
+    expect(channelLinks({ ...list[0], email: " sam@example.com " }).mail).toMatch(/^mailto:sam@example\.com\?subject=/);
+    expect(channelLinks({ ...list[0], email: "a&b@example.com" }).mail).toMatch(/^mailto:a%26b@example\.com\?subject=/);
+    expect(channelLinks({ ...list[0], email: undefined }).mail).toMatch(/^mailto:\?subject=/);
+  });
+
   it("says so when there is no new arrival time", () => {
     useTripStore.setState({ trip: structuredClone(sampleTrip) });
     simulateFlightChange("cancelled");

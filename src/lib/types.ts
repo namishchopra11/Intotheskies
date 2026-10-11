@@ -107,6 +107,7 @@ export const PersonSchema = z.object({
   name: z.string(),
   role: PersonRoleSchema,
   phone: z.string().optional(),
+  email: z.string().optional(),
 });
 export type Person = z.infer<typeof PersonSchema>;
 

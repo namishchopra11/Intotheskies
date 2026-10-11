@@ -1,9 +1,9 @@
 import { formatDate, formatDateTime, minutesBetween } from "@/lib/domain/time";
-import { LocalDateTimeSchema, type Flight, type Ride, type Stay } from "@/lib/types";
+import { LocalDateTimeSchema, type Flight, type Person, type PersonRole, type Ride, type Stay } from "@/lib/types";
 import type { SuggestionSource } from "./suggestions";
 
 /**
- * The three kinds of booking the traveler can type in, described as data so one sheet
+ * The kinds of entry the traveler can type in (bookings, and the people waiting on them), described as data so one sheet
  * can edit any of them. A draft is the form's state: every field as a string.
  */
 export type Draft = Record<string, string>;
@@ -11,7 +11,9 @@ export type Draft = Record<string, string>;
 export type FieldSpec = {
   key: string;
   label: string;
-  type?: "text" | "tel" | "datetime-local" | "time";
+  type?: "text" | "tel" | "email" | "datetime-local" | "time" | "select";
+  /** For `type: "select"`: the choices. The first one is the default for a new entry. */
+  options?: { value: string; label: string }[];
   placeholder?: string;
   hint?: string;
   optional?: boolean;
@@ -27,6 +29,8 @@ export type EntryKind<T extends { id: string }> = {
   noun: string;
   /** Show the title in the monospaced figure font (flight numbers and airport codes). */
   mono?: boolean;
+  /** Let the subtitle wrap instead of cutting it off (an email address is worth reading in full). */
+  wrapSubtitle?: boolean;
   fields: FieldSpec[];
   toDraft: (item?: T) => Draft;
   fromDraft: (draft: Draft, id: string, existing?: T) => T;
@@ -152,6 +156,51 @@ export const RIDE: EntryKind<Ride> = {
   }),
   title: (r) => `${r.provider} · ${r.from} → ${r.to}`,
   subtitle: (r) => formatDateTime(r.pickupAt),
+};
+
+export const PERSON_ROLES: { value: PersonRole; label: string }[] = [
+  { value: "family", label: "Family or friend" },
+  { value: "pickup", label: "Picking me up" },
+  { value: "other", label: "Someone else" },
+];
+
+const roleLabel = (role: PersonRole) => PERSON_ROLES.find((r) => r.value === role)?.label ?? role;
+
+/** Deliberately loose: the point is to catch a typo, not to police what counts as an address. */
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const PERSON: EntryKind<Person> = {
+  noun: "person",
+  wrapSubtitle: true,
+  fields: [
+    { key: "name", label: "Name", placeholder: "Marco" },
+    {
+      key: "role",
+      label: "How they're waiting",
+      type: "select",
+      options: PERSON_ROLES,
+      hint: "Family and pickup get a message ready to send. Someone else only shows on your timeline.",
+    },
+    { key: "phone", label: "Phone", type: "tel", optional: true, placeholder: "+39 345 555 0142" },
+    { key: "email", label: "Email", type: "email", optional: true, placeholder: "marco@example.com" },
+  ],
+  toDraft: (p) => ({
+    name: p?.name ?? "",
+    role: p?.role ?? PERSON_ROLES[0].value,
+    phone: p?.phone ?? "",
+    email: p?.email ?? "",
+  }),
+  fromDraft: (d, id) => ({
+    id,
+    name: d.name.trim(),
+    role: PERSON_ROLES.some((r) => r.value === d.role) ? (d.role as PersonRole) : "other",
+    phone: opt(d.phone),
+    email: opt(d.email),
+  }),
+  check: (d): Record<string, string> =>
+    d.email?.trim() && !EMAIL.test(d.email.trim()) ? { email: "That doesn't look like an email address." } : {},
+  title: (p) => p.name,
+  subtitle: (p) => [roleLabel(p.role), p.phone ?? p.email].filter(Boolean).join(" · "),
 };
 
 const isDateTime = (v: string | undefined) => LocalDateTimeSchema.safeParse(v).success;
