@@ -712,7 +712,8 @@ function NoTrip() {
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(340)}>
         <p className="mx-1 mb-1 flex items-start gap-2 text-[13px] leading-[1.4] text-ink-2">
           <Icon name="lock" size={16} className="mt-px" />
-          Your trip is saved only on this phone. Listen sends the summary to ElevenLabs for audio. No account needed.
+          Your trip is saved only on this phone. Import sends what you add to Claude to read it, and Listen sends the
+          summary to ElevenLabs for audio. No account needed.
         </p>
         <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
           Add your trip
