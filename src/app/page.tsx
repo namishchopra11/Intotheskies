@@ -31,6 +31,7 @@ import { cityName } from "@/lib/domain/airports";
 import { buildBriefing } from "@/lib/domain/briefing";
 import { TIGHT_CONNECTION_MINUTES, computeImpact, findConnection, lastLeg, type Impact } from "@/lib/domain/impact";
 import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
+import { flightLabel } from "@/lib/domain/text";
 import type { LoadNotice } from "@/lib/recoverTrip";
 import { finalArrival } from "@/lib/domain/timeline";
 import { useTripStore } from "@/lib/store";
@@ -870,7 +871,7 @@ function bannerFor(d: Disruption, f: Flight): string {
 function headlineFor(d: Disruption, f: Flight, impact: Impact): string {
   const instead = `You're on the ${timePart(f.departAt)} instead.`;
   const rebooked = f.status === "rebooked";
-  const was = f.original?.flightNumber ?? f.flightNumber;
+  const was = flightLabel(f.original?.flightNumber ?? f.flightNumber);
   switch (d.type) {
     case "missed_connection":
       return `${cityName(f.from)} connection missed. ${rebooked ? instead : "You need a new flight."}`;
@@ -881,7 +882,7 @@ function headlineFor(d: Disruption, f: Flight, impact: Impact): string {
     case "delay":
     default: {
       const late = impact.delayMinutes;
-      const lead = late && late > 0 ? `${f.flightNumber} is ${formatDuration(late)} late.` : `${f.flightNumber} has new times.`;
+      const lead = late && late > 0 ? `${flightLabel(f.flightNumber)} is ${formatDuration(late)} late.` : `${flightLabel(f.flightNumber)} has new times.`;
       const c = impact.connection;
       if (!c) return lead;
       if (c.status === "missed") return `${lead} You'll likely miss your connection.`;

@@ -3,6 +3,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { Card, Icon } from "@/components/ui";
 import { countdownLabel, departureInstant } from "@/lib/domain/countdown";
+import { flightLabel } from "@/lib/domain/text";
 import { formatDate, timePart } from "@/lib/domain/time";
 import type { Trip } from "@/lib/types";
 import { useTimeFormat } from "@/lib/useTimeFormat";
@@ -66,7 +67,7 @@ export function TripCountdown({ trip }: { trip: Trip }) {
   const { days } = daysUntil(first.departAt, today(now));
   const label = cancelled
     ? "Waiting for a new flight"
-    : live ? `${first.flightNumber} · ${live.label}`
+    : live ? `${flightLabel(first.flightNumber)} · ${live.label}`
     : departure !== null ? countdownLabel(departure, now)
     : days < 0 ? "Trip started"
     : days === 0 ? "Leaving today"

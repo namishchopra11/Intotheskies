@@ -52,7 +52,7 @@ describe("simulateFlightChange", () => {
     const change = simulateFlightChange();
     const [flight] = current().flights;
 
-    expect(change?.title).toBe("Simulated change · BA 286 is delayed");
+    expect(change?.title).toBe("Simulated change · Flight BA 286 is delayed");
     expect(flight.status).toBe("delayed");
     expect(flight.departAt).toBe("2026-10-16T18:10");
     expect(flight.arriveAt).toBe("2026-10-17T12:05");
@@ -64,7 +64,7 @@ describe("simulateFlightChange", () => {
     load({ ...sampleTrip, flights: [first, { ...second, from: "CDG" }] });
     const change = simulateFlightChange();
 
-    expect(change?.title).toBe("Simulated change · BA 286 is delayed");
+    expect(change?.title).toBe("Simulated change · Flight BA 286 is delayed");
     expect(current().disruptions).toHaveLength(1);
     expect(current().disruptions[0].type).toBe("delay");
     expect(current().flights[1].status).toBe("scheduled");
@@ -125,7 +125,7 @@ describe("simulateFlightChange", () => {
     load(sampleTrip);
     const change = simulateFlightChange("cancelled");
     const [first] = current().flights;
-    expect(change?.title).toBe("Simulated change · BA 286 is cancelled");
+    expect(change?.title).toBe("Simulated change · Flight BA 286 is cancelled");
     expect(first.status).toBe("cancelled");
     expect(first.arriveAt).toBe("2026-10-17T10:35");
     expect(current().disruptions[0].type).toBe("cancellation");

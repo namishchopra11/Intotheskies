@@ -30,8 +30,8 @@ describe("buildTimeline", () => {
   it("shows a missed connection as a broken rail, then the rebooked flight", () => {
     const { nodes } = run("missed", noRides);
     expect(kinds(nodes)).toEqual(["flight:warn", "connection:bad", "flight:ok", "stay:ok", "person:bad", "person:warn"]);
-    expect(nodes[1].title).toBe("Missed AZ 201");
-    expect(nodes[1].detail).toBe("BA 286 lands 12:45, 1h 15m after AZ 201 left at 11:30.");
+    expect(nodes[1].title).toBe("Missed Flight AZ 201");
+    expect(nodes[1].detail).toBe("Flight BA 286 lands 12:45, 1h 15m after Flight AZ 201 left at 11:30.");
     expect(nodes[1].broken).toBe(true);
     expect(nodes[2].time).toBe("18:00");
     expect(nodes[2].was).toBe("15:05");
@@ -105,7 +105,7 @@ describe("a round trip", () => {
     const { trip, id, nodes } = run("missed", roundTrip);
     expect(finalArrival(trip, id)?.flight.flightNumber).toBe("AZ 207");
     // Rome to London days later is not a connection.
-    expect(nodes.filter((n) => n.kind === "connection").map((n) => n.title)).toEqual(["Missed AZ 201", "1h 40m in London"]);
+    expect(nodes.filter((n) => n.kind === "connection").map((n) => n.title)).toEqual(["Missed Flight AZ 201", "1h 40m in London"]);
     expect(nodes.some((n) => n.kind === "stay")).toBe(true);
   });
 });

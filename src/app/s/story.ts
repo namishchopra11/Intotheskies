@@ -1,4 +1,5 @@
 import { cityName } from "@/lib/domain/airports";
+import { flightLabel } from "@/lib/domain/text";
 import type { ShareSnapshot } from "@/lib/domain/shareLink";
 import { datePart, formatDuration, timePart } from "@/lib/domain/time";
 
@@ -49,7 +50,7 @@ export function whyLine(s: ShareSnapshot, first: string, f: SnapFlight): string 
   const from = cityName(f.from);
   const to = cityName(f.to);
   const rebooked = f.status === "rebooked";
-  const newFlight = f.original && f.original.flightNumber !== f.flightNumber ? ` ${f.airline} ${f.flightNumber}` : " a new flight";
+  const newFlight = f.original && f.original.flightNumber !== f.flightNumber ? ` ${flightLabel(f.flightNumber)} (${f.airline})` : " a new flight";
   switch (s.disruption.type) {
     case "delay": {
       const late = s.impact.delayMinutes && s.impact.delayMinutes > 0 ? ` ${formatDuration(s.impact.delayMinutes)}` : "";

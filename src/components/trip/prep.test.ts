@@ -8,7 +8,7 @@ describe("before-you-go reminders", () => {
   it("keeps it to five reminders built from the trip's own bookings", () => {
     expect(keys).toEqual(["documents", "checkin", "connection:flight-lhr-fco", "arrival", "share-plans"]);
     const checkin = prepItems(sampleTrip).find((i) => i.key === "checkin");
-    expect(checkin?.title).toBe("Check in for BA 286 and AZ 201");
+    expect(checkin?.title).toBe("Check in for Flight BA 286 and Flight AZ 201");
   });
 
   it("flags the 55-minute London connection", () => {

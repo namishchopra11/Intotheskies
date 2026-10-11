@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { flightLabel } from "@/lib/domain/text";
 import { LocalDateTimeSchema, type Flight, type Ride, type Stay, type Trip } from "@/lib/types";
 
 /**
@@ -71,7 +72,7 @@ export function toImportItems(result: ImportResult, newId: () => string): Import
   const items: ImportItem[] = [];
 
   for (const f of result.flights) {
-    const label = `${f.flightNumber} · ${code(f.from)} – ${code(f.to)}`;
+    const label = `${flightLabel(f.flightNumber)} · ${code(f.from)} – ${code(f.to)}`;
     if (!isTime(f.departAt) || !isTime(f.arriveAt)) {
       items.push({ kind: "skipped", label, reason: "Departure or arrival time wasn't readable." });
       continue;

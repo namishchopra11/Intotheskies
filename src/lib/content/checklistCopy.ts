@@ -8,9 +8,9 @@
 //
 // Placeholders you can use inside title or detail (they are filled in automatically):
 //   {airline}        airline of the disrupted flight         e.g. British Airways
-//   {flight}         its flight number                       e.g. BA 286
+//   {flight}         its flight number                       e.g. Flight BA 286
 //   {onwardAirline}  airline of the connecting flight        e.g. ITA Airways
-//   {onwardFlight}   its flight number                       e.g. AZ 201
+//   {onwardFlight}   its flight number                       e.g. Flight AZ 201
 //   {hotel}          name of the affected stay               e.g. Hotel Aventino Garden
 //   {insurer}        name of the saved insurance contact
 // A placeholder with nothing to fill it becomes a generic phrase ("the airline",
@@ -44,7 +44,7 @@ export const checklistCopy = {
     detail: "Date, time, seat and bags.",
   },
   rebook_onward: {
-    title: "Rebook the onward flight {onwardFlight}",
+    title: "Rebook {onwardFlight}",
     detail: "Ask {onwardAirline} for the next one.",
   },
   check_bags: {
@@ -91,7 +91,7 @@ export const shareCopy = {
   go_to_transfer_desk: "Getting rebooked with {airline}",
   confirm_new_times: "Confirming the latest times for {flight}",
   confirm_new_booking: "Confirming the new booking for {flight}",
-  rebook_onward: "Rebooking the onward flight {onwardFlight}",
+  rebook_onward: "Rebooking {onwardFlight}",
   check_bags: "Finding out where the checked bags are",
   tell_hotel: "Letting {hotel} know about a late arrival",
   rearrange_pickup: "Rearranging the pickup or transfer",

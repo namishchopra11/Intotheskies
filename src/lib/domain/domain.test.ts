@@ -101,7 +101,7 @@ describe("the sample trip (acceptance test)", () => {
       flightId: sampleTrip.flights[1].id, minutesBefore: 55, minutesAfter: 10, status: "tight",
     });
     expect(impact.affectedStays).toHaveLength(1);
-    expect(titles(disruption).some((t) => /rebook the onward flight/i.test(t))).toBe(true);
+    expect(titles(disruption).some((t) => /rebook flight AZ 201/i.test(t))).toBe(true);
     expect(titles(disruption).some((t) => /tell the hotel/i.test(t))).toBe(true);
   });
 });
@@ -122,7 +122,7 @@ describe("computeImpact", () => {
     expect(impact.delayMinutes).toBe(90);
     expect(impact.connection).toEqual({ flightId: ONWARD, minutesBefore: 55, minutesAfter: -35, status: "missed" });
     expect(impact.affectedStays.map((s) => s.stayId)).toEqual([STAY]);
-    expect(impact.affectedStays[0].reason).toContain("AZ 201");
+    expect(impact.affectedStays[0].reason).toContain("Flight AZ 201");
   });
 
   it("a delay that doesn't break a connection: ok, and nothing downstream is affected", () => {
@@ -221,7 +221,7 @@ describe("generateChecklist", () => {
     expect(byKey("rebook_onward").contactId).toBe("c-ita");
     expect(byKey("tell_hotel").contactId).toBe("c-hotel");
     expect(byKey("ask_entitlements").contactId).toBe("c-ba");
-    expect(byKey("rebook_onward").title).toContain("AZ 201");
+    expect(byKey("rebook_onward").title).toContain("Flight AZ 201");
     expect(disruption.tasks.every((t) => !t.done && t.source === "generated")).toBe(true);
     expect(new Set(disruption.tasks.map((t) => t.id)).size).toBe(disruption.tasks.length);
   });
@@ -284,8 +284,8 @@ describe("recipientTasks", () => {
   it("rewords generated tasks for the reader, in checklist order", () => {
     const { trip, disruption } = delayFirst(45);
     expect(recipientTasks(trip, disruption, opts)).toEqual([
-      "Confirming the latest times for BA 286",
-      "Rebooking the onward flight AZ 201",
+      "Confirming the latest times for Flight BA 286",
+      "Rebooking Flight AZ 201",
       "Letting Hotel Aventino Garden know about a late arrival",
       "Rearranging the pickup or transfer",
     ]);
@@ -314,14 +314,14 @@ describe("recipientTasks", () => {
     ];
     const edited = { ...disruption, tasks };
     const on = recipientTasks(trip, edited, opts);
-    expect(on).not.toContain("Confirming the latest times for BA 286");
+    expect(on).not.toContain("Confirming the latest times for Flight BA 286");
     expect(on).toContain("Buy a phone charger");
     expect(on).not.toContain("Pack the spare adapter");
     expect(on.join(" ")).toContain("Hotel Aventino Garden");
 
     const off = recipientTasks(trip, edited, { includeStays: false });
     expect(off.join(" ")).not.toContain("Aventino");
-    expect(off).toContain("Rebooking the onward flight AZ 201");
+    expect(off).toContain("Rebooking Flight AZ 201");
   });
 
   it("ignores generated tasks it does not recognise", () => {
@@ -336,20 +336,20 @@ describe("buildSummary", () => {
     const { trip } = delayFirst(45);
     const text = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
     expect(text).toContain("Alex Morgan");
-    expect(text).toContain("BA 286 (San Francisco to London) is delayed by 45 min");
+    expect(text).toContain("Flight BA 286 (San Francisco to London) is delayed by 45 min");
     expect(text).toContain("11:20 instead of 10:35");
-    expect(text).toContain("10 min to connect to AZ 201 to Rome (it was 55 min)");
+    expect(text).toContain("10 min to connect to Flight AZ 201 to Rome (it was 55 min)");
     expect(text).toContain("Revised itinerary:");
     expect(text).toContain("Hotel Aventino Garden");
     expect(text).toContain("Still to sort out:");
-    expect(text).toMatch(/- Rebooking the onward flight AZ 201/);
+    expect(text).toMatch(/- Rebooking Flight AZ 201/);
   });
 
   it("words open tasks for the reader and leaves out the traveler's own chores", () => {
     const { trip } = delayFirst(45);
     const text = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
     const still = text.slice(text.indexOf("Still to sort out:"));
-    expect(still).toContain("- Confirming the latest times for BA 286");
+    expect(still).toContain("- Confirming the latest times for Flight BA 286");
     expect(still).toContain("- Letting Hotel Aventino Garden know about a late arrival");
     expect(still).not.toMatch(/send an update|receipts|entitled|in writing|\byou(r)?\b/i);
   });
@@ -357,7 +357,7 @@ describe("buildSummary", () => {
   it("leaves the traveler's own admin tasks out of the message to others", () => {
     const { trip } = delayFirst(45);
     const text = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
-    expect(text).toMatch(/- Rebooking the onward flight AZ 201/);
+    expect(text).toMatch(/- Rebooking Flight AZ 201/);
     expect(text).not.toMatch(/Send an update to someone|what you're entitled to|Keep receipts/);
     const snapshot = decodeShare(encodeShare(trip, "d1", DEFAULT_SUMMARY_OPTIONS));
     expect(snapshot!.openTasks.join(" ")).not.toMatch(/Send an update to someone|entitled to|receipts/);
@@ -393,7 +393,7 @@ describe("buildSummary", () => {
   it("describes a cancellation with no new flight", () => {
     const { trip } = report(baseTrip, FIRST, "cancellation");
     const text = buildSummary(trip, "d1", DEFAULT_SUMMARY_OPTIONS);
-    expect(text).toContain("BA 286 (San Francisco to London) was cancelled. I don't have a new flight yet.");
+    expect(text).toContain("Flight BA 286 (San Francisco to London) was cancelled. I don't have a new flight yet.");
     expect(text).toContain("cancelled, no new flight yet");
     expect(text).toContain("at risk");
   });
@@ -410,7 +410,7 @@ describe("buildBriefing", () => {
     expect(text).toBe(
       "Your flight to London is now 45 minutes late, arriving at 11:20 AM. " +
         "That leaves only 10 minutes for your connection to Rome, and you may reach Hotel Aventino Garden late. " +
-        "First, check the latest times for BA 286.",
+        "First, check the latest times for Flight BA 286.",
     );
     expect(text).not.toMatch(/LHR|SFO|FCO|\bmin\b/);
   });
@@ -427,7 +427,7 @@ describe("buildBriefing", () => {
     const text = buildBriefing(ticked, "d1");
     expect(text).toContain("Your flight to London has been cancelled, and there is no new flight yet.");
     expect(text).toContain("Your connection to Rome is at risk");
-    expect(text).toContain("First, rebook the onward flight AZ 201.");
+    expect(text).toContain("First, rebook Flight AZ 201.");
     expect(buildBriefing(baseTrip, "nope")).toBe("");
   });
 });
@@ -451,8 +451,8 @@ describe("share link", () => {
     expect(snapshot!.flights).toHaveLength(2);
     expect(snapshot!.flights[0].original?.arriveAt).toBe("2026-10-17T10:35");
     expect(snapshot!.stays[0].name).toBe("Hotel Aventino Garden");
-    expect(snapshot!.openTasks).toContain("Rebooking the onward flight AZ 201");
-    expect(snapshot!.openTasks).not.toContain("Rebook the onward flight AZ 201");
+    expect(snapshot!.openTasks).toContain("Rebooking Flight AZ 201");
+    expect(snapshot!.openTasks).not.toContain("Rebook Flight AZ 201");
     expect(decodeShare(`#${fragment}`)).toEqual(snapshot);
   });
 
