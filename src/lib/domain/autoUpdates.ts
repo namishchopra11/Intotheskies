@@ -65,7 +65,7 @@ function flightAction(flight: Flight, disruptionId: string): AutoAction {
     return {
       ...base,
       status: "done",
-      title: `Booked you on ${flight.flightNumber}`,
+      title: `${flight.airline} rebooked you on ${flight.flightNumber}`,
       detail: times,
     };
   }

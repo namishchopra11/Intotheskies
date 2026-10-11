@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return fail("Choose an available voice and send briefing text between 1 and 1,200 characters.", 400);
 
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
-  if (!apiKey) return fail("Listen isn't set up yet. The team needs to add the ElevenLabs API key.", 503);
+  if (!apiKey) return fail("Listen isn't available right now.", 503);
 
   try {
     // Voice and request format from ElevenLabs' official Create speech example.

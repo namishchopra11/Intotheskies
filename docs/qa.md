@@ -91,7 +91,7 @@ None blocks the demo. All of these are small.
 
 ---
 
-## Will's Layover branch (`design-share`, not merged yet)
+## Will's Layover branch (`design-share`, merged; both problems below fixed)
 
 Tested on Saturday evening by running the branch on a Mac at phone width. The AI import and
 ElevenLabs need API keys that were not on that Mac, so their failures there are expected. These
