@@ -18,14 +18,17 @@ export function FlightWatcher() {
   const ready = useStoreReady();
   const hasTrip = useTripStore((s) => Boolean(s.trip));
   const signedIn = useTripStore((s) => s.profile !== null);
+  // With demo controls on, the presenter's "Next" button makes the change instead.
+  const demo = useTripStore((s) => s.settings.demoControls);
   const disruptions = useTripStore((s) => s.trip?.disruptions.length ?? 0);
   const pathname = usePathname();
   const router = useRouter();
   // The banner belongs to the screen it appeared on; it doesn't follow the traveler to /share.
   const [alert, setAlert] = useState<{ change: FlightAlertContent; path: string } | null>(null);
 
-  // Only on the home screen: never on the recipient's /s page, mid-edit on /trip, or before sign-in.
-  const watching = ready && signedIn && hasTrip && disruptions === 0 && pathname === "/";
+  // Only on the home screen: never on the recipient's /s page, mid-edit on /trip, or before
+  // sign-in. With demo controls on, the presenter's "Next" button makes the change instead.
+  const watching = ready && signedIn && !demo && hasTrip && disruptions === 0 && pathname === "/";
 
   useEffect(() => {
     if (!watching) return;

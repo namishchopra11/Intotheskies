@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { initials } from "@/components/trip/ProfileButton";
 import { SPEECH_VOICES } from "@/components/trip/speechVoices";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
-import { Button, Card, Field, PageHeader, SelectField, Sheet, ThemeToggle, Toggle } from "@/components/ui";
+import { Button, Card, Field, PageHeader, PageTransition, SelectField, Sheet, ThemeToggle, Toggle } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
 import { SpeechVoiceSchema, type Profile } from "@/lib/types";
 
@@ -16,25 +16,28 @@ export default function SettingsPage() {
   const profile = useTripStore((s) => s.profile);
 
   return (
-    <main className="flex flex-1 flex-col">
-      <PageHeader variant="bar" title="Settings" back={{ href: "/", label: "Back to trip status" }} />
-      {ok && profile && (
-        <div className="flex flex-col gap-7 px-4 pb-[max(env(safe-area-inset-bottom),28px)]">
-          <Account profile={profile} />
-          <AutoUpdates />
-          <Notifications />
-          <Group title="Appearance">
-            <ThemeToggle />
-          </Group>
-          <ListenVoice />
-          <YourData />
-          <p className="px-1 text-[13px] leading-snug text-ink-2">
-            Layover keeps your trips on this phone. Confirmations you import are sent to Claude, Anthropic&apos;s AI,
-            to be read.
-          </p>
-        </div>
-      )}
-    </main>
+    <PageTransition>
+      <main className="flex flex-1 flex-col">
+        <PageHeader variant="bar" title="Settings" back={{ href: "/", label: "Back to trip status" }} />
+        {ok && profile && (
+          <div className="flex flex-col gap-7 px-4 pb-[max(env(safe-area-inset-bottom),28px)]">
+            <Account profile={profile} />
+            <AutoUpdates />
+            <Notifications />
+            <Group title="Appearance">
+              <ThemeToggle />
+            </Group>
+            <ListenVoice />
+            <Demo />
+            <YourData />
+            <p className="px-1 text-[13px] leading-snug text-ink-2">
+              Layover keeps your trips on this phone. Confirmations you import are sent to Claude, Anthropic&apos;s AI,
+              to be read.
+            </p>
+          </div>
+        )}
+      </main>
+    </PageTransition>
   );
 }
 
@@ -217,6 +220,28 @@ function ListenVoice() {
             if (next.success) updateSettings({ voice: next.data });
           }}
           options={Object.entries(SPEECH_VOICES).map(([value, v]) => ({ value, label: v.label }))}
+        />
+      </Card>
+    </Group>
+  );
+}
+
+/** The presenter's "Next" button (components/trip/DemoNextButton.tsx). */
+function Demo() {
+  const on = useTripStore((s) => s.settings.demoControls);
+  const updateSettings = useTripStore((s) => s.updateSettings);
+  return (
+    <Group title="Demo">
+      <Card className="py-1">
+        <Toggle
+          checked={on}
+          onChange={(demoControls) => updateSettings({ demoControls })}
+          label="Demo controls"
+          description={
+            on
+              ? "Shows a Next button that walks through every screen. Flights change only when you press it."
+              : "Off. Flights change on their own a few seconds after a trip loads."
+          }
         />
       </Card>
     </Group>

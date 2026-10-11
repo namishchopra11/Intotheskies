@@ -18,6 +18,7 @@ export function ProfileButton() {
   return (
     <Link
       href="/settings"
+      transitionTypes={["nav-forward"]}
       aria-label="Settings"
       className="inline-flex h-11 w-11 items-center justify-center rounded-control hover:bg-sunk"
     >

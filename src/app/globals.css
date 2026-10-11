@@ -482,3 +482,53 @@ dialog.ck-sheet[open] > .ck-sheet-panel {
     opacity: 0;
   }
 }
+
+/* Page slides between screens (components/ui/PageTransition.tsx). Forward goes left, back
+   goes right; the old page leaves quickly, the new one settles in. */
+::view-transition-old(.nav-forward) {
+  --slide-offset: -48px;
+  animation:
+    140ms ease-in both ck-vt-fade reverse,
+    360ms cubic-bezier(0.2, 0.8, 0.2, 1) both ck-vt-slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --slide-offset: 48px;
+  animation:
+    200ms ease-out 120ms both ck-vt-fade,
+    360ms cubic-bezier(0.2, 0.8, 0.2, 1) both ck-vt-slide;
+}
+::view-transition-old(.nav-back) {
+  --slide-offset: 48px;
+  animation:
+    140ms ease-in both ck-vt-fade reverse,
+    360ms cubic-bezier(0.2, 0.8, 0.2, 1) both ck-vt-slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --slide-offset: -48px;
+  animation:
+    200ms ease-out 120ms both ck-vt-fade,
+    360ms cubic-bezier(0.2, 0.8, 0.2, 1) both ck-vt-slide;
+}
+@keyframes ck-vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ck-vt-slide {
+  from {
+    translate: var(--slide-offset);
+  }
+  to {
+    translate: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

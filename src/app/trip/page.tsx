@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { Autocomplete, Button, Card, Field, Icon, PageHeader, Sheet, cx, type IconName } from "@/components/ui";
+import { Autocomplete, Button, Card, Field, Icon, PageHeader, PageTransition, Sheet, cx, type IconName } from "@/components/ui";
 import { newId } from "@/lib/id";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useTripStore } from "@/lib/store";
@@ -10,6 +10,10 @@ import type { Trip } from "@/lib/types";
 import { FLIGHT, RIDE, STAY, validate, type Draft, type EntryKind } from "./entries";
 import { DateTimeField } from "./DateTimeField";
 import { ImportSheet } from "./ImportSheet";
+import { START_TRIP_ID, leaveStartTrip } from "./leaveStartTrip";
+
+// Bookings build up in order when they appear: import, trip name, flights, hotels, rides.
+const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 import { candidates, matchSuggestions, type Suggestion } from "./suggestions";
 
 /** The "fill it in for me" entry point, at the top of the screen. */
@@ -42,10 +46,12 @@ export default function TripEditPage() {
   const trip = useTripStore((s) => s.trip);
 
   return (
-    <main className="flex flex-1 flex-col">
-      <PageHeader variant="bar" title="Your trip" back={{ href: "/", label: "Back to trip status" }} />
-      {!ready ? null : trip ? <Bookings trip={trip} /> : <StartTrip />}
-    </main>
+    <PageTransition>
+      <main className="flex flex-1 flex-col">
+        <PageHeader variant="bar" title="Your trip" back={{ href: "/", label: "Back to trip status" }} />
+        {!ready ? null : trip ? <Bookings trip={trip} /> : <StartTrip />}
+      </main>
+    </PageTransition>
   );
 }
 
@@ -57,7 +63,7 @@ function StartTrip() {
   const [tried, setTried] = useState(false);
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div id={START_TRIP_ID} className="flex flex-1 flex-col">
       <p className="px-5 pb-4 text-ink-2">
         Add your flights, hotel and rides. When something changes, Layover shows what it affects.
       </p>
@@ -68,7 +74,7 @@ function StartTrip() {
         onSubmit={(e) => {
           e.preventDefault();
           setTried(true);
-          if (name.trim() && traveler.trim()) startTrip({ name, travelerName: traveler });
+          if (name.trim() && traveler.trim()) leaveStartTrip(() => startTrip({ name, travelerName: traveler }));
         }}
       >
         <Field
@@ -113,11 +119,14 @@ function Bookings({ trip }: { trip: Trip }) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <ImportCard />
+      <div className="ck-rise" style={rise(0)}>
+        <ImportCard />
+      </div>
       <button
         type="button"
         onClick={() => setEditing({ kind: "details" })}
-        className="mx-4 mt-3 flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left hover:bg-sunk"
+        style={rise(70)}
+        className="ck-rise mx-4 mt-3 flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left hover:bg-sunk"
       >
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] font-semibold">{trip.name || "Untitled trip"}</span>
@@ -127,6 +136,7 @@ function Bookings({ trip }: { trip: Trip }) {
       </button>
 
       <Section
+        delay={150}
         icon="plane"
         title="Flights"
         items={trip.flights}
@@ -135,6 +145,7 @@ function Bookings({ trip }: { trip: Trip }) {
         onEdit={(id) => setEditing({ kind: "flight", id })}
       />
       <Section
+        delay={230}
         icon="bed"
         title="Hotels"
         items={trip.stays}
@@ -143,6 +154,7 @@ function Bookings({ trip }: { trip: Trip }) {
         onEdit={(id) => setEditing({ kind: "stay", id })}
       />
       <Section
+        delay={310}
         icon="car"
         title="Rides"
         items={rides}
@@ -151,7 +163,7 @@ function Bookings({ trip }: { trip: Trip }) {
         onEdit={(id) => setEditing({ kind: "ride", id })}
       />
 
-      <div className="mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),24px)]">
+      <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),24px)]" style={rise(390)}>
         <Button variant="primary" size="lg" block chip="arrow-right" disabled={empty} onClick={() => router.push("/")}>
           Done
         </Button>
@@ -172,6 +184,7 @@ function Bookings({ trip }: { trip: Trip }) {
 }
 
 function Section<T extends { id: string }>({
+  delay,
   icon,
   title,
   items,
@@ -179,6 +192,7 @@ function Section<T extends { id: string }>({
   onAdd,
   onEdit,
 }: {
+  delay: number;
   icon: IconName;
   title: string;
   items: T[];
@@ -187,7 +201,7 @@ function Section<T extends { id: string }>({
   onEdit: (id: string) => void;
 }) {
   return (
-    <section className="flex flex-col gap-2.5 px-4 pt-7">
+    <section className="ck-rise flex flex-col gap-2.5 px-4 pt-7" style={rise(delay)}>
       <h2 className="ck-label px-1">{title}</h2>
       {items.length > 0 && (
         <Card as="div" padding="none" className="divide-y divide-line-soft overflow-hidden">

@@ -29,6 +29,7 @@ export function PageHeader({ title, eyebrow, back, action, variant = "bar", chil
         {back && (
           <Link
             href={back.href}
+            transitionTypes={["nav-back"]}
             aria-label={back.label}
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink hover:bg-sunk"
           >
@@ -46,6 +47,7 @@ export function PageHeader({ title, eyebrow, back, action, variant = "bar", chil
       {back && (
         <Link
           href={back.href}
+          transitionTypes={["nav-back"]}
           className="-ml-3 mb-1 inline-flex min-h-11 items-center gap-1 rounded-control pr-3 pl-1 font-medium text-ink-2 hover:text-ink"
         >
           <Icon name="chevron-left" size={22} />

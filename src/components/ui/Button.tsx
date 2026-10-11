@@ -26,6 +26,8 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   drawIcon?: boolean;
   /** Renders a link that looks like a button. */
   href?: string;
+  /** With href: the page-transition direction, e.g. ["nav-forward"] (see PageTransition). */
+  transitionTypes?: string[];
   children?: ReactNode;
 };
 
@@ -91,6 +93,7 @@ export function Button({
   chip,
   drawIcon,
   href,
+  transitionTypes,
   className,
   children,
   type = "button",
@@ -122,7 +125,7 @@ export function Button({
   );
   if (href) {
     return (
-      <Link href={href} className={classes} aria-label={rest["aria-label"]}>
+      <Link href={href} transitionTypes={transitionTypes} className={classes} aria-label={rest["aria-label"]}>
         {content}
       </Link>
     );
