@@ -21,7 +21,7 @@ export function flightsInOrder(trip: Trip): Flight[] {
 const list = (items: string[]) =>
   items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
 
-/** Reminders for the days before the trip, most time-sensitive first. Keys are stable. */
+/** At most five reminders for the days before the trip, most time-sensitive first. Keys are stable. */
 export function prepItems(trip: Trip): PrepItem[] {
   const flights = flightsInOrder(trip);
   if (flights.length === 0) return [];
@@ -35,27 +35,15 @@ export function prepItems(trip: Trip): PrepItem[] {
     detail: `Make sure your passport is valid for the whole trip, and check what you need to enter ${cityName(last.to)}.`,
   });
 
-  for (const f of flights) {
-    items.push({
-      key: `checkin:${f.id}`,
-      title: `Check in for ${f.flightNumber}`,
-      detail: `${f.airline}, ${formatDate(f.departAt)}. Online check-in usually opens a day or two before departure.`,
-    });
-  }
-
-  items.push({
-    key: "boarding-passes",
-    title: "Save boarding passes to your phone",
-    detail: "Add them to your wallet so they open without signal.",
-  });
-
+  // Every flight's check-in, boarding passes and airline apps as one job.
   const airlines = [...new Set(flights.map((f) => f.airline))];
   items.push({
-    key: "airline-apps",
-    title: airlines.length === 1 ? `Install the ${airlines[0]} app` : "Install your airlines' apps",
-    detail: `${list(airlines)}: gate changes and rebooking offers often show up there first.`,
+    key: "checkin",
+    title: `Check in for ${list(flights.map((f) => f.flightNumber))}`,
+    detail: `Save the boarding passes to your phone and get the ${list(airlines)} ${airlines.length === 1 ? "app" : "apps"}.`,
   });
 
+  // The first tight connection only: one is enough to plan around.
   for (let i = 0; i + 1 < flights.length; i++) {
     const [a, b] = [flights[i], flights[i + 1]];
     if (a.to !== b.from) continue;
@@ -66,32 +54,23 @@ export function prepItems(trip: Trip): PrepItem[] {
         title: `Plan your ${cityName(b.from)} connection`,
         detail: `${formatDuration(gap)} to change planes. Look up how transfers work at ${b.from} and sit near the front if you can.`,
       });
+      break;
     }
   }
 
-  for (const r of trip.rides ?? []) {
+  // The pickup and the hotel, told about your arrival in one go.
+  const ride = trip.rides?.[0];
+  const stay = trip.stays[0];
+  if (ride || stay) {
     items.push({
-      key: `ride:${r.id}`,
-      title: `Confirm ${r.provider} pickup`,
-      detail: `${timePart(r.pickupAt)} on ${formatDate(r.pickupAt)} at ${r.from}. Give them your flight number so they can follow it.`,
-    });
-  }
-
-  for (const s of trip.stays) {
-    items.push({
-      key: `hotel:${s.id}`,
-      title: `Tell ${s.name} your arrival time`,
-      detail: s.latestCheckIn
-        ? `The front desk is open until ${s.latestCheckIn}. Ask how to get in if you're late.`
-        : "Ask them to note your arrival time and hold the room.",
-    });
-  }
-
-  if (!trip.contacts.some((c) => c.kind === "insurance")) {
-    items.push({
-      key: "insurance",
-      title: "Save your insurance details",
-      detail: "Save the policy number and claims phone somewhere you can reach offline.",
+      key: "arrival",
+      title: ride && stay ? "Confirm pickup and hotel" : ride ? `Confirm ${ride.provider} pickup` : `Tell ${stay!.name} your arrival time`,
+      detail: [
+        ride && `${ride.provider}, ${timePart(ride.pickupAt)} at ${ride.from}: give them your flight number.`,
+        stay && (stay.latestCheckIn ? `${stay.name}: desk open until ${stay.latestCheckIn}.` : `${stay.name}: tell them when you arrive.`),
+      ]
+        .filter(Boolean)
+        .join(" "),
     });
   }
 
