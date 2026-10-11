@@ -3,7 +3,7 @@ import { simulateFlightChange } from "@/components/trip/simulateChange";
 import { sampleTrip } from "@/lib/sampleTrip";
 import { useTripStore } from "@/lib/store";
 import type { Trip } from "@/lib/types";
-import { buildDrafts, channelLinks } from "./messages";
+import { buildDrafts, sendLink } from "./messages";
 
 function drafts(base: Trip = sampleTrip) {
   useTripStore.setState({ trip: structuredClone(base) });
@@ -43,14 +43,16 @@ describe("buildDrafts", () => {
     expect(list.find((x) => x.kind === "hotel")!.taskIds.length).toBeGreaterThanOrEqual(0);
   });
 
-  it("builds WhatsApp, SMS and mail links, with a contact picker when there is no number", () => {
+  it("picks how to send from the contact's saved details: text, then email, else nothing", () => {
     const { list } = drafts();
-    // The sample trip leaves people's numbers out on purpose, so give Marco one here.
-    const links = channelLinks({ ...list[0], phone: "+39 06 0000 0199" });
-    expect(links.whatsapp).toMatch(/^https:\/\/wa\.me\/390600000199\?text=/);
-    expect(links.sms).toMatch(/^sms:\+390600000199\?&body=/);
-    expect(links.mail).toMatch(/^mailto:\?subject=/);
-    expect(channelLinks({ ...list[0], phone: undefined }).whatsapp).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    // The sample trip leaves people's numbers out on purpose, so give Marco some here.
+    const text = sendLink({ ...list[0], phone: "+39 06 0000 0199", email: "marco@example.com" });
+    expect(text?.channel).toBe("text");
+    expect(text?.href).toMatch(/^sms:\+390600000199\?&body=/);
+    const mail = sendLink({ ...list[0], phone: undefined, email: "marco@example.com" });
+    expect(mail?.channel).toBe("email");
+    expect(mail?.href).toMatch(/^mailto:marco%40example\.com\?subject=/);
+    expect(sendLink({ ...list[0], phone: undefined, email: undefined })).toBeNull();
   });
 
   it("says so when there is no new arrival time", () => {

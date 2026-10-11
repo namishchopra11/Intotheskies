@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandMark, Button, Field, Icon, cx } from "@/components/ui";
+import { Button, Field, HomeLogo, Icon, cx } from "@/components/ui";
 import { useStoreReady, useTripStore } from "@/lib/store";
+import type { Profile } from "@/lib/types";
+import { SocialSignIn } from "./SocialSignIn";
 
 type Mode = "signin" | "create";
 
@@ -36,10 +38,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [tried, setTried] = useState(false);
 
-  // Settings links here as /login#create for guests who want an account.
+  // Settings links here as /login#create for guests who want an account. Next keeps this page
+  // alive between visits, so set the tab every time it's shown and drop what was typed.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (window.location.hash === "#create") setMode("create");
+    setMode(window.location.hash === "#create" ? "create" : "signin");
+    setPassword("");
+    setTried(false);
   }, []);
 
   // Already signed in (not as a guest): nothing to do here.
@@ -59,8 +64,13 @@ export default function LoginPage() {
   const submit = () => {
     setTried(true);
     if (errors.name || errors.email || errors.password) return;
-    signIn({ name: creating ? name : nameFromEmail(email), email, guest: false });
+    signIn({ name: creating ? name : nameFromEmail(email), email, guest: false, provider: "email" });
     setPassword("");
+    router.replace("/");
+  };
+
+  const social = (profile: Profile) => {
+    signIn(profile);
     router.replace("/");
   };
 
@@ -71,9 +81,8 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 flex-col px-5 pt-[max(env(safe-area-inset-top),28px)] pb-[max(env(safe-area-inset-bottom),24px)]">
-      <div className="ck-rise flex items-center gap-2.5 text-[17px] font-semibold">
-        <BrandMark size={30} className="rounded-[6px]" />
-        Layover
+      <div className="ck-rise">
+        <HomeLogo />
       </div>
 
       <section className="ck-rise pt-10 pb-6">
@@ -86,6 +95,14 @@ export default function LoginPage() {
             : "Log in to see your trip and anything that changed."}
         </p>
       </section>
+
+      <SocialSignIn onSignIn={social} />
+
+      <div className="my-5 flex items-center gap-3 text-[13px] text-ink-2" aria-hidden="true">
+        <span className="h-px flex-1 bg-line" />
+        or use your email
+        <span className="h-px flex-1 bg-line" />
+      </div>
 
       <div role="tablist" aria-label="Log in or create an account" className="mb-5 grid grid-cols-2 gap-1 rounded-control bg-sunk p-1">
         {(["signin", "create"] as const).map((m) => (
@@ -154,7 +171,8 @@ export default function LoginPage() {
 
       <p className="mt-auto flex items-start gap-2 pt-8 text-[13px] leading-snug text-ink-2">
         <Icon name="lock" size={16} className="mt-px" />
-        Demo login: your name and email stay on this phone, and your password is never saved.
+        Demo login: Apple and Google sign-in are simulated, your name and email stay on this phone,
+        and your password is never saved.
       </p>
     </main>
   );

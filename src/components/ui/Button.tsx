@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, MouseEventHandler, ReactNode } from "react";
 import { cx } from "./cx";
 import { Icon, type IconName } from "./Icon";
 
@@ -125,7 +125,13 @@ export function Button({
   );
   if (href) {
     return (
-      <Link href={href} transitionTypes={transitionTypes} className={classes} aria-label={rest["aria-label"]}>
+      <Link
+        href={href}
+        transitionTypes={transitionTypes}
+        className={classes}
+        aria-label={rest["aria-label"]}
+        onClick={rest.onClick as MouseEventHandler<HTMLAnchorElement> | undefined}
+      >
         {content}
       </Link>
     );

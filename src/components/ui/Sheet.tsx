@@ -19,18 +19,29 @@ type SheetProps = {
 export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  // True while this sheet is meant to be showing. A close the sheet does itself on cleanup
+  // happens while this is false, so it isn't reported as the user closing it.
+  const active = useRef(false);
 
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
-    if (!open && d.open) d.close();
-    if (!open) return;
+    if (!open) {
+      if (d.open) d.close();
+      return;
+    }
+    if (!d.open) d.showModal();
+    active.current = true;
     const root = document.documentElement;
     const prev = root.style.overflow;
     root.style.overflow = "hidden";
     return () => {
+      active.current = false;
       root.style.overflow = prev;
+      // Next keeps a page you leave alive in the background. A modal left open there sits in
+      // the top layer with no layout and comes back pinned to the top of the screen, and
+      // scrolling stays locked. Close it here; it reopens cleanly if `open` is still true.
+      if (d.open) d.close();
     };
   }, [open]);
 
@@ -39,7 +50,12 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
       ref={ref}
       className="ck-sheet"
       aria-labelledby={titleId}
-      onClose={onClose}
+      onClose={() => {
+        // The close event arrives a moment later. Ignore it if the sheet closed itself on
+        // cleanup, or was shown again since (React runs effects twice in development).
+        if (!active.current || ref.current?.open) return;
+        onClose();
+      }}
       onClick={(e) => {
         // A click on the <dialog> itself (not its panel) is a click on the backdrop.
         if (e.target === ref.current) onClose();

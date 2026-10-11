@@ -48,7 +48,7 @@ export default function TripEditPage() {
   return (
     <PageTransition>
       <main className="flex flex-1 flex-col">
-        <PageHeader variant="bar" title="Your trip" back={{ href: "/", label: "Back to trip status" }} />
+        <PageHeader variant="bar" title="Your trip" />
         {!ready ? null : trip ? <Bookings trip={trip} /> : <StartTrip />}
       </main>
     </PageTransition>

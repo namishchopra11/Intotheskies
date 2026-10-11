@@ -11,6 +11,7 @@ export type Draft = {
   kind: "pickup" | "hotel" | "family";
   name: string;
   phone?: string;
+  email?: string;
   subject: string;
   body: string;
   /** Checklist tasks that count as done once this draft is opened in a messaging app. */
@@ -47,6 +48,7 @@ export function buildDrafts(trip: Trip, disruptionId: string): Draft[] {
       kind: pickup ? "pickup" : "family",
       name: p.name,
       phone: p.phone,
+      email: p.email,
       subject: "Change of plans",
       body: pickup
         ? `Hi ${p.name}, my flights have changed. ${arrival} Can you adjust the pickup? I'll message again when I'm on the ground.`
@@ -76,13 +78,18 @@ export function buildDrafts(trip: Trip, disruptionId: string): Draft[] {
 
 const digits = (phone?: string) => phone?.replace(/\D/g, "") ?? "";
 
-/** Links that open the person's own messaging app with the text filled in. */
-export function channelLinks(draft: Draft) {
+export type SendLink = { channel: "text" | "email"; href: string };
+
+/**
+ * How this update reaches them, picked from the contact details saved for them: a text if
+ * there's a phone number, otherwise an email. Opens Messages or Mail with it filled in (the
+ * app can't send by itself). null when there's neither, so the screen can ask for one.
+ */
+export function sendLink(draft: Draft): SendLink | null {
   const text = encodeURIComponent(draft.body);
   const num = digits(draft.phone);
-  return {
-    whatsapp: `https://wa.me/${num}?text=${text}`, // no number: WhatsApp's own contact picker opens
-    sms: `sms:${num ? `+${num}` : ""}?&body=${text}`, // "?&body=" works on both iOS and Android
-    mail: `mailto:?subject=${encodeURIComponent(draft.subject)}&body=${text}`,
-  };
+  if (num) return { channel: "text", href: `sms:+${num}?&body=${text}` }; // "?&body=" works on iOS and Android
+  const to = draft.email?.trim();
+  if (to) return { channel: "email", href: `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(draft.subject)}&body=${text}` };
+  return null;
 }

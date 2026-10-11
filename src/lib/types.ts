@@ -107,6 +107,8 @@ export const PersonSchema = z.object({
   name: z.string(),
   role: PersonRoleSchema,
   phone: z.string().optional(),
+  // Used when there's no phone number: the update goes by email instead.
+  email: z.string().optional(),
 });
 export type Person = z.infer<typeof PersonSchema>;
 
@@ -156,6 +158,8 @@ export const ProfileSchema = z.object({
   name: z.string(),
   email: z.string(),
   guest: z.boolean(),
+  // How they signed in. Google and Apple are simulated (app/login/SocialSignIn.tsx).
+  provider: z.enum(["email", "google", "apple"]).optional(),
 });
 export type Profile = z.infer<typeof ProfileSchema>;
 

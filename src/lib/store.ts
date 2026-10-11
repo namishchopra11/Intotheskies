@@ -14,6 +14,7 @@ import {
   DEFAULT_SETTINGS,
   ProfileSchema,
   SettingsSchema,
+  type Person,
   type Profile,
   type Settings,
   type Contact,
@@ -46,10 +47,23 @@ export type TripState = {
   /** Who is signed in on this phone; null = nobody yet (show /login). */
   profile: Profile | null;
   settings: Settings;
+  /**
+   * Trips put away for signed-in accounts that are logged out, keyed by accountKey(). Each
+   * account gets its own back when it signs in again. Guests have no entry: their trip is
+   * deleted when they log out.
+   */
+  accounts: Record<string, { trip: Trip | null; savedTrips: Trip[] }>;
 
-  /** Demo sign-in: keeps the name and email on this phone. Never pass a password here. */
+  /**
+   * Demo sign-in: keeps the name and email on this phone. Never pass a password here.
+   * Brings back that account's trips if it signed in here before; otherwise whatever is open
+   * stays open (so a guest who creates an account keeps their trip).
+   */
   signIn: (profile: Profile) => void;
-  /** Signs out. With `erase`, also deletes the trip and saved trips from this phone. */
+  /**
+   * Logs out and clears the screen: a signed-in account's trips are put away for its next
+   * sign-in, a guest's are deleted. With `erase`, this account's trips and the settings go too.
+   */
   signOut: (options?: { erase?: boolean }) => void;
   updateProfile: (changes: Partial<Pick<Profile, "name" | "email">>) => void;
   updateSettings: (changes: Partial<Settings>) => void;
@@ -74,6 +88,8 @@ export type TripState = {
   removeRide: (rideId: string) => void;
   /** Ticks or unticks a "Before you go" reminder by its key. */
   togglePrep: (key: string) => void;
+  /** Adds or replaces someone waiting on the traveler (their phone or email for updates). */
+  upsertPerson: (person: Person) => void;
   upsertContact: (contact: Contact) => void;
   removeContact: (contactId: string) => void;
 
@@ -116,6 +132,12 @@ const noopStorage: StateStorage = {
   removeItem: () => {},
 };
 
+/** Who owns a set of trips on this phone: provider and email. Guests own none to keep. */
+export function accountKey(profile: Profile): string | null {
+  if (profile.guest || !profile.email.trim()) return null;
+  return `${profile.provider ?? "email"}:${profile.email.trim().toLowerCase()}`;
+}
+
 export const useTripStore = create<TripState>()(
   persist(
     (set, get) => {
@@ -137,15 +159,40 @@ export const useTripStore = create<TripState>()(
         savedTrips: [],
         profile: null,
         settings: DEFAULT_SETTINGS,
+        accounts: {},
 
         signIn: (profile) =>
-          set({ profile: { name: profile.name.trim(), email: profile.email.trim(), guest: profile.guest } }),
+          set((state) => {
+            const next: Profile = {
+              name: profile.name.trim(),
+              email: profile.email.trim(),
+              guest: profile.guest,
+              ...(profile.provider ? { provider: profile.provider } : {}),
+            };
+            const key = accountKey(next);
+            const stash = key ? state.accounts[key] : undefined;
+            if (!key || !stash) return { profile: next };
+            const accounts = { ...state.accounts };
+            delete accounts[key];
+            return { profile: next, trip: stash.trip, savedTrips: stash.savedTrips, accounts, loadNotice: null };
+          }),
         signOut: ({ erase = false } = {}) =>
-          set(
-            erase
-              ? { profile: null, trip: null, savedTrips: [], settings: DEFAULT_SETTINGS, loadNotice: null }
-              : { profile: null },
-          ),
+          set((state) => {
+            const key = state.profile ? accountKey(state.profile) : null;
+            const accounts = { ...state.accounts };
+            if (key) {
+              if (erase) delete accounts[key];
+              else accounts[key] = { trip: state.trip, savedTrips: state.savedTrips };
+            }
+            return {
+              profile: null,
+              trip: null,
+              savedTrips: [],
+              accounts,
+              loadNotice: null,
+              ...(erase ? { settings: DEFAULT_SETTINGS } : {}),
+            };
+          }),
         updateProfile: (changes) =>
           set((state) =>
             state.profile
@@ -206,6 +253,8 @@ export const useTripStore = create<TripState>()(
           updateTrip((trip) => ({ ...trip, stays: trip.stays.filter((s) => s.id !== stayId) })),
         upsertRide: (ride) =>
           updateTrip((trip) => ({ ...trip, rides: upsert(trip.rides ?? [], ride) })),
+        upsertPerson: (person) =>
+          updateTrip((trip) => ({ ...trip, people: upsert(trip.people ?? [], person) })),
         togglePrep: (key) =>
           updateTrip((trip) => {
             const done = new Set(trip.prepDone ?? []);
@@ -335,6 +384,7 @@ export const useTripStore = create<TripState>()(
         savedTrips: state.savedTrips,
         profile: state.profile,
         settings: state.settings,
+        accounts: state.accounts,
       }),
       // Hydration is started by useStoreReady() after mount, so the server render and
       // the first client render both see `trip: null` and never mismatch.
@@ -344,7 +394,7 @@ export const useTripStore = create<TripState>()(
       // and the screens are told (loadNotice) rather than silently showing "no trip".
       merge: (persisted, current) => {
         const p = persisted as
-          | { trip?: unknown; savedTrips?: unknown; profile?: unknown; settings?: unknown }
+          | { trip?: unknown; savedTrips?: unknown; profile?: unknown; settings?: unknown; accounts?: unknown }
           | undefined;
         const { trip, notice } = recoverTrip(p?.trip);
         const profile = ProfileSchema.safeParse(p?.profile);
@@ -355,9 +405,23 @@ export const useTripStore = create<TripState>()(
           const r = recoverTrip(t).trip;
           return r ? [r] : [];
         });
+        // Each logged-out account's trips, read the same forgiving way.
+        const accounts: TripState["accounts"] = {};
+        const rawAccounts = p?.accounts && typeof p.accounts === "object" ? (p.accounts as Record<string, unknown>) : {};
+        for (const [key, value] of Object.entries(rawAccounts)) {
+          const v = value as { trip?: unknown; savedTrips?: unknown } | null;
+          accounts[key] = {
+            trip: v?.trip ? recoverTrip(v.trip).trip : null,
+            savedTrips: (Array.isArray(v?.savedTrips) ? v.savedTrips : []).flatMap((t) => {
+              const r = recoverTrip(t).trip;
+              return r ? [r] : [];
+            }),
+          };
+        }
         return {
           ...current,
           trip,
+          accounts,
           // Keep a notice the traveler has not dismissed when another tab's save is read back.
           loadNotice: notice ?? current.loadNotice,
           savedTrips,

@@ -67,7 +67,6 @@ export default function TripStatusPage() {
               {menuButton}
             </span>
           }
-          onLogoClick={trip ? () => setLeaveOpen(true) : undefined}
         />
         {ready && loadNotice && <LoadNoticeBar notice={loadNotice} onDismiss={dismissLoadNotice} />}
         {!ready ? (
@@ -79,7 +78,15 @@ export default function TripStatusPage() {
         ) : (
           <Status trip={trip} />
         )}
-        <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
+        <TripMenu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          hasTrip={Boolean(trip)}
+          onNewTrip={() => {
+            setMenuOpen(false);
+            setLeaveOpen(true);
+          }}
+        />
         <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
       </main>
     </PageTransition>
@@ -761,7 +768,7 @@ function SavedTrips({ trips }: { trips: Trip[] }) {
   );
 }
 
-/** Logo tapped with a trip open: close it, keeping a copy or not, or stay. */
+/** "Start a new trip" in the menu: close this trip, keeping a copy or not, or stay. */
 function LeaveTripSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const saveAndCloseTrip = useTripStore((s) => s.saveAndCloseTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
@@ -771,11 +778,11 @@ function LeaveTripSheet({ open, onClose }: { open: boolean; onClose: () => void 
     window.scrollTo({ top: 0 });
   };
   return (
-    <Sheet open={open} onClose={onClose} title="Head back to the start?">
+    <Sheet open={open} onClose={onClose} title="Start a new trip?">
       <div className="flex flex-col gap-3 pt-1">
         <p className="mb-2 leading-snug text-ink-2">
-          This trip will close. Unless you save it, its flights, hotels and rides will be gone
-          for good.
+          This trip will close. Save it to reopen it later from the start screen, or its flights,
+          hotels and rides will be gone for good.
         </p>
         <Button variant="primary" block icon="check" onClick={() => leave(saveAndCloseTrip)}>
           Save it for later
@@ -816,10 +823,13 @@ function TripMenu({
   open,
   onClose: closeSheet,
   hasTrip,
+  onNewTrip,
 }: {
   open: boolean;
   onClose: () => void;
   hasTrip: boolean;
+  /** Opens the save-or-discard choice for the current trip. */
+  onNewTrip: () => void;
 }) {
   const loadSampleTrip = useTripStore((s) => s.loadSampleTrip);
   const resetTrip = useTripStore((s) => s.resetTrip);
@@ -855,12 +865,17 @@ function TripMenu({
               Allow phone notifications
             </Button>
           )}
-          <Button variant="secondary" block icon="user" href="/settings">
+          <Button variant="secondary" block icon="user" href="/settings" onClick={closeSheet}>
             Settings
           </Button>
           {hasTrip && (
-            <Button variant="secondary" block icon="pencil" href="/trip">
+            <Button variant="secondary" block icon="pencil" href="/trip" onClick={closeSheet}>
               Edit flights, hotels and rides
+            </Button>
+          )}
+          {hasTrip && (
+            <Button variant="secondary" block icon="plus" onClick={onNewTrip}>
+              Start a new trip
             </Button>
           )}
           {confirming ? (

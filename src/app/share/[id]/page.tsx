@@ -59,7 +59,7 @@ export default function SharePage() {
   if (!trip || !disruption) {
     return (
       <main className="flex flex-1 flex-col">
-        <PageHeader title="Nothing to share yet" back={{ href: "/", label: "Back to trip" }} />
+        <PageHeader title="Nothing to share yet" />
         <div className="px-4 pt-2">
           <Card className="text-ink-2">
             This update isn&apos;t on this phone. Changes from the simulated airline feed show up on
@@ -121,7 +121,7 @@ export default function SharePage() {
 
   return (
     <main className="ck-screen-in flex flex-1 flex-col">
-      <PageHeader title="Share the new plan" back={{ href: "/", label: "Back to trip" }} />
+      <PageHeader title="Share the new plan" />
 
       <SendTo trip={trip} disruptionId={disruption.id} />
 
