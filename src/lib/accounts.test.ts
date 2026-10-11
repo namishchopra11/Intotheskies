@@ -59,6 +59,29 @@ describe("each account keeps its own trips", () => {
     expect(state().trip?.name).toBe("Rome via London");
   });
 
+  it("a guest who logs in to an account with trips here keeps their trip as a saved one", () => {
+    state().signIn(alex);
+    state().loadSampleTrip();
+    state().signOut();
+
+    state().signIn(guest);
+    state().startTrip({ name: "Weekend in Paris", travelerName: "" });
+    state().signIn(alex);
+    expect(state().trip?.name).toBe("Rome via London");
+    expect(state().savedTrips.map((t) => t.name)).toEqual(["Weekend in Paris"]);
+  });
+
+  it("a guest's trip stays open when the account they log in to had none open", () => {
+    state().signIn(alex);
+    state().signOut();
+
+    state().signIn(guest);
+    state().startTrip({ name: "Weekend in Paris", travelerName: "" });
+    state().signIn(alex);
+    expect(state().trip?.name).toBe("Weekend in Paris");
+    expect(state().savedTrips).toHaveLength(0);
+  });
+
   it("deleting an account drops its put-away trips", () => {
     state().signIn(alex);
     state().loadSampleTrip();

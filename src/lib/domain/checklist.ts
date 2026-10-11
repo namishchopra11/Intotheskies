@@ -113,10 +113,13 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
   const pickupHandled = actions.some((a) => a.kind === "ride");
   const staysToTell = impact.affectedStays.filter((a) => !hotelHandled.has(a.stayId));
 
+  // Only a trip with a booked ride or someone picking the traveler up has a pickup to move.
+  const hasPickup = (trip.rides ?? []).length > 0 || (trip.people ?? []).some((p) => p.role === "pickup");
+
   const connectionAtRisk = impact.connection !== null && impact.connection.status !== "ok";
   if (connectionAtRisk) keys.add("rebook_onward");
   if (staysToTell.length > 0) keys.add("tell_hotel");
-  if ((impact.delayMinutes !== 0 || connectionAtRisk) && !pickupHandled) keys.add("rearrange_pickup");
+  if ((impact.delayMinutes !== 0 || connectionAtRisk) && hasPickup && !pickupHandled) keys.add("rearrange_pickup");
   keys.add("keep_receipts");
   if (insurer) keys.add("contact_insurer");
   keys.add("send_update");

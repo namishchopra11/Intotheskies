@@ -63,14 +63,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="app-column mx-auto flex min-h-dvh w-full max-w-[520px] flex-col pb-[env(safe-area-inset-bottom)]">
           {children}
         </div>
-        {/* Reads the URL, so it streams in after the static shell. */}
+        </PullToRefresh>
+        {/* Reads the URL, so it streams in after the static shell. Outside PullToRefresh: its
+            pull moves the page with a transform, which would carry these fixed overlays with it. */}
         <Suspense fallback={null}>
           <NavHistory />
           <FlightWatcher />
           <DemoNextButton />
           <AccountTour />
         </Suspense>
-        </PullToRefresh>
       </body>
     </html>
   );

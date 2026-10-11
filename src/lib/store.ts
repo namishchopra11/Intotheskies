@@ -176,7 +176,15 @@ export const useTripStore = create<TripState>()(
             if (!key || !stash) return { profile: next };
             const accounts = { ...state.accounts };
             delete accounts[key];
-            return { profile: next, trip: stash.trip, savedTrips: stash.savedTrips, accounts, loadNotice: null };
+            // A guest logging in to an account that already has trips here keeps theirs too:
+            // they join the account's saved trips (or stay open if the account had none open).
+            const theirs = new Set([stash.trip?.id, ...stash.savedTrips.map((t) => t.id)]);
+            const guestTrips = state.profile?.guest
+              ? withSaved(state.savedTrips, state.trip).filter((t) => !theirs.has(t.id))
+              : [];
+            const trip = stash.trip ?? guestTrips[0] ?? null;
+            const savedTrips = [...guestTrips.filter((t) => t !== trip), ...stash.savedTrips];
+            return { profile: next, trip, savedTrips, accounts, loadNotice: null };
           }),
         signOut: ({ erase = false } = {}) =>
           set((state) => {
