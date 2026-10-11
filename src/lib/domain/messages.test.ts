@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { simulateFlightChange } from "@/components/trip/simulateChange";
 import { sampleTrip } from "@/lib/sampleTrip";
 import { useTripStore } from "@/lib/store";
+import type { Trip } from "@/lib/types";
 import { buildDrafts, channelLinks } from "./messages";
 
-function drafts() {
-  useTripStore.setState({ trip: structuredClone(sampleTrip) });
+function drafts(base: Trip = sampleTrip) {
+  useTripStore.setState({ trip: structuredClone(base) });
   simulateFlightChange("missed");
   const trip = useTripStore.getState().trip!;
   return { trip, list: buildDrafts(trip, trip.disruptions[0].id) };
@@ -34,7 +35,8 @@ describe("buildDrafts", () => {
   });
 
   it("links each draft to the task it completes", () => {
-    const { trip, list } = drafts();
+    // Without the booked transfer, rearranging the pickup is left to the traveler.
+    const { trip, list } = drafts({ ...sampleTrip, rides: [] });
     const d = trip.disruptions[0];
     const pickup = list.find((x) => x.kind === "pickup")!;
     expect(d.tasks.some((t) => t.id === pickup.taskIds[0])).toBe(true);

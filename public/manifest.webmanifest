@@ -1,6 +1,6 @@
 {
- "name": "ConnectionKeeper",
- "short_name": "ConnectionKeeper",
+ "name": "Layover",
+ "short_name": "Layover",
  "description": "Your trip and next steps, together when a flight changes.",
  "id": "/", "start_url": "/", "scope": "/", "display": "standalone",
  "background_color": "#f0f0ec", "theme_color": "#f0f0ec",

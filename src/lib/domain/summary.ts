@@ -20,6 +20,9 @@ export const DEFAULT_SUMMARY_OPTIONS: SummaryOptions = {
   includeOpenTasks: true,
 };
 
+// Tasks that are the traveler's own admin. They make no sense in a message to the people
+// waiting ("Send an update to someone waiting for you" would be read by that someone).
+
 const route = (f: Flight) => `${cityName(f.from)} to ${cityName(f.to)}`;
 
 function whatChanged(flight: Flight, disruption: Disruption, impact: Impact): string {

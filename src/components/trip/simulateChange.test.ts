@@ -70,6 +70,17 @@ describe("simulateFlightChange", () => {
     expect(current().flights[1].status).toBe("scheduled");
   });
 
+  it("delays only the first flight when the flights do not connect", () => {
+    const [a, b] = sampleTrip.flights;
+    load({ ...sampleTrip, flights: [a, { ...b, from: "CDG", departAt: "2026-10-25T09:00", arriveAt: "2026-10-25T11:00" }] });
+    simulateFlightChange();
+    const [first, second] = current().flights;
+    expect(first.status).toBe("delayed");
+    expect(first.arriveAt).toBe("2026-10-17T12:05"); // 90 minutes, not days
+    expect(second.status).toBe("scheduled");
+    expect(current().disruptions[0].type).toBe("delay");
+  });
+
   it("says in the notification that the change is simulated", () => {
     load(sampleTrip);
     expect(simulateFlightChange()?.title).toMatch(/^Simulated/);
@@ -114,7 +125,7 @@ describe("simulateFlightChange", () => {
     load(sampleTrip);
     const change = simulateFlightChange("cancelled");
     const [first] = current().flights;
-    expect(change?.title).toBe("BA 286 is cancelled");
+    expect(change?.title).toBe("Simulated change · BA 286 is cancelled");
     expect(first.status).toBe("cancelled");
     expect(first.arriveAt).toBe("2026-10-17T10:35");
     expect(current().disruptions[0].type).toBe("cancellation");

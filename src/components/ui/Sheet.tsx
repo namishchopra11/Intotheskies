@@ -8,13 +8,15 @@ type SheetProps = {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  /** Optional sticky footer, e.g. a primary Button. */
+  footer?: ReactNode;
 };
 
 /**
  * Bottom sheet built on the native <dialog>: focus is trapped inside, Escape and a tap on
  * the dimmed backdrop close it, and the page behind can't scroll.
  */
-export function Sheet({ open, onClose, title, children }: SheetProps) {
+export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -61,7 +63,12 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5">{children}</div>
-        <div className="pb-[env(safe-area-inset-bottom)]" />
+        {footer && (
+          <div className="border-t border-line px-5 pt-3 pb-[max(env(safe-area-inset-bottom),16px)]">
+            {footer}
+          </div>
+        )}
+        {!footer && <div className="pb-[env(safe-area-inset-bottom)]" />}
       </div>
     </dialog>
   );

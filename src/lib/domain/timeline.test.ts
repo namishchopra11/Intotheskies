@@ -12,12 +12,14 @@ function run(scenario: Scenario, trip: Trip = sampleTrip) {
   return { trip: t, id: t.disruptions[0].id, nodes: buildTimeline(t, t.disruptions[0].id) };
 }
 const kinds = (n: ReturnType<typeof buildTimeline>) => n.map((x) => `${x.kind}:${x.state}`);
+// Without the booked transfer, Layover has no ride to move, so the pickup is a task for the traveler.
+const noRides: Trip = { ...sampleTrip, rides: [] };
 
 describe("buildTimeline", () => {
   beforeEach(() => useTripStore.getState().resetTrip());
 
   it("shows a missed connection as a broken rail, then the rebooked flight", () => {
-    const { nodes } = run("missed");
+    const { nodes } = run("missed", noRides);
     expect(kinds(nodes)).toEqual(["flight:warn", "connection:bad", "flight:ok", "stay:ok", "person:bad", "person:warn"]);
     expect(nodes[1].title).toBe("Missed AZ 201");
     expect(nodes[1].broken).toBe(true);
@@ -50,8 +52,18 @@ describe("buildTimeline", () => {
     expect(run("missed", late).nodes.find((n) => n.kind === "stay")?.state).toBe("bad");
   });
 
+  it("shows the pickup person as handled when Layover moved the booked ride", () => {
+    const { nodes } = run("missed");
+    expect(nodes.find((n) => n.id === "person-marco")?.state).toBe("ok");
+  });
+
+  it("shows the pickup person as waiting when the ride is on hold for a new flight", () => {
+    const { nodes } = run("cancelled");
+    expect(nodes.find((n) => n.id === "person-marco")?.state).toBe("warn");
+  });
+
   it("turns the pickup person green once rearrange_pickup is done", () => {
-    const { trip, id } = run("missed");
+    const { trip, id } = run("missed", noRides);
     const task = trip.disruptions[0].tasks.find((t) => t.id.endsWith(":rearrange_pickup"))!;
     useTripStore.getState().toggleTask(id, task.id);
     const nodes = buildTimeline(useTripStore.getState().trip!, id);

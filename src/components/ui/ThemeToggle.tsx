@@ -39,9 +39,10 @@ function targetIndex(key: string, index: number): number | null {
 
 /**
  * Light / Dark / Auto (follows the phone). Remembered on this device. A radio group: Tab
- * lands on the chosen one, and the arrow keys move and choose, as native radios do.
+ * lands on the chosen one, and the arrow keys move and choose, as native radios do. `compact`
+ * shows icons only, with the label as each option's accessible name.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const pref = useSyncExternalStore(subscribe, getPref, () => "system" as ThemePreference);
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -63,6 +64,7 @@ export function ThemeToggle() {
             role="radio"
             aria-checked={active}
             tabIndex={active ? 0 : -1}
+            aria-label={compact ? o.label : undefined}
             onClick={() => window.__ckApplyTheme?.(o.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cx(
@@ -71,7 +73,7 @@ export function ThemeToggle() {
             )}
           >
             <Icon name={o.icon} size={18} />
-            {o.label}
+            {!compact && o.label}
           </button>
         );
       })}

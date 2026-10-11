@@ -152,10 +152,18 @@ export function buildTimeline(trip: Trip, disruptionId: string): TimelineNode[] 
 
   const isDone = (key: string) => d.tasks.find((t) => t.id === taskId(d.id, key as never))?.done;
   const hasTask = (key: string) => d.tasks.some((t) => t.id === taskId(d.id, key as never));
+  // A pickup Layover already moved by itself (autoUpdates.ts) has no rearrange_pickup task.
+  const rideAction = (d.actions ?? []).find((a) => a.kind === "ride");
   for (const p of trip.people ?? []) {
     const key = p.role === "pickup" ? "rearrange_pickup" : p.role === "family" ? "send_update" : null;
     const base = { id: p.id, kind: "person" as const, title: `${p.name} · ${p.role === "pickup" ? "pickup" : p.role === "family" ? "family" : "waiting"}` };
-    if (!key || !hasTask(key)) nodes.push({ ...base, detail: "Nothing to tell them yet.", state: "idle" });
+    if (key === "rearrange_pickup" && !hasTask(key) && rideAction) {
+      nodes.push(
+        rideAction.status === "done"
+          ? { ...base, detail: "Pickup moved for you to meet the new arrival.", state: "ok" }
+          : { ...base, detail: "Pickup on hold until there's a new flight.", state: "warn" },
+      );
+    } else if (!key || !hasTask(key)) nodes.push({ ...base, detail: "Nothing to tell them yet.", state: "idle" });
     else if (isDone(key)) nodes.push({ ...base, detail: "Knows the new plan.", state: "ok" });
     else nodes.push({ ...base, detail: p.role === "pickup" ? "Still expects the old arrival." : "Hasn't heard yet.", state: p.role === "pickup" ? "bad" : "warn" });
   }

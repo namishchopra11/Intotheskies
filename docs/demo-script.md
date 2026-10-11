@@ -42,7 +42,7 @@ There is no "report a change" screen. A change arrives on its own:
 
 It plays once per trip. Once the trip has a change, nothing more fires until you restart it.
 
-**Do not want to wait the 6 seconds?** Menu > **Trigger the change now** makes it arrive at
+**Do not want to wait the 6 seconds?** The **Simulate a change** button on the home screen makes it arrive at
 once. Handy when rehearsing, or if a judge is hovering and time is short.
 
 ## Before you walk on (2 minutes, do this every time)
@@ -70,8 +70,9 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 
 **TAP** **Try the sample trip** on the home screen.
 
-You land on **Your trip is on track. Nothing to do right now.** with **All flights on time**
-and a pulsing **Simulated feed** in the bar at the top. Say "simulated" when you point at it.
+You land on **Flights are on time, but 55 min in London is tight.** The bar at the top reads
+**On time · tight connection**, next to a pulsing **Watching · simulated feed**. Say
+"simulated" when you point at it.
 
 **POINT** at the two flights, and at the line between them: **55 min in London**, marked
 tight.
@@ -262,7 +263,7 @@ Then, in this order:
 | What you see | What to do |
 | --- | --- |
 | The trip already shows a change from the last run | Menu > **Restart the demo trip** > **Restart**. It goes back on time and the change arrives again in about 6 seconds. |
-| You do not want to wait for the change | Menu > **Trigger the change now**. |
+| You do not want to wait for the change | Tap **Simulate a change** on the home screen, or menu > **Pick a scenario**. |
 | You see no change after about 10 seconds | You are probably on the shared `/s` page, which never changes a trip, or the trip already has a change. Go to the home screen, then menu > **Restart the demo trip** > **Restart**. |
 | You missed the notification card | It hides itself after about 9 seconds. The home screen already shows the change. Carry on from step 3. |
 | Copy link does nothing | Use **Copy text** instead, or read the first two lines aloud and move on. |

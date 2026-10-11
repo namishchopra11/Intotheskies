@@ -58,3 +58,12 @@ export const CONNECTION_BADGE: Record<"ok" | "tight" | "missed", { tone: Tone; l
   tight: { tone: "warn", label: "Tight connection" },
   missed: { tone: "bad", label: "Missed connection" },
 };
+
+export function FlightStatusBadge({ status, size }: { status: FlightStatus; size?: "sm" | "md" }) {
+  const b = FLIGHT_STATUS_BADGE[status];
+  return (
+    <Badge tone={b.tone} size={size}>
+      {b.label}
+    </Badge>
+  );
+}

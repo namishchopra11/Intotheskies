@@ -30,7 +30,7 @@ words, so the word count is lower than it looks. The full tap-by-tap demo is in
 
 ### 2. The idea (about 10 seconds)
 
-> ConnectionKeeper. It watches your flights. When one changes, it tells you what that means
+> Layover. It watches your flights. When one changes, it tells you what that means
 > for everything else, what to do next, and writes the update for the people waiting on you.
 > You do not enter anything.
 
@@ -104,7 +104,7 @@ line. Drop 5.
 ## The 60-second cut (an elevator version)
 
 > When a flight is delayed, you juggle an airline app, confirmation emails and a hotel
-> booking, while someone waits for news. ConnectionKeeper puts it in one place. When a
+> booking, while someone waits for news. Layover puts it in one place. When a
 > flight changes, it shows you what is now at risk, gives you a checklist of what to do, and
 > writes the update for the people waiting. The trip drives the checklist and both drive the
 > message. Everything stays on your phone. (The flight feed in our demo is simulated.)

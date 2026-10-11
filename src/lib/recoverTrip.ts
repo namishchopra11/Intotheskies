@@ -4,6 +4,7 @@ import {
   DisruptionSchema,
   FlightSchema,
   PersonSchema,
+  RideSchema,
   StaySchema,
   TripSchema,
   type Trip,
@@ -50,6 +51,7 @@ export function recoverTrip(raw: unknown): Recovery {
   const contacts = keepValid(ContactSchema, r.contacts);
   const disruptions = keepValid(DisruptionSchema, r.disruptions);
   const people = keepValid(PersonSchema, r.people);
+  const rides = keepValid(RideSchema, r.rides);
   // A disruption for a flight that did not survive has nothing to describe.
   const flightIds = new Set(flights.kept.map((f) => f.id));
   const attached = disruptions.kept.filter((d) => flightIds.has(d.flightId));
@@ -64,6 +66,7 @@ export function recoverTrip(raw: unknown): Recovery {
     disruptions: attached,
     // Only set when the saved trip had people, so an older trip stays without the field.
     ...(Array.isArray(r.people) ? { people: people.kept } : {}),
+    ...(Array.isArray(r.rides) ? { rides: rides.kept } : {}),
   });
   if (!rebuilt.success) return lost;
 
@@ -72,6 +75,7 @@ export function recoverTrip(raw: unknown): Recovery {
     stays.dropped +
     contacts.dropped +
     people.dropped +
+    rides.dropped +
     disruptions.dropped +
     (disruptions.kept.length - attached.length);
   return { trip: rebuilt.data, notice: { kind: "recovered", dropped } };
@@ -83,6 +87,6 @@ export function recoverTrip(raw: unknown): Recovery {
  * version as a second argument and add one branch per step; without a migrate function
  * zustand throws the saved state away on any version change.
  */
-export function migratePersisted(persisted: unknown): { trip?: unknown } {
-  return persisted && typeof persisted === "object" ? (persisted as { trip?: unknown }) : {};
+export function migratePersisted(persisted: unknown): Record<string, unknown> {
+  return persisted && typeof persisted === "object" ? (persisted as Record<string, unknown>) : {};
 }

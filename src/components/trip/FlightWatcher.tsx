@@ -17,15 +17,15 @@ const WATCH_DELAY_MS = 6000;
 export function FlightWatcher() {
   const ready = useStoreReady();
   const hasTrip = useTripStore((s) => Boolean(s.trip));
+  const signedIn = useTripStore((s) => s.profile !== null);
   const disruptions = useTripStore((s) => s.trip?.disruptions.length ?? 0);
   const pathname = usePathname();
   const router = useRouter();
-  const [alert, setAlert] = useState<FlightAlertContent | null>(null);
+  // The banner belongs to the screen it appeared on; it doesn't follow the traveler to /share.
+  const [alert, setAlert] = useState<{ change: FlightAlertContent; path: string } | null>(null);
 
-  // The recipient's read-only page (/s) never changes anyone's trip. "/share/..." is the
-  // traveler's own screen, so it is not matched by the prefix.
-  const onRecipientPage = pathname === "/s" || pathname.startsWith("/s/");
-  const watching = ready && hasTrip && disruptions === 0 && !onRecipientPage;
+  // Only on the home screen: never on the recipient's /s page, mid-edit on /trip, or before sign-in.
+  const watching = ready && signedIn && hasTrip && disruptions === 0 && pathname === "/";
 
   useEffect(() => {
     if (!watching) return;
@@ -33,11 +33,13 @@ export function FlightWatcher() {
     return () => clearTimeout(t);
   }, [watching]);
 
-  // Both the timer and the scenario sheet arrive here.
+  // The timer, the "Simulate a change" button and the scenario sheet all arrive here.
   useEffect(() => {
     const onChange = (e: Event) => {
+      // Switched off in Settings: the trip still updates, there's just no alert.
+      if (!useTripStore.getState().settings.notifications) return;
       const change = (e as CustomEvent<FlightAlertContent>).detail;
-      setAlert(change);
+      setAlert({ change, path: window.location.pathname });
       notifyDevice(change);
     };
     window.addEventListener(FLIGHT_CHANGE_EVENT, onChange);
@@ -51,8 +53,9 @@ export function FlightWatcher() {
     else window.scrollTo({ top: 0, behavior: "smooth" });
   }, [pathname, router]);
 
-  if (!alert) return null;
-  return <NotificationBanner key={alert.disruptionId} title={alert.title} lines={alert.lines} onOpen={open} onDismiss={dismiss} />;
+  if (!alert || alert.path !== pathname) return null;
+  const { change } = alert;
+  return <NotificationBanner key={change.disruptionId} title={change.title} lines={change.lines} onOpen={open} onDismiss={dismiss} />;
 }
 
 /** A buzz, and a system notification too when the person has allowed them. */

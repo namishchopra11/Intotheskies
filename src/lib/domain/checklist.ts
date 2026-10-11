@@ -104,10 +104,16 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
     keys.delete("go_to_transfer_desk");
     keys.add("confirm_new_booking");
   }
+  // Jobs Layover already did by itself (see autoUpdates.ts) are not the traveler's to do.
+  const actions = disruption.actions ?? [];
+  const hotelHandled = new Set(actions.filter((a) => a.kind === "hotel").map((a) => a.targetId));
+  const pickupHandled = actions.some((a) => a.kind === "ride");
+  const staysToTell = impact.affectedStays.filter((a) => !hotelHandled.has(a.stayId));
+
   const connectionAtRisk = impact.connection !== null && impact.connection.status !== "ok";
   if (connectionAtRisk) keys.add("rebook_onward");
-  if (impact.affectedStays.length > 0) keys.add("tell_hotel");
-  if (impact.delayMinutes !== 0 || connectionAtRisk) keys.add("rearrange_pickup");
+  if (staysToTell.length > 0) keys.add("tell_hotel");
+  if ((impact.delayMinutes !== 0 || connectionAtRisk) && !pickupHandled) keys.add("rearrange_pickup");
   keys.add("keep_receipts");
   if (insurer) keys.add("contact_insurer");
   keys.add("send_update");
@@ -140,7 +146,7 @@ export function generateChecklist(trip: Trip, disruption: Disruption, impact: Im
   for (const key of URGENCY) {
     if (!keys.has(key)) continue;
     if (key === "tell_hotel") {
-      for (const { stayId } of impact.affectedStays) {
+      for (const { stayId } of staysToTell) {
         const stay = trip.stays.find((s) => s.id === stayId);
         if (!stay) continue;
         tasks.push(

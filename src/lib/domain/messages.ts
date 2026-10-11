@@ -51,7 +51,10 @@ export function buildDrafts(trip: Trip, disruptionId: string): Draft[] {
       body: pickup
         ? `Hi ${p.name}, my flights have changed. ${arrival} Can you adjust the pickup? I'll message again when I'm on the ground.`
         : `Hi ${p.name}, my flights have changed. ${arrival} I'm sorting it out and will keep you posted.`,
-      taskIds: [taskId(d.id, pickup ? "rearrange_pickup" : "send_update")],
+      // Only a task that exists: a pickup Layover already moved has no rearrange_pickup task.
+      taskIds: [taskId(d.id, pickup ? "rearrange_pickup" : "send_update")].filter((id) =>
+        d.tasks.some((t) => t.id === id),
+      ),
     });
   }
 

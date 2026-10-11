@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Trip update",
-  description: "A traveler's revised plans, shared from ConnectionKeeper.",
+  description: "A traveler's revised plans, shared from Layover.",
   robots: { index: false, follow: false },
 };
 

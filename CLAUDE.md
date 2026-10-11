@@ -1,11 +1,11 @@
-# ConnectionKeeper
+# Layover
 
 Read this first. It is the shared contract for all four sessions working in this repo.
 
 ## Product
 
 When a flight is delayed or cancelled, travelers juggle an airline app, confirmation
-emails, and a hotel booking. ConnectionKeeper keeps reservations, next steps, and contacts
+emails, and a hotel booking. Layover keeps reservations, next steps, and contacts
 in one place. When a flight changes it shows what is now at risk downstream, generates a
 checklist of what to do, and writes an update for the people waiting on them. The change
 itself comes from a simulated airline feed (there is no live flight data and no backend; see
@@ -198,12 +198,20 @@ The core flow never depends on this. With no `payoutAddress` or no `fundsRequest
 links and pages behave exactly as before, and a malformed `fundsRequest` in a link is
 dropped rather than breaking `/s`.
 
-Status: wired in. The traveler saves an address in the home menu (`setPayoutAddress`), the
-share screen has an "Ask for help" option with an amount (`SummaryOptions.fundsRequest`),
-and `/s` shows `FundsRequest` (a button, a QR code and the address) when the link carries
-`ShareSnapshot.fundsRequest`. Every place that mentions it says it is on devnet, Solana's test
-network. The trip name goes in the payment's memo, which is public on the blockchain, and the
-share screen says so.
+Status: wired end to end. The library (`src/lib/solana/**`, `Trip.payoutAddress`,
+`setPayoutAddress`, `SummaryOptions.fundsRequest`, `ShareSnapshot.fundsRequest`) is used by
+three screens:
+
+- `/` (trip menu): the "Solana address (optional)" field saves `Trip.payoutAddress` through
+  `setPayoutAddress`. "Restart the demo trip" keeps it; "Clear this trip" removes it.
+- `/share/[id]`: the "Ask for help" section has an "Add a Send help button" toggle (disabled
+  until an address is saved) and an amount field. It puts `fundsRequest` in the link.
+- `/s`: when the link carries a `fundsRequest`, the "Help {name} with costs" section renders
+  `FundsRequest` (`src/components/trip/FundsRequest.tsx`): the Send help button (a `solana:`
+  link), a QR code, a devnet notice and a copy-address fallback.
+
+Every place that mentions it says it is on devnet, Solana's test network. The trip name goes
+in the payment's memo, which is public on the blockchain, and the share screen says so.
 
 - `src/lib/solana/config.ts`: `SOLANA_CLUSTER` (the one switch, `"devnet"`), `USDC_MINTS`.
 - `src/lib/solana/address.ts`: `isValidSolanaAddress`, `normalizeSolanaAddress`,
@@ -234,7 +242,8 @@ their own, and the home screen shows the latest one.
 
 With no backend, the airline feed is simulated. `FlightWatcher`
 (`src/components/trip/FlightWatcher.tsx`, mounted in the root layout) waits 6 seconds
-(`WATCH_DELAY_MS`) after a trip with no disruptions is on screen, then calls
+(`WATCH_DELAY_MS`) after a trip with no disruptions is on screen at `/` (the home screen's visible
+"Simulate a change" button does the same on demand), then calls
 `simulateFlightChange()` (`src/components/trip/simulateChange.ts`) and shows a notification
 banner. It never runs on `/s`. On the sample trip the change is: BA 286 runs 2h 10m late,
 AZ 201 is missed, the traveler is rebooked on AZ 207 (14:25 to 18:00).

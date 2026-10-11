@@ -51,6 +51,18 @@ export const sampleTrip: Trip = {
       latestCheckIn: "22:00",
     },
   ],
+  rides: [
+    {
+      id: "ride-fco",
+      provider: "Roma Airport Transfers",
+      pickupAt: "2026-10-17T15:45",
+      from: "FCO Terminal 1 arrivals",
+      to: "Hotel Aventino Garden",
+      phone: "+39 06 0000 0190",
+      confirmation: "RAT-7731",
+      notes: "Driver waits at arrivals with a name sign.",
+    },
+  ],
   contacts: [
     {
       id: "contact-ba",
