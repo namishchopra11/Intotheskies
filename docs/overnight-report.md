@@ -9,8 +9,9 @@ and no screen showed an error. What is left is small, plus two keys only the tea
 1. Read **"For the team"** below out loud to the team, or send them the link to this page.
 2. Ask whoever owns the Vercel project to add the two keys (item 1 below). Until they do,
    **do not mention Import or ElevenLabs** at the table.
-3. Ask Will (or whoever owns the screens) to look at `fix/screens`, and Boris (or whoever owns
-   the logic) to look at `fix/logic`. Each is one small commit. They merge it or drop it.
+3. Ask Namish to merge his `qa-final` branch (checked, it passes everything). Then ask the
+   screens owner to look at `fix/screens` and the logic owner at `fix/logic`. Each is one
+   small commit. They merge it or drop it.
 4. Open `docs/demo-day.md` and work through it top to bottom. It has the one-hour-before
    list and how to record the backup video.
 5. Rehearse the pitch twice against a 3-minute timer. `docs/pitch.md` now has answers for
@@ -30,17 +31,20 @@ Vercel > the project > Settings > Environment Variables, add both for Production
 redeploy. Without them the app still works: Import says it is not available, and Listen uses
 the phone's own voice.
 
-### 2. `fix/screens`: for the screens owner (not merged)
+### 2. Namish's `qa-final` branch (pushed late Saturday, not merged yet)
 
-`src/app/page.tsx`, `src/app/settings/page.tsx`, `src/app/login/page.tsx`. Three short changes:
+Fixes an endless loading screen when the saved trip is unreadable, a plain message for Listen
+instead of "Failed to fetch", bigger airline link tap targets, and the "simulated" notes on
+**Handled for you** and in Settings. I ran it: 241 tests pass, lint and the build are clean.
+Merge it first.
 
-- **Handled for you** now says "Simulated in this demo: no message reaches the hotel or
-  driver." Settings drops "Your flights are always tracked." for a simulated note. `CLAUDE.md`
-  asks for this anywhere the app says it told a hotel or moved a ride.
+### 2b. `fix/screens`: for the screens owner (not merged)
+
+`src/app/page.tsx`, `src/app/login/page.tsx`. Two short changes, and it merges cleanly on top
+of `qa-final` (the "simulated" notes were dropped from this branch since `qa-final` has them):
+
 - The privacy line on the first screen also says Import sends what you add to Claude.
 - Sign-in says "Welcome to Layover", not "Welcome back", to a first-time visitor.
-
-Tests, lint and types pass on the branch.
 
 ### 3. `fix/logic`: for the logic owner (not merged)
 
