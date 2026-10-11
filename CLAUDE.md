@@ -193,7 +193,7 @@ planAutoUpdates(trip, flightId, disruptionId, settings): { actions: AutoAction[]
 buildTimeline(trip, disruptionId): TimelineNode[]   // rail of flights, links, stay, people
 finalArrival(trip, disruptionId): FinalArrival | null  // where the traveler now lands (or unknown)
 // messages.ts
-buildDrafts(trip, disruptionId): Draft[]  // pickup / family / hotel messages; channelLinks(draft)
+buildDrafts(trip, disruptionId): Draft[]  // pickup / family / hotel messages; sendLink(draft)
 // A person's node turns green when their task is done (pickup: rearrange_pickup, family:
 // send_update). A pickup Layover already moved (a ride AutoAction) shows as handled.
 // Opening a draft on /share ticks the matching tasks.

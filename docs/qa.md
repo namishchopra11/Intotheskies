@@ -69,8 +69,9 @@ owner; nothing here was changed in their files.
 - **Import:** PDFs are not made smaller before upload. A few large ones together can pass
   Vercel's 4.5 MB upload limit and show only "Reading failed". The import route also has no
   limit on how often it can be called, and each call spends Anthropic credit. (screens owner)
-- **Trips you type in yourself** have no way to add people waiting (like Marco or Mum), so
-  **Send to** on the share screen is empty for them. (screens owner)
+- **Trips you type in yourself** can add people waiting (like Marco or Mum) in the "Who's
+  waiting" section on `/trip`, so **Send to** on the share screen has someone to write to.
+  (fixed)
 
 ### Checked and fine
 

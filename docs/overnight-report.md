@@ -90,8 +90,9 @@ of `qa-final` (the "simulated" notes were dropped from this branch since `qa-fin
   Fine for a demo; worth a note if a judge asks about cost.
 - Several large PDFs at once can pass Vercel's 4.5 MB upload limit and show only "Reading
   failed". Screenshots are shrunk before upload, PDFs are not.
-- A trip typed in by hand has no way to add people waiting (like Marco or Mum), so **Send to**
-  on the share screen is empty for it. The read-only link still works.
+- A trip typed in by hand can add people waiting (like Marco or Mum) in the "Who's waiting"
+  section on `/trip`; until someone is added, **Send to** on the share screen is empty for it.
+  The read-only link works either way.
 
 ## What changed on `main` overnight (Sebastian's files only)
 
