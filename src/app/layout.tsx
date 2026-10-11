@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { DemoNextButton } from "@/components/trip/DemoNextButton";
 import { FlightWatcher } from "@/components/trip/FlightWatcher";
 import { AppOpening } from "@/components/ui/AppOpening";
+import { SaveFeedback } from "@/components/ui/SaveFeedback";
 import { AccountTour } from "@/components/ui/AccountTour";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { NavHistory } from "@/components/ui/BackButton";
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <AccountTour />
         </Suspense>
         </PullToRefresh>
+        <SaveFeedback />
       </body>
     </html>
   );

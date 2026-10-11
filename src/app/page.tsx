@@ -34,6 +34,7 @@ import { formatDate, formatDuration, minutesBetween, timePart } from "@/lib/doma
 import type { LoadNotice } from "@/lib/recoverTrip";
 import { finalArrival } from "@/lib/domain/timeline";
 import { useTripStore } from "@/lib/store";
+import { isPastTrip, localDay } from "@/lib/tripArchive";
 import type { AutoAction, Contact, Disruption, Flight, Ride, Stay, Trip } from "@/lib/types";
 
 const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
@@ -344,10 +345,11 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
 /* ---------- On track: nothing has changed yet ---------- */
 
 function OnTrack({ trip }: { trip: Trip }) {
+  const reminders = useTripStore((s) => s.settings.reminders);
   const count = trip.flights.length;
   const tight = tightLayover(trip);
   const done = new Set(trip.prepDone ?? []);
-  const toDo = prepItems(trip).filter((i) => !done.has(i.key)).length;
+  const toDo = prepItems(trip, reminders).filter((i) => !done.has(i.key)).length;
   return (
     <>
       <SignalBar
@@ -545,7 +547,8 @@ function NoTrip() {
         ))}
       </ol>
 
-      {savedTrips.length > 0 && <SavedTrips trips={savedTrips} />}
+      {savedTrips.some((t) => !isPastTrip(t, localDay())) && <SavedTrips trips={savedTrips.filter((t) => !isPastTrip(t, localDay()))} />}
+      {savedTrips.length > 0 && <div className="px-4 pt-4"><Button variant="secondary" block icon="calendar" href="/trips">My trips & archive</Button></div>}
 
       <div className="ck-rise mt-auto flex flex-col gap-3 px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(340)}>
         <p className="mx-1 mb-1 flex items-center gap-2 text-[12px] text-ink-2">
@@ -567,7 +570,7 @@ function SavedTrips({ trips }: { trips: Trip[] }) {
   const openSavedTrip = useTripStore((s) => s.openSavedTrip);
   const removeSavedTrip = useTripStore((s) => s.removeSavedTrip);
   return (
-    <Section title="Saved trips" delay={280}>
+    <Section title="Upcoming trips" delay={280}>
       <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface">
         {trips.map((t) => {
           // Where the trip goes: the first flight flown and the end of its journey.
@@ -698,6 +701,9 @@ function TripMenu({
           )}
           <Button variant="secondary" block icon="user" href="/settings" onClick={closeSheet}>
             Settings
+          </Button>
+          <Button variant="secondary" block icon="calendar" href="/trips" onClick={closeSheet}>
+            My trips & archive
           </Button>
           {hasTrip && (
             <Button variant="secondary" block icon="pencil" href="/trip" onClick={closeSheet}>

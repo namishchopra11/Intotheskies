@@ -12,6 +12,7 @@ import { FLIGHT, PERSON, RIDE, STAY, validate, type Draft, type EntryKind } from
 import { DateTimeField } from "./DateTimeField";
 import { ImportSheet } from "./ImportSheet";
 import { START_TRIP_ID, leaveStartTrip } from "./leaveStartTrip";
+import { missingDetails } from "./missingDetails";
 
 // Bookings build up in order when they appear: import, trip name, flights, hotels, rides.
 const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
@@ -107,6 +108,8 @@ function Bookings({ trip }: { trip: Trip }) {
   const rides = trip.rides ?? [];
   const people = trip.people ?? [];
   const empty = trip.flights.length + trip.stays.length + rides.length === 0;
+  const missing = missingDetails(trip);
+  const missingCount = missing.reduce((total, issue) => total + issue.fields.length, 0);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -125,6 +128,30 @@ function Bookings({ trip }: { trip: Trip }) {
         </span>
         <Icon name="pencil" size={18} className="text-ink-2" />
       </button>
+
+      <section aria-label="Missing booking details" className="ck-rise mx-4 mt-4 overflow-hidden rounded-card border border-line bg-surface" style={rise(100)}>
+        <div className="flex items-start gap-3 px-4 py-3.5">
+          <span aria-hidden="true" className={cx("inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px]", missingCount ? "bg-signal text-on-signal" : "bg-ok-bg text-ok-fg")}>
+            <Icon name={missingCount ? "circle-alert" : "circle-check"} size={19} />
+          </span>
+          <div>
+            <h2 className="font-semibold">{missingCount ? `${missingCount} ${missingCount === 1 ? "detail" : "details"} to add before you go` : "Booking details look complete"}</h2>
+            <p className="mt-0.5 text-[13px] leading-snug text-ink-2">{missingCount ? "Fill these in so they're easy to find when you need them." : "Your saved bookings have the key details. Check them against your confirmations."}</p>
+          </div>
+        </div>
+        {missing.length > 0 && <ul className="divide-y divide-line-soft border-t border-line-soft">
+          {missing.map((issue) => <li key={`${issue.kind}:${issue.id ?? "new"}`}>
+            <button type="button" aria-label={`Add missing details for ${issue.label}`} onClick={() => setEditing({ kind: issue.kind, id: issue.id })}
+              className="flex w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-sunk">
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-semibold">{issue.label}</span>
+                <span className="mt-0.5 block text-[13px] leading-snug text-ink-2">Missing: {issue.fields.join(", ")}.</span>
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold">Add <Icon name="chevron-right" size={16} /></span>
+            </button>
+          </li>)}
+        </ul>}
+      </section>
 
       <Section
         delay={150}

@@ -7,7 +7,7 @@ type RawStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
  * reads as "nothing saved". Without this the store never finishes loading (zustand stops
  * when the read throws) and every screen stays on its loading skeleton.
  */
-export function safeStorage(getStorage: () => RawStorage): StateStorage {
+export function safeStorage(getStorage: () => RawStorage, onWrite?: (saved: boolean) => void): StateStorage {
   return {
     getItem: (name) => {
       try {
@@ -22,8 +22,10 @@ export function safeStorage(getStorage: () => RawStorage): StateStorage {
     setItem: (name, value) => {
       try {
         getStorage().setItem(name, value);
+        onWrite?.(true);
       } catch {
         // Blocked or full: the trip stays in memory for this visit.
+        onWrite?.(false);
       }
     },
     removeItem: (name) => {

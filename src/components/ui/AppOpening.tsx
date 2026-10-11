@@ -32,7 +32,7 @@ export function AppOpening() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     // Marked seen when it ends, not when it starts, so dev's double-mounted effect still plays it.
     // The timer is also the fallback that removes the overlay if an animation event is missed.
-    const timer = window.setTimeout(() => finish(), reducedMotion.matches || hasSeen() ? 0 : 1700);
+    const timer = window.setTimeout(() => finish(), reducedMotion.matches || hasSeen() ? 0 : 2400);
     return () => window.clearTimeout(timer);
   }, [finish]);
 

@@ -523,7 +523,7 @@ body {
   to { transform: scaleX(1); }
 }
 .ck-opening {
-  animation: ck-opening-exit 1500ms ease-in-out both;
+  animation: ck-opening-exit 2200ms ease-in-out both;
 }
 /* Set by the theme script before first paint when the entrance already played in this tab. */
 html[data-opening-seen] .ck-opening {
@@ -533,7 +533,7 @@ html[data-opening-seen] .ck-opening {
   animation: ck-opening-mark 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .ck-opening-mark svg {
-  animation: ck-opening-arrow 500ms 150ms ease-in-out 2 both;
+  animation: ck-opening-arrow 800ms 150ms ease-in-out 2 both;
 }
 .ck-opening-name {
   animation: ck-opening-copy 350ms 120ms ease-out both;
@@ -542,16 +542,17 @@ html[data-opening-seen] .ck-opening {
   animation: ck-opening-copy 350ms 200ms ease-out both;
 }
 .ck-opening-route span {
-  animation: ck-opening-route 1100ms 150ms linear both;
+  animation: ck-opening-route 1750ms 150ms linear both;
 }
 
-/* Pull to refresh (PullToRefresh.tsx): the plane keeps crossing while the strip is open. */
+/* One flight on release: build speed, then leave the strip without looping back. */
 @keyframes ck-ptr-cross {
-  from { transform: translateX(-6%); }
-  to { transform: translateX(150%); }
+  from { transform: translateX(45%); opacity: 1; }
+  75% { opacity: 1; }
+  to { transform: translateX(112%); opacity: 0; }
 }
 .ck-ptr-fly {
-  animation: ck-ptr-cross 1100ms linear infinite;
+  animation: ck-ptr-cross 800ms cubic-bezier(0.55, 0, 0.9, 0.45) 1 forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
