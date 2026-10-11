@@ -9,6 +9,7 @@ export { Field, SelectField, TextAreaField } from "./Field";
 export { Icon, type IconName } from "./Icon";
 export { NotificationBanner } from "./NotificationBanner";
 export { PageHeader } from "./PageHeader";
+export { NAV_BACK, NAV_FORWARD, PageTransition } from "./PageTransition";
 export { ProgressBar } from "./ProgressBar";
 export { Sheet } from "./Sheet";
 export { ThemeToggle } from "./ThemeToggle";

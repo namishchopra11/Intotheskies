@@ -14,6 +14,8 @@ import {
   CONNECTION_BADGE,
   Field,
   Icon,
+  NAV_FORWARD,
+  PageTransition,
   ProgressBar,
   Sheet,
   SignalBar,
@@ -49,28 +51,30 @@ export default function TripStatusPage() {
   );
 
   return (
-    <main className="flex flex-1 flex-col">
-      <AppHeader
-        action={
-          <span className="flex items-center">
-            <ProfileButton />
-            {menuButton}
-          </span>
-        }
-        onLogoClick={trip ? () => setLeaveOpen(true) : undefined}
-      />
-      {!ready ? (
-        <Loading />
-      ) : !trip ? (
-        <NoTrip />
-      ) : trip.flights.length === 0 ? (
-        <NoFlights trip={trip} />
-      ) : (
-        <Status trip={trip} />
-      )}
-      <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
-      <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
-    </main>
+    <PageTransition>
+      <main className="flex flex-1 flex-col">
+        <AppHeader
+          action={
+            <span className="flex items-center">
+              <ProfileButton />
+              {menuButton}
+            </span>
+          }
+          onLogoClick={trip ? () => setLeaveOpen(true) : undefined}
+        />
+        {!ready ? (
+          <Loading />
+        ) : !trip ? (
+          <NoTrip />
+        ) : trip.flights.length === 0 ? (
+          <NoFlights trip={trip} />
+        ) : (
+          <Status trip={trip} />
+        )}
+        <TripMenu open={menuOpen} onClose={() => setMenuOpen(false)} hasTrip={Boolean(trip)} />
+        <LeaveTripSheet open={leaveOpen} onClose={() => setLeaveOpen(false)} />
+      </main>
+    </PageTransition>
   );
 }
 
@@ -736,7 +740,7 @@ function NoTrip() {
           <Icon name="lock" size={16} className="mt-px" />
           Your trip is saved only on this phone. Listen sends the summary to ElevenLabs for audio. No account needed.
         </p>
-        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
+        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip" transitionTypes={NAV_FORWARD}>
           Add your trip
         </Button>
       </div>
@@ -827,7 +831,7 @@ function NoFlights({ trip }: { trip: Trip }) {
         <p className="text-ink-2">When it changes, you will see what is affected and what to do next.</p>
       </section>
       <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),26px)]" style={rise(220)}>
-        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip">
+        <Button variant="primary" size="lg" block chip="arrow-right" href="/trip" transitionTypes={NAV_FORWARD}>
           Add your bookings
         </Button>
       </div>

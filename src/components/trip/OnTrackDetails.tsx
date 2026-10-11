@@ -60,14 +60,37 @@ export function AtAGlance({ trip, delay }: { trip: Trip; delay: number }) {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Reminders for the days before the trip, ticked off as you go and saved with the trip. */
+// A ticked reminder stays long enough for its strike-through and check to play, then folds away.
+const STRIKE_MS = 520;
+const FOLD_MS = 320;
+
 export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
   const togglePrep = useTripStore((s) => s.togglePrep);
   const [showDone, setShowDone] = useState(false);
+  // Keys just ticked: still shown while they animate out. "folding" once the strike is done.
+  const [leaving, setLeaving] = useState<Record<string, "striking" | "folding">>({});
   const items = prepItems(trip);
   if (items.length === 0) return null;
   const done = new Set(trip.prepDone ?? []);
   const doneCount = items.filter((i) => done.has(i.key)).length;
-  const visible = showDone ? items : items.filter((i) => !done.has(i.key));
+  const visible = showDone ? items : items.filter((i) => !done.has(i.key) || leaving[i.key]);
+
+  const toggle = (key: string) => {
+    const ticking = !done.has(key);
+    togglePrep(key);
+    if (!ticking || showDone) return;
+    setLeaving((l) => ({ ...l, [key]: "striking" }));
+    setTimeout(() => setLeaving((l) => (l[key] ? { ...l, [key]: "folding" } : l)), STRIKE_MS);
+    setTimeout(
+      () =>
+        setLeaving((l) => {
+          const next = { ...l };
+          delete next[key];
+          return next;
+        }),
+      STRIKE_MS + FOLD_MS,
+    );
+  };
 
   return (
     <section className="ck-rise flex flex-col px-5 pt-7" style={rise(delay)}>
@@ -76,26 +99,35 @@ export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
         {visible.map((item) => {
           const isDone = done.has(item.key);
           return (
-            <li key={item.key} className="border-b border-line">
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={isDone}
-                data-done={isDone}
-                onClick={() => togglePrep(item.key)}
-                className="flex min-h-13 w-full cursor-pointer items-center gap-3 py-2 text-left"
-              >
-                <span aria-hidden="true" className="relative inline-flex h-[22px] w-[22px] shrink-0">
-                  <Icon name="circle-dashed" size={22} className="ck-task-ring absolute inset-0 text-ink-2" />
-                  <span className="ck-task-disc absolute inset-0 inline-flex items-center justify-center rounded-full bg-meter text-bg">
-                    <Icon name="check" size={14} strokeWidth={3.5} />
+            <li
+              key={item.key}
+              className={cx(
+                "grid border-b border-line transition-[grid-template-rows,opacity,border-color] ease-out",
+                leaving[item.key] === "folding" ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]",
+              )}
+              style={{ transitionDuration: `${FOLD_MS}ms` }}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={isDone}
+                  data-done={isDone}
+                  onClick={() => toggle(item.key)}
+                  className="flex min-h-13 w-full cursor-pointer items-center gap-3 py-2 text-left"
+                >
+                  <span aria-hidden="true" className="relative inline-flex h-[22px] w-[22px] shrink-0">
+                    <Icon name="circle-dashed" size={22} className="ck-task-ring absolute inset-0 text-ink-2" />
+                    <span className="ck-task-disc absolute inset-0 inline-flex items-center justify-center rounded-full bg-meter text-bg">
+                      <Icon name="check" size={14} strokeWidth={3.5} />
+                    </span>
                   </span>
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
-                  <span className="ck-task-text">{item.title}</span>
-                  <span className="text-[14px] leading-snug text-ink-2">{item.detail}</span>
-                </span>
-              </button>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-[15px]">
+                    <span className="ck-task-text">{item.title}</span>
+                    <span className="text-[14px] leading-snug text-ink-2">{item.detail}</span>
+                  </span>
+                </button>
+              </div>
             </li>
           );
         })}

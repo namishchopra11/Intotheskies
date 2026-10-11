@@ -140,9 +140,18 @@ export const SettingsSchema = z.object({
   // Alert the traveler when a flight changes (banner, buzz and phone notification).
   notifications: z.boolean(),
   voice: SpeechVoiceSchema,
+  // The "Next" button for presenting the app; while it's on, the flight changes only when
+  // the presenter asks (see components/trip/DemoNextButton.tsx).
+  demoControls: z.boolean(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
-export const DEFAULT_SETTINGS: Settings = { notifyHotel: true, moveRides: true, notifications: true, voice: "george" };
+export const DEFAULT_SETTINGS: Settings = {
+  notifyHotel: true,
+  moveRides: true,
+  notifications: true,
+  voice: "george",
+  demoControls: true,
+};
 
 export const TripSchema = z.object({
   id: z.string(),

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Suspense } from "react";
+import { DemoNextButton } from "@/components/trip/DemoNextButton";
 import { FlightWatcher } from "@/components/trip/FlightWatcher";
 import { THEME_COLORS, themeScript } from "@/components/ui/theme";
 import "./globals.css";
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* Reads the URL, so it streams in after the static shell. */}
         <Suspense fallback={null}>
           <FlightWatcher />
+          <DemoNextButton />
         </Suspense>
       </body>
     </html>

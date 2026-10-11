@@ -18,6 +18,8 @@ export function FlightWatcher() {
   const ready = useStoreReady();
   const hasTrip = useTripStore((s) => Boolean(s.trip));
   const signedIn = useTripStore((s) => s.profile !== null);
+  // With demo controls on, the presenter's "Next" button makes the change instead.
+  const demo = useTripStore((s) => s.settings.demoControls);
   const disruptions = useTripStore((s) => s.trip?.disruptions.length ?? 0);
   const pathname = usePathname();
   const router = useRouter();
@@ -26,7 +28,8 @@ export function FlightWatcher() {
   // The recipient's read-only page never changes anyone's trip, and nothing happens before
   // the traveler has signed in.
   const recipientPage = pathname === "/s" || pathname.startsWith("/s/");
-  const watching = ready && signedIn && hasTrip && disruptions === 0 && !recipientPage && pathname !== "/login";
+  const watching =
+    ready && signedIn && !demo && hasTrip && disruptions === 0 && !recipientPage && pathname !== "/login";
 
   useEffect(() => {
     if (!watching) return;
