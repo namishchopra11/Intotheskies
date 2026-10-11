@@ -282,7 +282,10 @@ With no backend, the airline feed is simulated. `FlightWatcher`
 `simulateFlightChange()` (`src/components/trip/simulateChange.ts`) and shows a notification
 banner. It never runs on `/s`. On the sample trip the change is: BA 286 runs 2h 10m late,
 AZ 201 is missed, the traveler is rebooked on AZ 207 (14:25 to 18:00).
-"Restart the demo trip" in the home menu reloads the sample trip, which replays it. "Pick a scenario" (`ScenarioSheet`) restarts and plays `delay45`, `delay180`, `missed` or `cancelled` at once.
+"Restart the demo trip" in the home menu reloads the sample trip, which replays it.
+With `settings.demoControls` on (the default; Settings > Demo), the timer does not run: the
+presenter's **Next** button (`DemoNextButton`, steps in `demoSteps.ts`) walks every screen and
+makes the change when pressed. It is hidden on `/s` for a visitor with no profile. "Pick a scenario" (`ScenarioSheet`) restarts and plays `delay45`, `delay180`, `missed` or `cancelled` at once.
 Anything that says the app watches live flights must say this is simulated, and so must
 anything that says Layover told a hotel or moved a ride.
 

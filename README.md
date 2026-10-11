@@ -55,7 +55,8 @@ pnpm build   # production build
 ## Try the demo
 
 1. Tap **Try the sample trip**: San Francisco to Rome, changing planes in London.
-2. Wait about 6 seconds (or tap **Simulate a change**). The airline "changes" the trip and
+2. Tap **Next: Change the flight** (bottom right) or **Simulate a change**. (With Demo
+   controls switched off in Settings, it also happens by itself after about 6 seconds.) The airline "changes" the trip and
    a notification card appears: the first flight is over two hours late, so the London
    connection is missed and the traveler is rebooked on AZ 207.
 3. See the new arrival on the board, the trip as a rail that shows what is affected,
