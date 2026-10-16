@@ -2,7 +2,7 @@
 
 import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useState } from "react";
-import { Button, Card, Icon, buttonClasses } from "@/components/ui";
+import { Button, Icon, SignArrow, buttonClasses } from "@/components/ui";
 import { buildDrafts, sendLink, type Draft } from "@/lib/domain/messages";
 import { useTripStore } from "@/lib/store";
 import type { Trip } from "@/lib/types";
@@ -32,23 +32,29 @@ export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: strin
   };
 
   return (
-    <section aria-labelledby="send-to-h" className="mx-4 mt-2">
-      <h2 id="send-to-h" className="ck-label mb-2 px-1">
+    <section aria-labelledby="send-to-h" className="ck-rise mx-4">
+      <h2 id="send-to-h" className="ck-h2 mb-3">
         Send to
       </h2>
-      <Card padding="none" className="divide-y divide-line-soft">
+      <div className="flex flex-col gap-[3px]">
         {drafts.map((d) => {
           const link = sendLink(d);
           const sent = opened.has(d.id);
           const to = link?.channel === "text" ? d.phone : d.email;
           return (
-            <div key={d.id} className="flex flex-col gap-2.5 px-4 py-3.5">
+            <div key={d.id} className="flex flex-col gap-3 rounded-card bg-surface px-4 py-4">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[16px] font-semibold">
-                  {d.name} <span className="font-normal text-ink-2">· {ROLE[d.kind]}</span>
+                <p className="flex min-w-0 items-center gap-3">
+                  <span aria-hidden="true" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[3px] bg-key font-display text-[22px] font-bold text-on-key">
+                    {d.kind === "hotel" ? <Icon name="bed" size={18} /> : d.name.trim().charAt(0).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-display text-[24px] leading-none font-bold">{d.name}</span>
+                    <span className="mt-0.5 block text-[14px] font-medium text-ink-2">{ROLE[d.kind]}</span>
+                  </span>
                 </p>
                 {sent && (
-                  <span className="ck-fade inline-flex items-center gap-1 text-[13px] font-semibold text-ok-fg">
+                  <span className="ck-fade inline-flex items-center gap-1 text-[14px] font-bold text-ok-fg">
                     <Icon name="check" size={14} strokeWidth={3} /> Opened
                   </span>
                 )}
@@ -63,19 +69,24 @@ export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: strin
                         tick(d.taskIds);
                         setOpened((o) => new Set(o).add(d.id));
                       }}
-                      className={buttonClasses({ variant: "secondary", size: "sm", block: true })}
+                      className={buttonClasses({ variant: sent ? "tinted" : "plate", size: "md", block: true, chip: true })}
                     >
-                      <Icon name="message" size={18} />
-                      {link.channel === "text" ? `Text ${d.name}` : `Email ${d.name}`}
+                      <span className="inline-flex items-center gap-2">
+                        <Icon name="message" size={19} strokeWidth={2.25} />
+                        {link.channel === "text" ? `Text ${d.name}` : `Email ${d.name}`}
+                      </span>
+                      <span aria-hidden="true" className={sent ? "inline-flex h-10 w-10 items-center justify-center rounded-[3px] bg-sunk" : "inline-flex h-10 w-10 items-center justify-center rounded-[3px] bg-sign text-on-sign"}>
+                        {sent ? <Icon name="check" size={18} strokeWidth={3} /> : <SignArrow size={20} className="ck-key-arrow" />}
+                      </span>
                     </a>
-                    <p className="flex items-center justify-between gap-2 text-[13px] text-ink-2">
+                    <p className="flex items-center justify-between gap-2 text-[14px] text-ink-2">
                       <span className="truncate">
                         <span className="font-num">{to}</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => setEditing(d.id)}
-                        className="min-h-11 shrink-0 cursor-pointer font-semibold text-ink-2 hover:text-ink"
+                        className="ck-press min-h-11 shrink-0 cursor-pointer font-bold text-ink underline underline-offset-4"
                       >
                         Change
                       </button>
@@ -88,7 +99,7 @@ export function SendTo({ trip, disruptionId }: { trip: Trip; disruptionId: strin
             </div>
           );
         })}
-      </Card>
+      </div>
     </section>
   );
 }
@@ -144,7 +155,7 @@ function ContactEditor({ trip, draft, onDone, canCancel }: { trip: Trip; draft: 
         save(value);
       }}
     >
-      <p className="text-[13px] text-ink-2">
+      <p className="text-[14px] font-medium text-ink-2">
         {canCancel ? `Reach ${draft.name} at:` : `Add ${hotel ? "a phone number" : "a phone or email"}`}
       </p>
       <div className="flex gap-2">
@@ -159,21 +170,21 @@ function ContactEditor({ trip, draft, onDone, canCancel }: { trip: Trip; draft: 
           aria-label={`${draft.name}'s ${hotel ? "phone number" : "phone or email"}`}
           placeholder={hotel ? "Phone number" : "Phone or email"}
           aria-invalid={error ? true : undefined}
-          className="min-h-11 min-w-0 flex-1 rounded-control border border-line-strong bg-surface px-3.5 text-base text-ink outline-none placeholder:text-ink-3 focus:border-accent focus:ring-2 focus:ring-accent/25"
+          className="min-h-12 min-w-0 flex-1 rounded-control border-2 border-transparent bg-sunk px-3.5 text-[16px] font-medium text-ink outline-none transition-[border-color] placeholder:font-normal placeholder:text-ink-3 focus:border-ink"
         />
-        <Button type="submit" variant="secondary" size="sm">
+        <Button type="submit" variant="plate" size="md">
           Save
         </Button>
       </div>
-      {error && <p className="text-[13px] text-bad-fg">{error}</p>}
+      {error && <p className="text-[14px] font-semibold text-bad-fg">{error}</p>}
       <div className="flex gap-3">
         {contacts && (
-          <button type="button" onClick={pick} className="min-h-11 cursor-pointer text-[14px] font-semibold text-ink-2 hover:text-ink">
+          <button type="button" onClick={pick} className="ck-press min-h-11 cursor-pointer text-[15px] font-bold underline underline-offset-4">
             Pick from contacts
           </button>
         )}
         {canCancel && (
-          <button type="button" onClick={onDone} className="min-h-11 cursor-pointer text-[14px] font-semibold text-ink-2 hover:text-ink">
+          <button type="button" onClick={onDone} className="ck-press min-h-11 cursor-pointer text-[15px] font-bold underline underline-offset-4">
             Cancel
           </button>
         )}

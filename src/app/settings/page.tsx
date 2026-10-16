@@ -22,29 +22,34 @@ export default function SettingsPage() {
       <main className="flex flex-1 flex-col">
         <PageHeader variant="bar" title="Settings" />
         {ok && profile && (
-          <div className="flex flex-col gap-7 px-4 pb-[max(env(safe-area-inset-bottom),28px)]">
+          <div className="ck-rise flex flex-col gap-10 px-4 pb-[max(env(safe-area-inset-bottom),28px)]">
             <Account profile={profile} />
             <AutoUpdates />
             <Notifications />
             <Reminders />
             <Group title="Trips">
-              <Button variant="secondary" block icon="calendar" href="/trips">My trips & archive</Button>
+              <Button variant="plate" block icon="calendar" chip="arrow-right" href="/trips" transitionTypes={["nav-forward"]}>My trips & archive</Button>
             </Group>
             <Group title="Appearance">
-              <div data-tour="appearance"><ThemeToggle /></div>
+              <Card className="flex items-center justify-between gap-3 py-2 pr-2">
+                <span className="text-[17px] font-semibold">Theme</span>
+                <div data-tour="appearance"><ThemeToggle compact /></div>
+              </Card>
             </Group>
             <TimeDisplay />
             <ListenVoice />
             <SendHelp />
             <Group title="Getting started">
-              <Button variant="secondary" block onClick={() => {
+              <Button variant="plate" block chip="arrow-right" onClick={() => {
                 useTour.getState().start(profile, true);
                 router.push("/");
               }}>Replay the quick tour</Button>
             </Group>
             <Demo />
             <YourData />
-            <p className="px-1 text-[12px] text-ink-2">Trips stay on this phone. Imports are read by Claude.</p>
+            <p className="flex items-center justify-center gap-1.5 px-1 text-center text-[14px] font-medium text-ink-2">
+              Trips stay on this phone · Imports read by Claude
+            </p>
           </div>
         )}
       </main>
@@ -54,8 +59,8 @@ export default function SettingsPage() {
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2.5">
-      <h2 className="ck-label px-1">{title}</h2>
+    <section className="flex flex-col gap-3">
+      <h2 className="ck-h2">{title}</h2>
       {children}
     </section>
   );
@@ -84,13 +89,13 @@ function Account({ profile }: { profile: Profile }) {
         <div className="flex items-center gap-3">
           <span
             aria-hidden="true"
-            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-band font-semibold text-on-band"
+            className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-[3px] bg-sign font-display text-[30px] font-bold text-on-sign"
           >
             {initials(profile)}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate font-semibold">{profile.guest ? "Guest" : profile.name || "Your account"}</span>
-            <span className="block truncate text-[14px] text-ink-2">
+            <span className="block truncate font-display text-[28px] leading-none font-bold">{profile.guest ? "Guest" : profile.name || "Your account"}</span>
+            <span className="mt-1 block truncate text-[15px] text-ink-2">
               {profile.guest
                 ? "Not signed in"
                 : profile.provider === "google" || profile.provider === "apple"
@@ -104,6 +109,7 @@ function Account({ profile }: { profile: Profile }) {
           <Button
             variant="primary"
             block
+            chip="arrow-right"
             // Stays signed in as a guest until the new account exists, so the trip carries over.
             onClick={() => router.push("/login#create")}
           >
@@ -136,9 +142,9 @@ function Account({ profile }: { profile: Profile }) {
         )}
 
         <Button
-          variant="secondary"
+          variant="ghost"
           block
-          icon="arrow-right"
+          className="text-bad-fg"
           onClick={() => (guestHasTrips ? setConfirmGuestLogout(true) : logOut())}
         >
           Log out
@@ -147,7 +153,7 @@ function Account({ profile }: { profile: Profile }) {
 
       <Sheet open={confirmGuestLogout} onClose={() => setConfirmGuestLogout(false)} title="Log out of guest mode?">
         <div className="flex flex-col gap-3 pt-1">
-          <p className="mb-2 leading-snug text-ink-2">Guest trips are deleted when you log out.</p>
+          <p className="mb-2 text-[16px] leading-snug font-medium text-ink-2">Guest trips are deleted when you log out.</p>
           <Button
             variant="primary"
             block
@@ -182,7 +188,7 @@ function AutoUpdates() {
   const updateSettings = useTripStore((s) => s.updateSettings);
   return (
     <Group title="When a flight changes">
-      <Card className="flex flex-col divide-y divide-line-soft py-1">
+      <Card className="flex flex-col gap-[3px] py-1">
         <Toggle
           checked={settings.notifyHotel}
           onChange={(notifyHotel) => updateSettings({ notifyHotel })}
@@ -196,7 +202,7 @@ function AutoUpdates() {
           description="Match your new landing time."
         />
       </Card>
-      <p className="px-1 text-[12px] text-ink-2">Simulated: nothing is really sent. Off means it goes on your to-do list.</p>
+      <p className="text-[14px] font-medium text-ink-2">Simulated: nothing is really sent. Off adds it to your to-do list.</p>
     </Group>
   );
 }
@@ -215,8 +221,8 @@ function Reminders() {
   const updateSettings = useTripStore((s) => s.updateSettings);
   return (
     <Group title="Before you go reminders">
-      <p className="px-1 text-[14px] text-ink-2">Choose what appears in your trip checklist. These are in-app reminders.</p>
-      <Card className="flex flex-col divide-y divide-line-soft py-1">
+      <p className="-mt-1 text-[15px] font-medium text-ink-2">What shows in your trip checklist.</p>
+      <Card className="flex flex-col py-1">
         {REMINDER_OPTIONS.map(({ key, label, description }) => (
           <Toggle key={key} checked={reminders[key]} label={label} description={description}
             onChange={(checked) => updateSettings({ reminders: { ...reminders, [key]: checked } })} />
@@ -327,7 +333,7 @@ function YourData() {
   return (
     <Group title="Your data">
       <Card className="flex flex-col gap-3">
-        <p className="text-[15px] leading-snug">
+        <p className="text-[16px] leading-snug font-medium">
           {trip ? `1 open trip (${trip.name || "Untitled"})` : "No open trip"}
           {saved > 0 ? ` and ${saved} saved ${saved === 1 ? "trip" : "trips"}` : ""}, stored on this phone.
         </p>
@@ -338,7 +344,7 @@ function YourData() {
 
       <Sheet open={confirming} onClose={() => setConfirming(false)} title={guest ? "Delete your data?" : "Delete your account?"}>
         <div className="flex flex-col gap-3 pt-1">
-          <p className="mb-2 leading-snug text-ink-2">Deletes everything on this phone. Can&apos;t be undone.</p>
+          <p className="mb-2 text-[16px] leading-snug font-medium text-ink-2">Deletes everything on this phone. Can&apos;t be undone.</p>
           <Button
             variant="danger"
             block

@@ -1,7 +1,8 @@
 // import { Button, Card, Badge, ... } from "@/components/ui";
 export { Badge, FlightStatusBadge, FLIGHT_STATUS_BADGE, CONNECTION_BADGE, type Tone } from "./Badge";
 export { Autocomplete, type AutocompleteOption } from "./Autocomplete";
-export { AppHeader, BrandMark, SignalBar } from "./Brand";
+export { AppHeader, BrandMark, SignalBar, Wordmark } from "./Brand";
+export { SignArrow, ARROW_PATH, type ArrowDirection } from "./SignArrow";
 export { BackButton, NavHistory } from "./BackButton";
 export { HomeLogo } from "./HomeLogo";
 export { Button, buttonClasses, type ButtonVariant } from "./Button";

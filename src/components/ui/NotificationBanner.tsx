@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { BrandMark } from "./Brand";
+import { SignArrow } from "./SignArrow";
 import { Icon } from "./Icon";
 
 type NotificationBannerProps = {
@@ -174,25 +174,25 @@ export function NotificationBanner({ title, lines, meta = "now", onOpen, onDismi
         <div role="alert" className={leaving ? "ck-notify-out" : "ck-notify-in"}>
           {/* Compact, like a phone notification: one title line and at most two lines of text.
               Drag down for the rest; the full story is one tap away on the plan. */}
-          <div className="flex items-center gap-2.5 rounded-[16px] border border-line bg-surface py-2 pr-1 pl-2.5 shadow-[0_10px_28px_rgb(0_0_0/0.22)]">
+          <div className="flex items-center gap-3 rounded-control bg-sign py-2.5 pr-1 pl-2.5 text-on-sign shadow-float">
             <button
               type="button"
               onClick={() => !moved.current && leave(onOpen)}
               className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
             >
-              <BrandMark size={30} className="rounded-[7px]" />
+              <span aria-hidden="true" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[3px] bg-on-sign text-sign"><SignArrow size={22} /></span>
               <span
                 ref={text}
                 className="min-w-0 flex-1 overflow-hidden"
                 style={{ maxHeight, transition: dragging ? "none" : `max-height 220ms ${EASE}` }}
               >
                 <span className="flex items-baseline gap-2">
-                  <span className={`min-w-0 flex-1 text-[14px] leading-snug font-semibold text-ink ${unclamped ? "" : "truncate"}`}>
+                  <span className={`min-w-0 flex-1 font-display text-[20px] leading-tight font-bold ${unclamped ? "" : "truncate"}`}>
                     {title}
                   </span>
-                  <span className="shrink-0 text-[12px] text-ink-2">{meta}</span>
+                  <span className="shrink-0 text-[13px] font-semibold opacity-75">{meta}</span>
                 </span>
-                <span className={`text-[13px] leading-snug text-ink-body ${unclamped ? "block" : "line-clamp-2"}`}>
+                <span className={`text-[14px] leading-snug font-medium ${unclamped ? "block" : "line-clamp-2"}`}>
                   {lines.join(" ")}
                 </span>
               </span>
@@ -201,9 +201,9 @@ export function NotificationBanner({ title, lines, meta = "now", onOpen, onDismi
               type="button"
               aria-label="Dismiss"
               onClick={() => leave(onDismiss)}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-sunk"
+              className="ck-press inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-on-sign"
             >
-              <Icon name="x" size={16} />
+              <Icon name="x" size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>

@@ -62,7 +62,7 @@ export default function SharePage() {
       <main className="flex flex-1 flex-col">
         <PageHeader title="Nothing to share yet" />
         <div className="px-4 pt-2">
-          <Card className="text-ink-2">
+          <Card className="text-[16px] font-medium text-ink-2">
             This update isn&apos;t on this phone.
             <Button href="/" variant="primary" block chip="arrow-right" className="mt-4">
               Go to your trip
@@ -125,23 +125,29 @@ export default function SharePage() {
 
       <SendTo trip={trip} disruptionId={disruption.id} />
 
-      <section aria-label="Message preview" className="flex flex-col gap-2 px-4 pt-[22px]">
-        <span className="ck-label px-1">Preview</span>
-        <div
-          aria-live="polite"
-          className="ck-rise flex max-w-[320px] flex-col gap-2 self-end rounded-[16px] rounded-br-[4px] bg-bubble px-4 py-3.5 text-[15px] leading-[1.45] text-on-bubble"
-          style={{ animationDelay: "80ms" }}
-        >
+      <section aria-label="Message preview" className="mx-4 mt-10 flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="ck-h2">Message</h2>
+          <span className="text-[13px] font-medium text-ink-2">Snapshot from {displayTime(openedAt)}</span>
+        </div>
+        <div className="flex flex-col">
+          <div
+            aria-live="polite"
+            className="ck-wipe relative flex flex-col gap-2 overflow-hidden rounded-card bg-bubble py-4 pr-4 pl-6 text-[16px] leading-[1.45] font-medium text-on-bubble"
+            style={{ animationDelay: "80ms" }}
+          >
+          <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[6px] bg-sign" />
           {lines.map((line) => (
             <div key={line.key} className="ck-line" data-off={!line.on} aria-hidden={!line.on || undefined}>
-              <p className={cx("break-words", line.mono && "font-num text-[14px]")}>{line.text}</p>
+              <p className={cx("break-words", line.mono && "font-num text-[15px]")}>{line.text}</p>
             </div>
           ))}
+          </div>
         </div>
       </section>
 
-      <section aria-label="What to include" className="mx-4 mt-[22px]">
-        <Card padding="none" className="divide-y divide-line-soft px-4">
+      <section aria-label="What to include" className="mx-4 mt-[3px]">
+        <Card padding="none" className="px-4">
           <Toggle
             checked={options.includeBookingRefs}
             onChange={set("includeBookingRefs")}
@@ -155,10 +161,28 @@ export default function SharePage() {
             label="Open tasks"
           />
         </Card>
+        <div className="mt-[3px] grid grid-cols-2 gap-[3px]">
+          <Button
+            variant={done === "text" ? "success" : "secondary"}
+            icon={done === "text" ? "check" : "copy"}
+            drawIcon={done === "text"}
+            onClick={onCopyText}
+          >
+            {done === "text" ? "Text copied" : "Copy text"}
+          </Button>
+          <Button
+            variant={done === "link" ? "success" : "secondary"}
+            icon={done === "link" ? "check" : "link"}
+            drawIcon={done === "link"}
+            onClick={onCopyLink}
+          >
+            {done === "link" ? "Link copied" : "Copy link"}
+          </Button>
+        </div>
       </section>
 
-      <section aria-labelledby="funds-h" className="mx-4 mt-[22px]">
-        <h2 id="funds-h" className="ck-label mb-2 px-1">
+      <section aria-labelledby="funds-h" className="mx-4 mt-10">
+        <h2 id="funds-h" className="ck-h2 mb-3">
           Ask for help
         </h2>
         <Card padding="none" className="px-4">
@@ -197,7 +221,7 @@ export default function SharePage() {
           </Collapse>
         </Card>
         <Collapse open={fundsOn}>
-          <p className="mt-2 flex items-start gap-2 px-1 text-[14px] leading-snug text-ink-2">
+          <p className="mt-2 flex items-start gap-2 text-[14px] leading-snug font-medium text-ink-2">
             <Icon name="info" size={18} className="mt-px" />
             <span>
               {amountOk
@@ -208,38 +232,21 @@ export default function SharePage() {
         </Collapse>
       </section>
 
-      <div className="mt-auto flex flex-col gap-3 px-4 pt-4 pb-[max(env(safe-area-inset-bottom),26px)]">
-        <p className="mx-1 mb-1 text-[12px] text-ink-2">Link is a snapshot from {displayTime(openedAt)}.</p>
+      <div className="ck-dock sticky bottom-0 z-20 mt-auto pt-10">
+      <div className="ck-dock-inner flex flex-col gap-2.5 bg-plate px-4 pt-3 pb-[max(env(safe-area-inset-bottom),14px)]">
         <p role="status" aria-live="polite" className="sr-only">
           {done ? ANNOUNCE[done] : ""}
         </p>
         {done === "error" && (
-          <p className="ck-rise flex items-start gap-2 rounded-card bg-bad-bg px-3 py-2.5 text-[14px] text-bad-fg">
+          <p className="ck-rise flex items-start gap-2 rounded-card bg-bad-bg px-3 py-2.5 text-[15px] font-semibold text-bad-fg">
             <Icon name="circle-x" size={18} className="mt-px" />
             {ANNOUNCE.error}
           </p>
         )}
-        <Button variant="primary" size="lg" block chip={mainDone ? "check" : "share"} onClick={onShare}>
+        <Button variant="primary" size="lg" block chip={mainDone ? "check" : "arrow-right"} icon={mainDone ? undefined : "share"} onClick={onShare}>
           {done === "shared" ? "Shared" : done === "both" ? "Copied" : "Share"}
         </Button>
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <Button
-            variant={done === "text" ? "success" : "secondary"}
-            icon={done === "text" ? "check" : "copy"}
-            drawIcon={done === "text"}
-            onClick={onCopyText}
-          >
-            {done === "text" ? "Text copied" : "Copy text"}
-          </Button>
-          <Button
-            variant={done === "link" ? "success" : "secondary"}
-            icon={done === "link" ? "check" : "link"}
-            drawIcon={done === "link"}
-            onClick={onCopyLink}
-          >
-            {done === "link" ? "Link copied" : "Copy link"}
-          </Button>
-        </div>
+      </div>
       </div>
     </main>
   );

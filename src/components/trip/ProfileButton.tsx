@@ -11,7 +11,7 @@ export function initials(p: Profile): string {
   return (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : "")).toUpperCase();
 }
 
-/** The signed-in person's initials in a circle, linking to Settings. */
+/** The signed-in person's initials on a small plate, linking to Settings. */
 export function ProfileButton() {
   const profile = useTripStore((s) => s.profile);
   if (!profile) return null;
@@ -21,9 +21,9 @@ export function ProfileButton() {
       transitionTypes={["nav-forward"]}
       aria-label="Settings"
       data-tour="profile"
-      className="inline-flex h-11 w-11 items-center justify-center rounded-control hover:bg-sunk"
+      className="ck-press inline-flex h-11 w-11 items-center justify-center rounded-control"
     >
-      <span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-band text-[13px] font-semibold text-on-band">
+      <span aria-hidden="true" className="inline-flex h-9 w-9 items-center justify-center rounded-control bg-key font-display text-[17px] font-bold text-on-key">
         {initials(profile)}
       </span>
     </Link>

@@ -9,7 +9,7 @@ export const THEME_STORAGE_KEY = "ck-theme";
 export const OPENING_SEEN_KEY = "ck-opening-seen";
 
 // Browser status-bar colour per theme; matches --bg in globals.css.
-export const THEME_COLORS = { light: "#f0f0ec", dark: "#121311" } as const;
+export const THEME_COLORS = { light: "#e7e6e1", dark: "#0a0a0a" } as const;
 
 // Runs before first paint (inlined in layout.tsx) so a dark phone never flashes light.
 // Also marks <html data-opening-seen> when the entrance already played in this tab, so the

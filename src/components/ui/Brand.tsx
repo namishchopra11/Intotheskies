@@ -1,46 +1,56 @@
 import type { ReactNode } from "react";
 import { cx } from "./cx";
-import { Icon } from "./Icon";
 import { HomeLogo } from "./HomeLogo";
 
-/** The logo: an arrow on a small sign. Ink square with a yellow arrow (inverted in dark mode). */
-export function BrandMark({ size = 24, className }: { size?: number; className?: string }) {
+/**
+ * The logo: a sign-yellow plate with the wayfinding arrow, its shaft broken once. The break is
+ * the layover, the pause in a journey that keeps going. Yellow and black in both themes.
+ */
+export function BrandMark({ size = 28, className }: { size?: number; className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={cx(
-        "inline-flex shrink-0 items-center justify-center rounded-[4px] bg-mark text-on-mark",
-        className,
-      )}
+      className={cx("inline-flex shrink-0 items-center justify-center rounded-[3px] bg-sign text-on-sign", className)}
       style={{ width: size, height: size }}
     >
-      <Icon name="arrow-right" size={Math.round(size * 0.6)} strokeWidth={3} />
+      <svg width={size * 0.74} height={size * 0.74} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M1.5 9.6h4.6v4.8H1.5zM9 9.6h4.4L8.6 4.8l2.75-2.75L21.3 12l-9.95 9.95-2.75-2.75 4.8-4.8H9z" />
+      </svg>
+    </span>
+  );
+}
+
+/** "Layover" set as a sign: the mark and the name in condensed bold. */
+export function Wordmark({ size = 28, className }: { size?: number; className?: string }) {
+  return (
+    <span className={cx("inline-flex items-center gap-2", className)}>
+      <BrandMark size={size} />
+      <span className="font-display font-bold" style={{ fontSize: size * 0.93, lineHeight: 1 }}>
+        Layover
+      </span>
     </span>
   );
 }
 
 /**
  * App header for the home screen: the logo (always home) on the left, an optional action on
- * the right. Other screens get the same logo row from PageHeader.
+ * the right. Solid ground, sticky, so the trip scrolls underneath it.
  */
 export function AppHeader({ action }: { action?: ReactNode }) {
   return (
-    <header className="flex min-h-[68px] items-center justify-between pt-[max(env(safe-area-inset-top),12px)] pr-3 pb-3 pl-5">
+    <header className="sticky top-0 z-30 flex min-h-[60px] items-center justify-between bg-bg pt-[env(safe-area-inset-top)] pr-2 pl-4">
       <HomeLogo />
       {action}
     </header>
   );
 }
 
-/**
- * A full-width yellow band, like a gate sign: "NEW PLAN READY · UPDATED 09:42".
- * Use one at most per screen, for the single thing that just changed.
- */
+/** A one-line status plate for the one thing that just changed. */
 export function SignalBar({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   return (
-    <div className="ck-fade flex items-center justify-between gap-3 bg-signal px-5 py-2.5 font-num text-[13px] font-semibold tracking-[0.04em] text-on-signal uppercase">
+    <div className="ck-fade mx-4 flex items-center justify-between gap-3 rounded-control bg-sign px-4 py-2 text-[14px] font-semibold text-on-sign">
       <span>{children}</span>
-      {aside && <span className="tabular-nums">{aside}</span>}
+      {aside && <span className="font-num">{aside}</span>}
     </div>
   );
 }

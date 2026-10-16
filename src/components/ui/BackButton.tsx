@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { cx } from "./cx";
-import { Icon } from "./Icon";
+import { SignArrow } from "./SignArrow";
 import { NAV_BACK } from "./PageTransition";
 
 // The Layover screens visited in this tab, oldest first, so Back knows whether there is one of
@@ -55,11 +55,11 @@ export function BackButton({ fallback = "/", onlyWithHistory = false, className 
       aria-label="Back"
       onClick={() => (hasHistory ? router.back() : router.push(fallback, { transitionTypes: NAV_BACK }))}
       className={cx(
-        "ck-fade -ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-ink hover:bg-sunk",
+        "ck-fade ck-press -ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-current [@media(hover:hover)]:hover:bg-sunk",
         className,
       )}
     >
-      <Icon name="chevron-left" size={22} />
+      <SignArrow direction="left" size={22} />
     </button>
   );
 }

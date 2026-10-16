@@ -152,29 +152,31 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
         if (e.target === ref.current) requestClose();
       }}
     >
-      <div ref={panelRef} className="ck-sheet-panel flex max-h-[90dvh] flex-col rounded-t-sheet border border-b-0 border-line bg-surface">
+      <div ref={panelRef} className="ck-sheet-panel flex max-h-[90dvh] flex-col rounded-t-sheet bg-bg shadow-float">
         <button type="button" aria-label="Drag down or tap to close" className="flex h-7 w-full shrink-0 touch-none cursor-grab items-center justify-center rounded-t-sheet select-none active:cursor-grabbing"
           onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={(event) => endDrag(event)}
           onPointerCancel={(event) => endDrag(event, true)} onLostPointerCapture={(event) => endDrag(event, true)}
           onClick={() => { if (!ignoreHandleClick.current) requestClose(); ignoreHandleClick.current = false; }}>
-          <span aria-hidden="true" className="h-1.5 w-10 rounded-full bg-line-strong" />
+          <span aria-hidden="true" className="h-[5px] w-10 rounded-[2px] bg-line-strong" />
         </button>
-        <div className="flex items-center gap-2 py-1 pr-2 pl-5">
-          <h2 id={titleId} className="flex-1 text-lg font-semibold">
+        <div className="flex items-center gap-2 pt-1 pr-3 pb-2 pl-5">
+          <h2 id={titleId} className="flex-1 font-display text-[30px] leading-none font-bold">
             {title}
           </h2>
           <button
             type="button"
             onClick={requestClose}
             aria-label="Close"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-2 hover:bg-sunk"
+            className="ck-press inline-flex h-11 w-11 items-center justify-center rounded-control text-ink"
           >
-            <Icon name="x" size={22} />
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-control bg-sunk">
+              <Icon name="x" size={16} strokeWidth={2.5} />
+            </span>
           </button>
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5">{children}</div>
         {footer && (
-          <div className="border-t border-line px-5 pt-3 pb-[max(env(safe-area-inset-bottom),16px)]">
+          <div className="bg-bg px-5 pt-3 pb-[max(env(safe-area-inset-bottom),16px)]">
             {footer}
           </div>
         )}

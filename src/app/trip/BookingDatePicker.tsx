@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Icon, SelectField, Sheet, cx } from "@/components/ui";
+import { Button, SelectField, Sheet, SignArrow, cx } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
 
 type Props = {
@@ -43,17 +43,17 @@ export function BookingDatePicker({ label, date, time, onApply, onCancel }: Prop
   return (
     <Sheet open onClose={onCancel} title={`Choose ${label.toLowerCase()} date and time`}
       footer={<div className="flex gap-2">
-        <Button variant="ghost" className="flex-1" onClick={onCancel}>Cancel</Button>
+        <Button variant="sunk" className="flex-1" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" className="flex-1" icon="check" onClick={() => onApply(chosen, `${pad(hour)}:${minute}`)}>Use date & time</Button>
       </div>}>
     <div role="group" aria-label={`Choose ${label.toLowerCase()} date and time`} className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <button type="button" aria-label="Previous month" disabled={month.year <= 2000 && month.index === 0} onClick={() => moveMonth(-1)} className="inline-flex h-11 w-11 items-center justify-center rounded-control hover:bg-surface disabled:opacity-30"><Icon name="chevron-left" size={20} /></button>
-        <p aria-live="polite" className="font-semibold">{monthLabel}</p>
-        <button type="button" aria-label="Next month" disabled={month.year >= 2100 && month.index === 11} onClick={() => moveMonth(1)} className="inline-flex h-11 w-11 items-center justify-center rounded-control hover:bg-surface disabled:opacity-30"><Icon name="chevron-right" size={20} /></button>
+        <button type="button" aria-label="Previous month" disabled={month.year <= 2000 && month.index === 0} onClick={() => moveMonth(-1)} className="ck-press inline-flex h-11 w-11 items-center justify-center rounded-control bg-surface disabled:opacity-30"><SignArrow direction="left" size={20} /></button>
+        <p aria-live="polite" className="font-display text-[26px] leading-none font-bold">{monthLabel}</p>
+        <button type="button" aria-label="Next month" disabled={month.year >= 2100 && month.index === 11} onClick={() => moveMonth(1)} className="ck-press inline-flex h-11 w-11 items-center justify-center rounded-control bg-surface disabled:opacity-30"><SignArrow size={20} /></button>
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {weekdays.map((day) => <span key={day} aria-hidden="true" className="pb-1 text-center text-[11px] font-medium text-ink-2">{day}</span>)}
+        {weekdays.map((day) => <span key={day} aria-hidden="true" className="pb-1 text-center text-[13px] font-semibold text-ink-2">{day}</span>)}
         {Array.from({ length: offset }, (_, index) => <span key={`empty-${index}`} />)}
         {Array.from({ length: count }, (_, index) => {
           const day = index + 1;
@@ -61,7 +61,7 @@ export function BookingDatePicker({ label, date, time, onApply, onCancel }: Prop
           const selected = value === chosen;
           return <button key={value} type="button" aria-pressed={selected}
             aria-label={monthDate(month.year, month.index, day).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
-            onClick={() => setChosen(value)} className={cx("flex min-h-11 min-w-0 items-center justify-center rounded-control font-num text-[14px] transition-colors", selected ? "bg-signal font-semibold text-on-signal" : "hover:bg-surface")}>{day}</button>;
+            onClick={() => setChosen(value)} className={cx("flex min-h-11 min-w-0 items-center justify-center rounded-control font-display text-[19px] font-bold transition-colors", selected ? "bg-sign text-on-sign" : "bg-surface [@media(hover:hover)]:hover:bg-sunk")}>{day}</button>;
         })}
       </div>
       <div className={cx("grid gap-2", format === "12h" ? "grid-cols-3" : "grid-cols-2")}>

@@ -2,7 +2,7 @@
 
 import { useTimeFormat } from "@/lib/useTimeFormat";
 import { useId, useState, type ReactNode } from "react";
-import { Button, Card, Collapse, Icon, buttonClasses, cx } from "@/components/ui";
+import { Collapse, Icon, SignArrow, cx } from "@/components/ui";
 import { cityName } from "@/lib/domain/airports";
 import type { FinalArrival } from "@/lib/domain/timeline";
 import { timePart } from "@/lib/domain/time";
@@ -19,8 +19,8 @@ export function haptic() {
 }
 
 /**
- * "Do this first": the first unfinished task with one clear action. The card and full list sit
- * behind "To do". Generated tasks are already in order of urgency, so no sorting here.
+ * "Do this now": the first unfinished task as a yellow sign with one clear action. The full
+ * checklist folds out under it. Generated tasks are already in order of urgency, so no sorting.
  */
 export function NextAction({
   disruption,
@@ -50,79 +50,94 @@ export function NextAction({
     }
   };
 
+  const total = disruption.tasks.length;
+  const left = disruption.tasks.filter((t) => !t.done).length;
   return (
-    <section aria-label="Tasks" className="ck-rise flex flex-col px-4 pt-7" style={{ animationDelay: "700ms" }}>
+    <section aria-label="Tasks" className="flex flex-col gap-[3px]">
+      <div
+        aria-labelledby="first-task-heading"
+        className={cx("relative overflow-hidden rounded-card", task ? "bg-sign text-on-sign" : "bg-ok-bg text-ok-fg")}
+      >
+        {/* A new first task is pasted up when the one before it is done. */}
+        <div key={task?.id ?? "all-done"} className="ck-wipe flex flex-col gap-3 p-5">
+          <p className="flex items-center justify-between gap-3 text-[15px] font-bold">
+            <span className="inline-flex items-center gap-2">
+              {task ? <SignArrow size={22} /> : <Icon name="circle-check" size={22} strokeWidth={2.5} />}
+              {task ? "Do this now" : "All sorted"}
+            </span>
+            <span className="font-num">
+              {total - left} of {total}
+            </span>
+          </p>
+          <h3 id="first-task-heading" className="font-display text-[32px] leading-[0.98] font-bold break-words">
+            {task ? displayTime(task.title) : "Nothing left to do"}
+          </h3>
+          {task?.detail && <p className="text-[16px] leading-snug font-medium break-words">{displayTime(task.detail)}</p>}
+          {!task && arrival && !arrival.unknown && (
+            <p className="text-[16px] font-medium">
+              Land {cityName(arrival.flight.to)} {displayTime(timePart(arrival.arriveAt))}
+            </p>
+          )}
+          {task && (
+            <div className="mt-1 flex gap-2">
+              <button
+                type="button"
+                aria-label={`Mark done: ${task.title}`}
+                onClick={markDone}
+                className="ck-press inline-flex min-h-13 flex-1 cursor-pointer items-center justify-center gap-2 rounded-control bg-on-sign px-4 text-[17px] font-bold text-sign"
+              >
+                <Icon name="check" size={20} strokeWidth={3} />
+                Done
+              </button>
+              {contact?.phone && (
+                <a
+                  href={`tel:${contact.phone.replace(/\s+/g, "")}`}
+                  aria-label={`Call ${contact.name}`}
+                  className="ck-press inline-flex min-h-13 flex-1 items-center justify-center gap-2 rounded-control bg-black/10 px-4 text-[17px] font-bold"
+                >
+                  <Icon name="phone" size={19} strokeWidth={2.5} />
+                  Call
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {lastDone && (
+        <div className="ck-rise flex items-center justify-between gap-3 rounded-card bg-surface py-1 pr-1 pl-4 text-[14px]" role="status">
+          <span className="inline-flex min-w-0 items-center gap-2 font-semibold text-ok-fg">
+            <Icon name="check" size={16} strokeWidth={3} />
+            <span className="truncate">{displayTime(lastDone.title)}</span>
+          </span>
+          <button
+            type="button"
+            aria-label={`Undo task: ${displayTime(lastDone.title)}`}
+            onClick={() => {
+              toggleTask(disruption.id, lastDone.id);
+              setLastDoneId(null);
+            }}
+            className="ck-press min-h-11 shrink-0 cursor-pointer rounded-control px-3 font-bold underline underline-offset-4"
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
       <button
         type="button"
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex min-h-11 cursor-pointer items-center justify-between rounded-control px-1 text-[15px] font-semibold hover:bg-sunk"
+        className="ck-press flex min-h-14 cursor-pointer items-center justify-between rounded-card bg-surface px-4 text-[16px] font-bold"
       >
-        To do ({disruption.tasks.filter((t) => !t.done).length})
-        <Icon
-          name="chevron-right"
-          size={18}
-          className={cx("transition-transform duration-300 ease-out", open && "rotate-90")}
-        />
+        <span>{open ? "Hide checklist" : "Full checklist"}</span>
+        <span className="inline-flex items-center gap-2 font-num text-ink-2">
+          {!open && `${left} open`}
+          <SignArrow size={18} direction={open ? "up" : "down"} className="text-ink transition-transform duration-300" />
+        </span>
       </button>
-      <Collapse open={open} id={listId} className="flex flex-col gap-2.5 pt-2.5">
-        <Card aria-labelledby="first-task-heading">
-          {/* A new first task settles in when the one before it is done. */}
-          <div key={task?.id ?? "all-done"} className="ck-rise flex items-start gap-3">
-            <span className={cx(
-              "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control",
-              task ? "bg-mark text-on-mark" : "bg-ok-bg text-ok-fg",
-            )}>
-              <Icon name={task ? "arrow-right" : "circle-check"} size={20} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="ck-label text-ink-2">{task ? "Do this first" : "Sorted"}</p>
-              <h2 id="first-task-heading" className="mt-1 break-words text-[18px] leading-snug font-semibold text-ink">
-                {task ? displayTime(task.title) : "All done"}
-              </h2>
-              {task?.detail && (
-                <p className="mt-1.5 break-words text-[14px] leading-snug text-ink-2">{displayTime(task.detail)}</p>
-              )}
-              {!task && arrival && !arrival.unknown && (
-                <p className="mt-1.5 text-[14px] text-ink-2">
-                  Land {cityName(arrival.flight.to)} {displayTime(timePart(arrival.arriveAt))}
-                </p>
-              )}
-            </div>
-          </div>
-          {task && (
-            <div className="mt-4 flex gap-2.5">
-              {contact?.phone && (
-                <a
-                  href={`tel:${contact.phone.replace(/\s+/g, "")}`}
-                  aria-label={`Call ${contact.name}`}
-                  className={buttonClasses({ variant: "secondary", size: "sm", className: "flex-1" })}
-                >
-                  <Icon name="phone" size={18} />
-                  Call
-                </a>
-              )}
-              <Button variant="secondary" size="sm" block icon="check" className="flex-1"
-                aria-label={`Mark done: ${task.title}`} onClick={markDone}>
-                Done
-              </Button>
-            </div>
-          )}
-          {lastDone && (
-            <div className="ck-rise mt-2 flex items-center justify-between gap-3 text-[13px]" role="status">
-              <span className="text-ok-fg">Done</span>
-              <button type="button" aria-label={`Undo task: ${displayTime(lastDone.title)}`}
-                onClick={() => {
-                  toggleTask(disruption.id, lastDone.id);
-                  setLastDoneId(null);
-                }}
-                className="min-h-11 cursor-pointer rounded-control px-2 font-semibold text-ink-2 hover:bg-sunk">
-                Undo
-              </button>
-            </div>
-          )}
-        </Card>
+      <Collapse open={open} id={listId}>
         {children}
       </Collapse>
     </section>

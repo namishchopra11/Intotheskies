@@ -91,7 +91,7 @@ export function Autocomplete<O extends AutocompleteOption>({
           id={listId}
           role="listbox"
           aria-label={`${label} suggestions`}
-          className="ck-pop absolute inset-x-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-control border border-line-strong bg-surface py-1 shadow-[0_12px_32px_rgb(0_0_0/0.18)]"
+          className="ck-pop absolute inset-x-0 z-20 mt-1 max-h-64 overflow-y-auto rounded-control bg-surface p-1 shadow-float"
         >
           {options.map((o, i) => (
             <li
@@ -106,12 +106,12 @@ export function Autocomplete<O extends AutocompleteOption>({
               }}
               onMouseEnter={() => setActive(i)}
               className={cx(
-                "flex min-h-11 cursor-pointer items-center gap-3 px-3.5 text-[15px]",
-                i === active && "bg-sunk",
+                "flex min-h-11 cursor-pointer items-center gap-3 rounded-[3px] px-3 text-[16px]",
+                i === active && "bg-sign text-on-sign",
               )}
             >
               <span className="min-w-0 flex-1 truncate font-medium">{o.label ?? o.value}</span>
-              {o.hint && <span className="shrink-0 truncate text-[13px] text-ink-2">{o.hint}</span>}
+              {o.hint && <span className={cx("shrink-0 truncate text-[13px]", i === active ? "text-on-sign" : "text-ink-2")}>{o.hint}</span>}
             </li>
           ))}
         </ul>

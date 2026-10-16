@@ -46,7 +46,7 @@ export function SocialSignIn({ onSignIn }: { onSignIn: (profile: Profile) => voi
       disabled={pending !== null}
       aria-busy={pending === provider || undefined}
       className={cx(
-        "relative inline-flex min-h-13 w-full cursor-pointer items-center justify-center gap-2.5 rounded-control px-5 text-[16px] font-semibold transition-opacity disabled:cursor-default",
+        "ck-press relative inline-flex min-h-14 w-full cursor-pointer items-center justify-center gap-2.5 rounded-control px-5 text-[17px] font-bold disabled:cursor-default",
         pending && pending !== provider && "opacity-50",
         className,
       )}
@@ -61,9 +61,9 @@ export function SocialSignIn({ onSignIn }: { onSignIn: (profile: Profile) => voi
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      {button("apple", "border border-line bg-band text-on-band", <AppleLogo />)}
-      {button("google", "border border-[#747775] bg-white text-[#1f1f1f]", <GoogleLogo />)}
+    <div className="flex flex-col gap-2">
+      {button("apple", "bg-band text-on-band", <AppleLogo />)}
+      {button("google", "bg-white text-[#1f1f1f]", <GoogleLogo />)}
     </div>
   );
 }

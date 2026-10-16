@@ -21,9 +21,9 @@ type FieldBase = {
 
 // 16px text keeps iOS from zooming in on focus.
 const CONTROL = cx(
-  "block w-full min-h-12 rounded-control border bg-surface px-3.5 text-base text-ink",
-  "placeholder:text-ink-3 outline-none transition-colors",
-  "focus:border-accent focus:ring-2 focus:ring-accent/25",
+  "block w-full min-h-13 rounded-control border-2 bg-sunk px-4 text-[17px] font-medium text-ink",
+  "placeholder:font-normal placeholder:text-ink-3 outline-none transition-[border-color,background-color] duration-200",
+  "focus:border-ink focus:bg-surface",
   "disabled:opacity-50",
 );
 
@@ -37,17 +37,17 @@ function Shell({
 }: FieldBase & { id: string; children: ReactNode }) {
   return (
     <div className={cx("flex flex-col gap-1.5", className)}>
-      <label htmlFor={id} className="font-medium text-ink">
+      <label htmlFor={id} className="text-[14px] font-semibold text-ink-2">
         {label}
       </label>
       {hint && (
-        <p id={`${id}-hint`} className="-mt-1 text-[14px] leading-snug text-ink-3">
+        <p id={`${id}-hint`} className="-mt-1 text-[13px] leading-snug text-ink-3">
           {hint}
         </p>
       )}
       {children}
       {error && (
-        <p id={`${id}-error`} role="alert" className="flex items-start gap-1.5 text-[14px] text-bad-fg">
+        <p id={`${id}-error`} role="alert" className="ck-rise flex items-start gap-1.5 text-[14px] font-medium text-bad-fg">
           <Icon name="circle-x" size={16} strokeWidth={2} className="mt-0.5" />
           {error}
         </p>
@@ -85,7 +85,7 @@ export function Field({
         aria-describedby={describedBy(id, hint, error)}
         className={cx(
           CONTROL,
-          error ? "border-bad" : "border-line-strong",
+          error ? "border-bad" : "border-transparent",
           TIME_TYPES.has(type) && "font-num tabular-nums",
           Boolean(endAdornment) && "pr-14",
         )}
@@ -116,7 +116,7 @@ export function TextAreaField({
         rows={rows}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error)}
-        className={cx(CONTROL, "py-3 leading-snug", error ? "border-bad" : "border-line-strong")}
+        className={cx(CONTROL, "py-3 leading-snug", error ? "border-bad" : "border-transparent")}
         {...textarea}
       />
     </Shell>
@@ -143,7 +143,7 @@ export function SelectField({
           id={id}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error)}
-          className={cx(CONTROL, "appearance-none pr-10", error ? "border-bad" : "border-line-strong")}
+          className={cx(CONTROL, "appearance-none pr-10", error ? "border-bad" : "border-transparent")}
           {...select}
         >
           {options.map((o) => (

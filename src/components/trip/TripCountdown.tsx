@@ -1,11 +1,8 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
-import { Card, Icon } from "@/components/ui";
 import { countdownLabel, departureInstant } from "@/lib/domain/countdown";
-import { formatDate, timePart } from "@/lib/domain/time";
 import type { Trip } from "@/lib/types";
-import { useTimeFormat } from "@/lib/useTimeFormat";
 import { daysUntil } from "./prep";
 
 const DAY_MS = 86400000;
@@ -52,12 +49,20 @@ function shortClock(ms: number) {
   return `${h > 0 ? `${h}h ` : ""}${m}m ${String(s % 60).padStart(2, "0")}s`;
 }
 
+export type Countdown = {
+  /** "2 days to go", "Leaves in 23h 56m 11s", "Waiting for a new flight". */
+  label: string;
+  /** A live, ticking clock (after a change). */
+  live: boolean;
+  /** The clock is the demo's 24 hours, not the real departure. */
+  demo: boolean;
+};
+
 /** Live seconds during the final 24 hours; calendar fallback for unknown airport zones. */
-export function TripCountdown({ trip }: { trip: Trip }) {
+export function useTripCountdown(trip: Trip): Countdown | null {
   const epoch = useSyncExternalStore(subscribe, nowSeconds, serverNow);
-  const displayTime = useTimeFormat();
   const first = [...trip.flights].sort((a, b) => a.departAt.localeCompare(b.departAt))[0];
-  const departure = useMemo(() => first ? departureInstant(first.departAt, first.from) : null, [first]);
+  const departure = useMemo(() => (first ? departureInstant(first.departAt, first.from) : null), [first]);
   const disruption = trip.disruptions[trip.disruptions.length - 1];
   if (epoch === null || !first) return null;
   const now = epoch * 1000;
@@ -66,24 +71,10 @@ export function TripCountdown({ trip }: { trip: Trip }) {
   const { days } = daysUntil(first.departAt, today(now));
   const label = cancelled
     ? "Waiting for a new flight"
-    : live ? `${first.flightNumber} · ${live.label}`
+    : live ? `Leaves in ${live.label}`
     : departure !== null ? countdownLabel(departure, now)
     : days < 0 ? "Trip started"
     : days === 0 ? "Leaving today"
     : days === 1 ? "Leaving tomorrow" : `${days} days to go`;
-
-  return (
-    <section aria-label="Trip countdown" className="mx-4 mb-4">
-      <Card className="flex items-center gap-3 py-2.5">
-        <Icon name={live ? "clock" : "calendar"} size={20} className="shrink-0 text-ink-2" />
-        <p className="min-w-0 flex-1 truncate font-num text-[15px] font-semibold whitespace-nowrap tabular-nums">{label}</p>
-        {!live && !cancelled && (
-          <span className="shrink-0 text-[13px] text-ink-2">
-            {formatDate(first.departAt)} · {displayTime(timePart(first.departAt))}
-          </span>
-        )}
-        {live?.demo && <span className="shrink-0 font-num text-[11px] tracking-[0.06em] text-ink-2 uppercase">Demo</span>}
-      </Card>
-    </section>
-  );
+  return { label, live: Boolean(live), demo: Boolean(live?.demo) };
 }

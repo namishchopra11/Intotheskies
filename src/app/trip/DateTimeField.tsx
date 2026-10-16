@@ -19,7 +19,7 @@ type Props = {
 
 const LOCAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const CONTROL =
-  "block min-h-12 w-full rounded-control border bg-surface px-3.5 text-base text-ink font-num tabular-nums placeholder:font-sans placeholder:text-ink-3 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/25";
+  "block min-h-13 w-full rounded-control border-2 bg-sunk px-4 text-[17px] font-medium text-ink font-num placeholder:font-normal placeholder:text-ink-3 outline-none transition-[border-color] duration-200 focus:border-ink";
 
 // US readers write 10/17 for 17 October; most others write 17/10.
 const dayFirst = () => typeof navigator === "undefined" || !/^en-US$/i.test(navigator.language);
@@ -58,9 +58,9 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
 
   return (
     <fieldset className={cx("flex min-w-0 flex-col gap-1.5", className)} aria-describedby={describedBy}>
-      <legend className="mb-1.5 font-medium text-ink">{label}</legend>
+      <legend className="mb-1.5 text-[14px] font-semibold text-ink-2">{label}</legend>
       {hint && (
-        <p id={`${id}-hint`} className="-mt-1 text-[14px] leading-snug text-ink-3">
+        <p id={`${id}-hint`} className="-mt-1 text-[13px] leading-snug text-ink-3">
           {hint}
         </p>
       )}
@@ -78,7 +78,7 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
             // Tidy what was typed into one clear form once the box is left.
             onBlur={() => date && setDateText(formatDateInput(date))}
             aria-invalid={dateInvalid || undefined}
-            className={cx(CONTROL, "pr-12", dateInvalid ? "border-bad" : "border-line-strong")}
+            className={cx(CONTROL, "pr-12", dateInvalid ? "border-bad" : "border-transparent")}
           />
           <button
             ref={picker}
@@ -87,7 +87,7 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
             aria-expanded={pickerOpen}
             aria-controls={`${id}-picker`}
             onClick={() => setPickerOpen((open) => !open)}
-            className="absolute top-1/2 right-1 inline-flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-control text-ink-2 hover:bg-sunk"
+            className="absolute top-1/2 right-1 inline-flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-control text-ink-2 [@media(hover:hover)]:hover:bg-sunk"
           >
             <Icon name="calendar" size={18} />
           </button>
@@ -104,7 +104,7 @@ export function DateTimeField({ label, hint, error, value, onChange, className }
           }}
           onBlur={() => time && setTimeText(displayTime(time))}
           aria-invalid={timeInvalid || undefined}
-          className={cx(CONTROL, "min-w-0 flex-[2_1_0]", timeInvalid ? "border-bad" : "border-line-strong")}
+          className={cx(CONTROL, "min-w-0 flex-[2_1_0]", timeInvalid ? "border-bad" : "border-transparent")}
         />
       </div>
       {pickerOpen && <div id={`${id}-picker`}>
