@@ -171,6 +171,16 @@ export const SpeechVoiceSchema = z.enum(["george", "sarah", "alice", "roger"]);
 export const TimeFormatSchema = z.enum(["12h", "24h"]);
 export type TimeFormat = z.infer<typeof TimeFormatSchema>;
 
+export const ReminderPreferencesSchema = z.object({
+  documents: z.boolean().default(true),
+  checkin: z.boolean().default(true),
+  connections: z.boolean().default(true),
+  arrival: z.boolean().default(true),
+  sharing: z.boolean().default(true),
+});
+export type ReminderPreferences = z.infer<typeof ReminderPreferencesSchema>;
+export const DEFAULT_REMINDERS: ReminderPreferences = ReminderPreferencesSchema.parse({});
+
 export const SettingsSchema = z.object({
   notifyHotel: z.boolean(),
   moveRides: z.boolean(),
@@ -181,6 +191,7 @@ export const SettingsSchema = z.object({
   // the presenter asks (see components/trip/DemoNextButton.tsx).
   demoControls: z.boolean(),
   timeFormat: TimeFormatSchema.default("12h"),
+  reminders: ReminderPreferencesSchema.default(DEFAULT_REMINDERS),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 export const DEFAULT_SETTINGS: Settings = {
@@ -190,6 +201,7 @@ export const DEFAULT_SETTINGS: Settings = {
   voice: "george",
   demoControls: true,
   timeFormat: "12h",
+  reminders: DEFAULT_REMINDERS,
 };
 
 export const TripSchema = z.object({
@@ -205,6 +217,7 @@ export const TripSchema = z.object({
   people: z.array(PersonSchema).optional(),
   // Keys of the "Before you go" reminders the traveler has ticked off (see components/trip/prep.ts).
   prepDone: z.array(z.string()).optional(),
+  archivedAt: z.string().datetime().optional().catch(undefined),
   // Where a "request funds" link asks contacts to send USDC. Set it with the store's
   // setPayoutAddress, which rejects anything that is not a Solana public key. A stored
   // value that fails validation is dropped on load rather than discarding the trip.

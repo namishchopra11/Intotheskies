@@ -10,6 +10,7 @@ import { newId } from "@/lib/id";
 import { normalizeSolanaAddress } from "@/lib/solana/address";
 import { migratePersisted, recoverTrip, type LoadNotice } from "@/lib/recoverTrip";
 import { safeStorage } from "@/lib/safeStorage";
+import { useFeedback } from "@/lib/feedback";
 import { sampleTrip } from "@/lib/sampleTrip";
 import {
   DEFAULT_SETTINGS,
@@ -78,6 +79,8 @@ export type TripState = {
   /** Reopens a saved trip. The current trip, if any, is saved first so nothing is lost. */
   openSavedTrip: (tripId: string) => void;
   removeSavedTrip: (tripId: string) => void;
+  /** Keeps a finished trip in the archive, including all its bookings and tasks. */
+  archiveTrip: (tripId: string) => void;
   /** Renames the trip or the traveler. */
   updateTripDetails: (details: { name?: string; travelerName?: string }) => void;
 
@@ -143,13 +146,23 @@ export function accountKey(profile: Profile): string | null {
 export const useTripStore = create<TripState>()(
   persist(
     (set, get) => {
-      const updateTrip = (fn: (trip: Trip) => Trip) =>
-        set((state) => (state.trip ? { trip: fn(state.trip) } : state));
-      const updateDisruption = (disruptionId: string, fn: (d: Disruption) => Disruption) =>
+      const updateTrip = (fn: (trip: Trip) => Trip, undoLabel?: string) => {
+        const before = get().trip;
+        if (!before) return;
+        const after = fn(before);
+        set({ trip: after });
+        if (undoLabel) useFeedback.getState().offerUndo(undoLabel, () => {
+          // Never restore an old snapshot over subsequent edits or a different trip.
+          if (get().trip !== after) return false;
+          set({ trip: before });
+          return true;
+        });
+      };
+      const updateDisruption = (disruptionId: string, fn: (d: Disruption) => Disruption, undoLabel?: string) =>
         updateTrip((trip) => ({
           ...trip,
           disruptions: trip.disruptions.map((d) => (d.id === disruptionId ? fn(d) : d)),
-        }));
+        }), undoLabel);
 
       const withSaved = (saved: Trip[], trip: Trip | null) =>
         trip ? [trip, ...saved.filter((t) => t.id !== trip.id)] : saved;
@@ -240,10 +253,35 @@ export const useTripStore = create<TripState>()(
             const saved = state.savedTrips.find((t) => t.id === tripId);
             if (!saved) return state;
             const rest = withSaved(state.savedTrips, state.trip).filter((t) => t.id !== tripId);
-            return { trip: saved, savedTrips: rest };
+            return { trip: { ...saved, archivedAt: undefined }, savedTrips: rest };
           }),
-        removeSavedTrip: (tripId) =>
-          set((state) => ({ savedTrips: state.savedTrips.filter((t) => t.id !== tripId) })),
+        removeSavedTrip: (tripId) => {
+          const before = get().savedTrips;
+          if (!before.some((t) => t.id === tripId)) return;
+          const after = before.filter((t) => t.id !== tripId);
+          set({ savedTrips: after });
+          useFeedback.getState().offerUndo("Trip deleted", () => {
+            if (get().savedTrips !== after) return false;
+            set({ savedTrips: before });
+            return true;
+          });
+        },
+        archiveTrip: (tripId) => {
+          const before = { trip: get().trip, savedTrips: get().savedTrips };
+          const selected = before.trip?.id === tripId ? before.trip : before.savedTrips.find((t) => t.id === tripId);
+          if (!selected) return;
+          const archived = { ...selected, archivedAt: new Date().toISOString() };
+          const after = {
+            trip: before.trip?.id === tripId ? null : before.trip,
+            savedTrips: withSaved(before.savedTrips, archived),
+          };
+          set(after);
+          useFeedback.getState().offerUndo("Trip archived", () => {
+            if (get().trip !== after.trip || get().savedTrips !== after.savedTrips) return false;
+            set(before);
+            return true;
+          });
+        },
         updateTripDetails: ({ name, travelerName }) =>
           updateTrip((trip) => ({
             ...trip,
@@ -258,10 +296,10 @@ export const useTripStore = create<TripState>()(
             ...trip,
             flights: trip.flights.filter((f) => f.id !== flightId),
             disruptions: trip.disruptions.filter((d) => d.flightId !== flightId),
-          })),
+          }), "Flight deleted"),
         upsertStay: (stay) => updateTrip((trip) => ({ ...trip, stays: upsert(trip.stays, stay) })),
         removeStay: (stayId) =>
-          updateTrip((trip) => ({ ...trip, stays: trip.stays.filter((s) => s.id !== stayId) })),
+          updateTrip((trip) => ({ ...trip, stays: trip.stays.filter((s) => s.id !== stayId) }), "Hotel deleted"),
         upsertRide: (ride) =>
           updateTrip((trip) => ({ ...trip, rides: upsert(trip.rides ?? [], ride) })),
         togglePrep: (key) =>
@@ -270,9 +308,9 @@ export const useTripStore = create<TripState>()(
             if (done.has(key)) done.delete(key);
             else done.add(key);
             return { ...trip, prepDone: [...done] };
-          }),
+          }, get().trip?.prepDone?.includes(key) ? undefined : "Reminder completed"),
         removeRide: (rideId) =>
-          updateTrip((trip) => ({ ...trip, rides: (trip.rides ?? []).filter((r) => r.id !== rideId) })),
+          updateTrip((trip) => ({ ...trip, rides: (trip.rides ?? []).filter((r) => r.id !== rideId) }), "Ride deleted"),
         upsertPerson: (person) =>
           updateTrip((trip) => ({ ...trip, people: upsert(trip.people ?? [], person) })),
         removePerson: (personId) =>
@@ -366,7 +404,7 @@ export const useTripStore = create<TripState>()(
           updateDisruption(disruptionId, (d) => ({
             ...d,
             tasks: d.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
-          })),
+          }), get().trip?.disruptions.find((d) => d.id === disruptionId)?.tasks.find((t) => t.id === taskId)?.done ? undefined : "Task completed"),
         addTask: (disruptionId, title, detail) => {
           if (!get().trip?.disruptions.some((d) => d.id === disruptionId)) return "";
           const id = newId();
@@ -383,7 +421,7 @@ export const useTripStore = create<TripState>()(
           updateDisruption(disruptionId, (d) => ({
             ...d,
             tasks: d.tasks.filter((t) => t.id !== taskId),
-          })),
+          }), "Task deleted"),
       };
     },
     {
@@ -446,6 +484,13 @@ export const useTripStore = create<TripState>()(
     },
   ),
 );
+
+// A newer edit or a trip loaded from another tab invalidates a snapshot undo.
+useTripStore.subscribe((next, previous) => {
+  if (next.trip !== previous.trip || next.savedTrips !== previous.savedTrips || next.profile !== previous.profile) {
+    useFeedback.getState().clearUndo();
+  }
+});
 
 let hydrationStarted = false;
 

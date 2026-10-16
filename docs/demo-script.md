@@ -51,7 +51,7 @@ once. Handy when rehearsing, or if a judge is hovering and time is short.
 ## Before you walk on (2 minutes, do this every time)
 
 1. Charge the phone. Turn off notifications and Do Not Disturb on, so nothing else buzzes.
-2. Open **https://connectionkeeper.vercel.app** in the browser you will use on stage. Use
+2. Open **https://layoverapp.vercel.app/login** in the browser you will use on stage. Use
    this HTTPS address, not a laptop's `http://192.168...` address (the Copy button can fail
    there).
 3. Start clean: menu button > **Clear this trip** > **Clear trip**. The app remembers things on the phone, so
@@ -199,7 +199,7 @@ tested it and heard the picked voice.
 
 Only if you have a quiet moment. Tested on a real phone with Phantom: scanning works, completing the payment does not (see below).
 
-**Set it up beforehand, once.** Menu > **Solana address (optional)**, paste a wallet address,
+**Set it up beforehand, once.** With the trip open, go to **Settings** > **Send help** > **Solana address (optional)**, paste a wallet address,
 tap **Save address**. It is kept through **Restart the demo trip**, but **Clear this trip**
 wipes it. So: load the sample trip, save the address, then use **Restart the demo trip** as
 your step 1 instead of **Try the sample trip**.

@@ -4,12 +4,12 @@ import { cx } from "./cx";
 import { Icon, type IconName } from "./Icon";
 import { SignArrow } from "./SignArrow";
 
-export type ButtonVariant = "primary" | "secondary" | "tinted" | "ghost" | "danger" | "success" | "plate";
+export type ButtonVariant = "primary" | "secondary" | "sunk" | "onPlate" | "tinted" | "ghost" | "danger" | "success" | "plate";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   /**
    * primary: the one way to go on a screen (sign yellow). plate: a black sign key.
-   * secondary: a plate one tone off the ground. tinted: a pale-yellow key for repeated
+   * secondary: a plate one tone off the ground (sunk: on a surface; onPlate: on a black band). tinted: a pale-yellow key for repeated
    * actions in a list. success: a key that just worked ("Copied").
    */
   variant?: ButtonVariant;
@@ -37,6 +37,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
   primary: "ck-key ck-key-primary bg-sign text-on-sign",
   plate: "ck-key bg-key text-on-key",
   secondary: "ck-key ck-key-secondary bg-surface text-ink",
+  sunk: "ck-key bg-sunk text-ink",
+  onPlate: "ck-key bg-white/12 text-on-plate",
   tinted: "ck-key bg-accent-soft text-ink",
   success: "ck-key bg-ok-bg text-ok-fg",
   ghost: "ck-key bg-transparent text-ink [@media(hover:hover)]:hover:bg-sunk active:bg-sunk",

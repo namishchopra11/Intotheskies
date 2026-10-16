@@ -8,9 +8,11 @@ import { newId } from "@/lib/id";
 import { useTripStore } from "@/lib/store";
 import { ImportResultSchema, existingIdFor, toImportItems, type ImportItem } from "./importSchema";
 import { BoardingPassCamera } from "./BoardingPassCamera";
+import { ReadingProgress } from "./ReadingProgress";
 
 const ICON: Record<ImportItem["kind"], IconName> = { flight: "plane", stay: "bed", ride: "car", skipped: "circle-alert" };
 const MAX_SIDE = 2000;
+const READ_TIMEOUT_MS = 120_000;
 
 /** Photos straight off a phone camera are huge; shrink them before upload. Falls back to the original. */
 async function shrink(file: File): Promise<File> {
@@ -70,7 +72,8 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
       const body = new FormData();
       for (const f of await Promise.all(files.map(shrink))) body.append("files", f);
       if (text.trim()) body.append("text", text);
-      const res = await fetch("/api/import", { method: "POST", body });
+      // Never leave the traveler watching the animation forever if the server stops answering.
+      const res = await fetch("/api/import", { method: "POST", body, signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) {
         const message = (data as { error?: string } | null)?.error;
@@ -82,8 +85,14 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
       setPicked(new Set(items.flatMap((it, i) => (it.kind === "skipped" ? [] : [i]))));
       const { notes, tripName, travelerName } = result.data;
       setPhase({ step: "review", items, notes, tripName, travelerName });
-    } catch {
-      setPhase({ step: "input", error: "Couldn't reach the server. Check your connection and try again." });
+    } catch (error) {
+      const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+      setPhase({
+        step: "input",
+        error: timedOut
+          ? "That took too long. Try one file at a time, or paste the email text."
+          : "Couldn't reach the server. Check your connection and try again.",
+      });
     }
   };
 
@@ -191,6 +200,8 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
       }
     >
       <div className="flex flex-col gap-4 pt-1" aria-busy={reading}>
+        {reading && <ReadingProgress fileCount={files.length} />}
+        <div className={cx("flex flex-col gap-4", reading && "hidden")}>
         <p className="leading-snug text-ink-2">Screenshot, PDF or email.</p>
 
         <input
@@ -268,6 +279,8 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
           disabled={reading}
           onChange={(e) => setText(e.target.value)}
         />
+
+        </div>
 
         {phase.step === "input" && phase.error && (
           <p role="alert" className="flex items-start gap-1.5 text-[14px] text-bad-fg">

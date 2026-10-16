@@ -18,10 +18,13 @@ type SheetProps = {
  * back down to close.
  */
 // Matches the ck-sheet-down animation in globals.css.
-const CLOSE_MS = 220;
+const CLOSE_MS = 200;
 
 export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ pointer: number; start: number; y: number; time: number; distance: number; speed: number } | null>(null);
+  const ignoreHandleClick = useRef(false);
   const titleId = useId();
   // True while this sheet is meant to be showing. A close the sheet does itself on cleanup
   // happens while this is false, so it isn't reported as the user closing it.
@@ -56,6 +59,9 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
       };
     }
     delete d.dataset.closing;
+    panelRef.current?.style.removeProperty("--sheet-drag");
+    panelRef.current?.style.removeProperty("--sheet-close-y");
+    if (panelRef.current) delete panelRef.current.dataset.dragging;
     if (!d.open) d.showModal();
     active.current = true;
     const root = document.documentElement;
@@ -90,45 +96,39 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
     }, CLOSE_MS);
   };
 
-  // Drag the handle or title row down to dismiss: follows the finger 1:1, rubber-bands upward,
-  // and a quick flick closes it even when it hasn't travelled far.
-  const panel = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ y: number; t: number; dy: number; v: number } | null>(null);
-  const onPointerDown = (e: PointerEvent) => {
-    if ((e.target as HTMLElement).closest("button")) return;
-    drag.current = { y: e.clientY, t: performance.now(), dy: 0, v: 0 };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    if (panel.current) panel.current.style.transition = "none";
+  const startDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!event.isPrimary || event.button !== 0 || leaving.current) return;
+    ignoreHandleClick.current = false;
+    drag.current = { pointer: event.pointerId, start: event.clientY, y: event.clientY, time: event.timeStamp, distance: 0, speed: 0 };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    if (panelRef.current) panelRef.current.dataset.dragging = "true";
   };
-  const onPointerMove = (e: PointerEvent) => {
-    const d = drag.current;
-    if (!d || !panel.current) return;
-    const raw = e.clientY - d.y;
-    const now = performance.now();
-    d.v = (raw - d.dy) / Math.max(1, now - d.t);
-    d.t = now;
-    d.dy = raw;
-    const y = raw < 0 ? -Math.sqrt(-raw) * 2 : raw;
-    panel.current.style.transform = `translateY(${y}px)`;
+  const moveDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    const current = drag.current;
+    if (!current || current.pointer !== event.pointerId) return;
+    const elapsed = event.timeStamp - current.time;
+    current.speed = elapsed > 0 ? (event.clientY - current.y) / elapsed : 0;
+    current.y = event.clientY;
+    current.time = event.timeStamp;
+    current.distance = Math.max(0, event.clientY - current.start);
+    panelRef.current?.style.setProperty("--sheet-drag", `${current.distance}px`);
   };
-  const onPointerUp = () => {
-    const d = drag.current;
+  const endDrag = (event: PointerEvent<HTMLButtonElement>, cancelled = false) => {
+    const current = drag.current;
+    const panel = panelRef.current;
+    if (!current || current.pointer !== event.pointerId || !panel) return;
     drag.current = null;
-    const p = panel.current;
-    if (!d || !p) return;
-    p.style.transition = "transform 320ms cubic-bezier(0.32, 0.72, 0, 1)";
-    if (d.dy > 120 || (d.dy > 16 && d.v > 0.5)) {
-      p.style.transform = "translateY(100%)";
-      // The panel is already on its way down: skip the CSS slide and just close.
-      leaving.current = true;
-      setTimeout(() => {
-        onClose();
-        p.style.transform = "";
-        p.style.transition = "";
-      }, 260);
-    } else {
-      p.style.transform = "";
-    }
+    ignoreHandleClick.current = cancelled || current.distance > 6;
+    delete panel.dataset.dragging;
+    const height = panel.getBoundingClientRect().height;
+    const recentSpeed = event.timeStamp - current.time < 120 ? current.speed : 0;
+    const threshold = Math.min(100, Math.max(60, height * 0.22));
+    if (!cancelled && (current.distance >= threshold || (current.distance > 20 && recentSpeed > 0.6))) {
+      // Continue offscreen from the released position instead of jumping back before closing.
+      panel.style.setProperty("--sheet-close-y", `${Math.max(40, height - current.distance + 24)}px`);
+      requestClose();
+    } else panel.style.setProperty("--sheet-drag", "0px");
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
   return (
@@ -152,35 +152,27 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
         if (e.target === ref.current) requestClose();
       }}
     >
-      <div
-        ref={panel}
-        className="ck-sheet-panel flex max-h-[92dvh] flex-col rounded-t-sheet bg-bg shadow-float"
-      >
-        <div
-          className="touch-none cursor-grab select-none active:cursor-grabbing"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-        >
-          <div className="flex justify-center pt-2.5" aria-hidden="true">
-            <span className="h-[5px] w-10 rounded-[2px] bg-line-strong" />
-          </div>
-          <div className="flex items-center gap-2 pt-2 pr-3 pb-2 pl-5">
-            <h2 id={titleId} className="flex-1 font-display text-[30px] leading-none font-bold">
-              {title}
-            </h2>
-            <button
-              type="button"
-              onClick={requestClose}
-              aria-label="Close"
-              className="ck-press inline-flex h-11 w-11 items-center justify-center rounded-control text-ink"
-            >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-control bg-sunk">
-                <Icon name="x" size={16} strokeWidth={2.5} />
-              </span>
-            </button>
-          </div>
+      <div ref={panelRef} className="ck-sheet-panel flex max-h-[90dvh] flex-col rounded-t-sheet bg-bg shadow-float">
+        <button type="button" aria-label="Drag down or tap to close" className="flex h-7 w-full shrink-0 touch-none cursor-grab items-center justify-center rounded-t-sheet select-none active:cursor-grabbing"
+          onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={(event) => endDrag(event)}
+          onPointerCancel={(event) => endDrag(event, true)} onLostPointerCapture={(event) => endDrag(event, true)}
+          onClick={() => { if (!ignoreHandleClick.current) requestClose(); ignoreHandleClick.current = false; }}>
+          <span aria-hidden="true" className="h-[5px] w-10 rounded-[2px] bg-line-strong" />
+        </button>
+        <div className="flex items-center gap-2 pt-1 pr-3 pb-2 pl-5">
+          <h2 id={titleId} className="flex-1 font-display text-[30px] leading-none font-bold">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={requestClose}
+            aria-label="Close"
+            className="ck-press inline-flex h-11 w-11 items-center justify-center rounded-control text-ink"
+          >
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-control bg-sunk">
+              <Icon name="x" size={16} strokeWidth={2.5} />
+            </span>
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5">{children}</div>
         {footer && (

@@ -8,6 +8,7 @@ export const useTour = create<{
   active: boolean;
   step: number;
   account: string | null;
+  completedAccounts: Record<string, true>;
   start: (profile: Profile, replay?: boolean) => void;
   go: (step: number) => void;
   finish: () => void;
@@ -15,9 +16,11 @@ export const useTour = create<{
   active: false,
   step: 0,
   account: null,
+  completedAccounts: {},
   start: (profile, replay = false) => {
     const key = accountKey(profile);
     if (!key && !replay) return;
+    if (key && !replay && get().completedAccounts[key]) return;
     try {
       if (key && !replay && localStorage.getItem(completionKey(key))) return;
     } catch { /* The tour also works when browser storage is unavailable. */ }
@@ -27,6 +30,6 @@ export const useTour = create<{
   finish: () => {
     const key = get().account;
     try { if (key) localStorage.setItem(completionKey(key), "done"); } catch { /* Keep going without persistence. */ }
-    set({ active: false, step: 0 });
+    set({ active: false, step: 0, completedAccounts: key ? { ...get().completedAccounts, [key]: true } : get().completedAccounts });
   },
 }));

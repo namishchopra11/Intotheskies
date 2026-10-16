@@ -2,7 +2,7 @@ import { cityName } from "@/lib/domain/airports";
 import { TIGHT_CONNECTION_MINUTES, lastLeg } from "@/lib/domain/impact";
 import { flightLabel } from "@/lib/domain/text";
 import { datePart, formatDate, formatDuration, minutesBetween, timePart } from "@/lib/domain/time";
-import type { Flight, Ride, Stay, Trip } from "@/lib/types";
+import type { Flight, ReminderPreferences, Ride, Stay, Trip } from "@/lib/types";
 
 /**
  * What the "on track" screen shows before anything has changed: reminders built from the
@@ -23,7 +23,7 @@ const list = (items: string[]) =>
   items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
 
 /** At most five reminders for the days before the trip, most time-sensitive first. Keys are stable. */
-export function prepItems(trip: Trip): PrepItem[] {
+export function prepItems(trip: Trip, preferences?: ReminderPreferences): PrepItem[] {
   const flights = flightsInOrder(trip);
   if (flights.length === 0) return [];
   const first = flights[0];
@@ -82,7 +82,12 @@ export function prepItems(trip: Trip): PrepItem[] {
     detail: `Tell them you leave ${first.from} on ${formatDate(first.departAt)}. If anything changes, Layover helps you update them.`,
   });
 
-  return items;
+  return items.filter((item) => {
+    if (!preferences) return true;
+    if (item.key.startsWith("connection:")) return preferences.connections;
+    if (item.key === "share-plans") return preferences.sharing;
+    return preferences[item.key as "documents" | "checkin" | "arrival"];
+  });
 }
 
 /** "today", "tomorrow", "in 6 days", "2 days ago", from calendar dates only. */

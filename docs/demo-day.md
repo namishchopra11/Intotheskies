@@ -19,14 +19,15 @@ words are in `docs/pitch.md`.
 
 On the phone you present from:
 
-1. [ ] Open **https://connectionkeeper.vercel.app** in the browser you will use.
+1. [ ] Open **https://layoverapp.vercel.app/login** in the browser you will use.
 2. [ ] Tap **Continue as guest** if the sign-in screen shows.
 3. [ ] Menu (top right) > **Clear this trip** > **Clear trip**, so you start clean.
 4. [ ] Do one full practice run: **Try the sample trip**, wait for the change, **Mark done**,
        **Share update**, **Copy link**, open it.
 5. [ ] Tap **Listen** once. Is it the voice picked in the menu (ElevenLabs) or the
        phone's own voice? Only say "ElevenLabs" if it is the picked voice.
-6. [ ] If you will show Send help: menu > paste the Traveler wallet address > **Save address**.
+6. [ ] If you will show Send help: with the trip open, **Settings** > **Send help** > paste the
+       Traveler wallet address > **Save address**.
        Then use **Restart the demo trip** from now on, not **Clear this trip** (clearing wipes
        the address).
 7. [ ] Menu > **Restart the demo trip** > **Restart**, then go to the home screen and **stop**.

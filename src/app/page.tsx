@@ -34,6 +34,7 @@ import { flightLabel } from "@/lib/domain/text";
 import type { LoadNotice } from "@/lib/recoverTrip";
 import { finalArrival } from "@/lib/domain/timeline";
 import { useTripStore } from "@/lib/store";
+import { isPastTrip, localDay } from "@/lib/tripArchive";
 import type { AutoAction, Contact, Disruption, Flight, Ride, Stay, Trip } from "@/lib/types";
 
 const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
@@ -500,10 +501,11 @@ function Actions({ trip, disruption }: { trip: Trip; disruption: Disruption | un
 /* ---------- On track: nothing has changed yet ---------- */
 
 function OnTrack({ trip }: { trip: Trip }) {
+  const reminders = useTripStore((s) => s.settings.reminders);
   const count = trip.flights.length;
   const tight = tightLayover(trip);
   const done = new Set(trip.prepDone ?? []);
-  const toDo = prepItems(trip).filter((i) => !done.has(i.key)).length;
+  const toDo = prepItems(trip, reminders).filter((i) => !done.has(i.key)).length;
   return (
     <>
       <StatusSign trip={trip} disruption={undefined} tone={tight ? "warn" : "ok"} status={tight ? "Tight connection" : "On time"} />
@@ -765,7 +767,14 @@ function NoTrip() {
         </ul>
       </section>
 
-      {savedTrips.length > 0 && <SavedTrips trips={savedTrips} />}
+      {savedTrips.some((t) => !isPastTrip(t, localDay())) && <SavedTrips trips={savedTrips.filter((t) => !isPastTrip(t, localDay()))} />}
+      {savedTrips.length > 0 && (
+        <div className="ck-rise px-4 pt-[3px]" style={rise(320)}>
+          <Button variant="secondary" block icon="calendar" chip="arrow-right" href="/trips" transitionTypes={NAV_FORWARD}>
+            My trips & archive
+          </Button>
+        </div>
+      )}
 
       <div className="mt-auto flex flex-col gap-2 px-4 pt-10 pb-[max(env(safe-area-inset-bottom),20px)]">
         <p className="nt-cta mb-1 flex items-center justify-center gap-1.5 text-[14px] font-medium text-ink-2">
@@ -792,7 +801,7 @@ function SavedTrips({ trips }: { trips: Trip[] }) {
   const removeSavedTrip = useTripStore((s) => s.removeSavedTrip);
   return (
     <section className="ck-rise flex flex-col gap-3 px-4 pt-9" style={rise(280)}>
-      <h2 className="ck-h2">Saved trips</h2>
+      <h2 className="ck-h2">Upcoming trips</h2>
       <ul className="flex flex-col gap-[3px]">
         {trips.map((t) => {
           // Where the trip goes: the first flight flown and the end of its journey.
@@ -921,6 +930,9 @@ function TripMenu({
           <MenuRow icon="user" href="/settings" onClick={closeSheet}>
             Settings
           </MenuRow>
+          <MenuRow icon="calendar" href="/trips" onClick={closeSheet}>
+            My trips & archive
+          </MenuRow>
           {hasTrip && (
             <MenuRow icon="pencil" href="/trip" onClick={closeSheet}>
               Edit flights, hotels and rides
@@ -1031,7 +1043,7 @@ function Confirm({
       <p className="font-display text-[24px] leading-none font-bold">{title}</p>
       <p className="text-[15px] leading-snug text-ink-2">{body}</p>
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="secondary" onClick={onCancel} autoFocus className="bg-sunk">
+        <Button variant="sunk" onClick={onCancel} autoFocus>
           Keep it
         </Button>
         <Button variant={danger ? "danger" : "plate"} onClick={onConfirm}>

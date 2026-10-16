@@ -30,10 +30,11 @@ const FOLD_MS = 320;
 export function BeforeYouGo({ trip, delay }: { trip: Trip; delay: number }) {
   const displayTime = useTimeFormat();
   const togglePrep = useTripStore((s) => s.togglePrep);
+  const reminders = useTripStore((s) => s.settings.reminders);
   const [showDone, setShowDone] = useState(false);
   // Keys just ticked: still shown while they animate out. "folding" once the strike is done.
   const [leaving, setLeaving] = useState<Record<string, "striking" | "folding">>({});
-  const items = prepItems(trip);
+  const items = prepItems(trip, reminders);
   if (items.length === 0) return null;
   const done = new Set(trip.prepDone ?? []);
   const doneCount = items.filter((i) => done.has(i.key)).length;

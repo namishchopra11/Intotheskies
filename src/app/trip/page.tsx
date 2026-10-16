@@ -12,6 +12,7 @@ import { FLIGHT, PERSON, RIDE, STAY, validate, type Draft, type EntryKind } from
 import { DateTimeField } from "./DateTimeField";
 import { ImportSheet } from "./ImportSheet";
 import { START_TRIP_ID, leaveStartTrip } from "./leaveStartTrip";
+import { missingDetails } from "./missingDetails";
 
 // Bookings build up in order when they appear: import, trip name, flights, hotels, rides.
 const rise = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
@@ -76,6 +77,9 @@ function StartTrip() {
       >
         <Field
           label="Trip name"
+          spellCheck
+          autoCorrect="on"
+          autoCapitalize="sentences"
           placeholder="Rome via London"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -106,6 +110,8 @@ function Bookings({ trip }: { trip: Trip }) {
   const rides = trip.rides ?? [];
   const people = trip.people ?? [];
   const empty = trip.flights.length + trip.stays.length + rides.length === 0;
+  const missing = missingDetails(trip);
+  const missingCount = missing.reduce((total, issue) => total + issue.fields.length, 0);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -126,6 +132,32 @@ function Bookings({ trip }: { trip: Trip }) {
           <Icon name="pencil" size={18} strokeWidth={2.25} />
         </span>
       </button>
+
+      <section aria-label="Missing booking details" className="ck-rise mx-4 mt-[3px] flex flex-col gap-[3px]" style={rise(100)}>
+        <div className={cx("flex items-center gap-3 rounded-card px-4 py-3.5", missingCount ? "bg-accent-soft" : "bg-ok-bg text-ok-fg")}>
+          <Icon name={missingCount ? "circle-alert" : "circle-check"} size={22} strokeWidth={2.5} className="shrink-0" />
+          <h2 className="text-[16px] leading-snug font-bold">
+            {missingCount ? `${missingCount} ${missingCount === 1 ? "detail" : "details"} to add before you go` : "Booking details look complete"}
+          </h2>
+        </div>
+        {missing.map((issue) => (
+          <button
+            key={`${issue.kind}:${issue.id ?? "new"}`}
+            type="button"
+            aria-label={`Add missing details for ${issue.label}`}
+            onClick={() => setEditing({ kind: issue.kind, id: issue.id })}
+            className="ck-press flex w-full cursor-pointer items-center gap-3 rounded-card bg-surface px-4 py-3.5 text-left"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-[16px] font-bold">{issue.label}</span>
+              <span className="mt-0.5 block text-[14px] leading-snug text-ink-2">Missing: {issue.fields.join(", ")}</span>
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-[15px] font-bold">
+              Add <SignArrow size={16} className="ck-key-arrow" />
+            </span>
+          </button>
+        ))}
+      </section>
 
       <Section
         delay={150}
@@ -419,7 +451,7 @@ function DetailsSheet({ trip, onClose }: { trip: Trip; onClose: () => void }) {
       }
     >
       <div className="flex flex-col gap-4 pt-2">
-        <Field label="Trip name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label="Trip name" spellCheck autoCorrect="on" autoCapitalize="sentences" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
     </Sheet>
   );

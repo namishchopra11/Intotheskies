@@ -8,7 +8,7 @@ import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { Button, Card, Field, PageHeader, PageTransition, SelectField, Sheet, ThemeToggle, Toggle } from "@/components/ui";
 import { useTripStore } from "@/lib/store";
 import { useTour } from "@/lib/tour";
-import { SpeechVoiceSchema, TimeFormatSchema, type Profile } from "@/lib/types";
+import { SpeechVoiceSchema, TimeFormatSchema, type Profile, type ReminderPreferences } from "@/lib/types";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,6 +26,10 @@ export default function SettingsPage() {
             <Account profile={profile} />
             <AutoUpdates />
             <Notifications />
+            <Reminders />
+            <Group title="Trips">
+              <Button variant="plate" block icon="calendar" chip="arrow-right" href="/trips" transitionTypes={["nav-forward"]}>My trips & archive</Button>
+            </Group>
             <Group title="Appearance">
               <Card className="flex items-center justify-between gap-3 py-2 pr-2">
                 <span className="text-[17px] font-semibold">Theme</span>
@@ -204,6 +208,30 @@ function AutoUpdates() {
 }
 
 /** One switch for flight-change alerts. Turning it on also asks for phone notifications. */
+const REMINDER_OPTIONS: { key: keyof ReminderPreferences; label: string; description: string }[] = [
+  { key: "documents", label: "Passport & entry rules", description: "Check your travel documents" },
+  { key: "checkin", label: "Flight check-in", description: "Check in and save boarding passes" },
+  { key: "connections", label: "Connection planning", description: "Prepare for short layovers" },
+  { key: "arrival", label: "Hotel & pickup", description: "Confirm your arrival arrangements" },
+  { key: "sharing", label: "Share your plans", description: "Keep someone in the loop" },
+];
+
+function Reminders() {
+  const reminders = useTripStore((s) => s.settings.reminders);
+  const updateSettings = useTripStore((s) => s.updateSettings);
+  return (
+    <Group title="Before you go reminders">
+      <p className="-mt-1 text-[15px] font-medium text-ink-2">What shows in your trip checklist.</p>
+      <Card className="flex flex-col py-1">
+        {REMINDER_OPTIONS.map(({ key, label, description }) => (
+          <Toggle key={key} checked={reminders[key]} label={label} description={description}
+            onChange={(checked) => updateSettings({ reminders: { ...reminders, [key]: checked } })} />
+        ))}
+      </Card>
+    </Group>
+  );
+}
+
 function Notifications() {
   const on = useTripStore((s) => s.settings.notifications);
   const updateSettings = useTripStore((s) => s.updateSettings);

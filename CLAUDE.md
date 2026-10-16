@@ -180,7 +180,7 @@ buildBriefing(trip: Trip, disruptionId: string): string
 // changed, what is at risk, and the first unfinished task. "" if the id is unknown.
 // The home screen's "Listen to summary" button plays it with `useSpeech`
 // (src/components/trip/useSpeech.ts), which sends only this text to /api/speak
-// (ElevenLabs) and plays the audio. The voice is picked in the trip menu.
+// (ElevenLabs) and plays the audio. The voice is picked in Settings.
 
 // autoUpdates.ts
 planAutoUpdates(trip, flightId, disruptionId, settings): { actions: AutoAction[]; rides: Ride[] }

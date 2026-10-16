@@ -53,12 +53,10 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
   const [readyToSettle, setReadyToSettle] = useState(false);
   const [flightMs, setFlightMs] = useState(FLIGHT_DEFAULT_MS);
   const refreshingRef = useRef(false);
-  const pendingRef = useRef(false);
   const pendingSince = useRef(0);
 
   // Time each refresh so the next one's flight can be planned from it.
   useEffect(() => {
-    pendingRef.current = pending;
     if (pending) pendingSince.current = performance.now();
     else if (pendingSince.current) {
       recordRefreshMs(performance.now() - pendingSince.current);
@@ -66,14 +64,11 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
     }
   }, [pending]);
 
-  // The strip closes when the plane finishes a crossing with the refresh done. A refresh that
-  // outlasts the plan gets another crossing at the same speed.
+  // Fly once. If the request takes longer, wait for it without restarting the plane.
   useEffect(() => {
     if (!refreshing) return;
-    const landing = window.setInterval(() => {
-      if (!pendingRef.current) setReadyToSettle(true);
-    }, flightMs);
-    return () => window.clearInterval(landing);
+    const landing = window.setTimeout(() => setReadyToSettle(true), flightMs + 100);
+    return () => window.clearTimeout(landing);
   }, [refreshing, flightMs]);
 
   useEffect(() => {
@@ -99,6 +94,8 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
     let frame = 0;
     let wheelTimer = 0;
     let mouseDown = false;
+    let lastWheelAt = 0;
+    let wheelLocked = false;
     const reset = () => {
       origin = null;
       dragging = false;
@@ -157,6 +154,7 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
       if (refreshingRef.current) return;
       if (dragging && pull >= THRESHOLD && window.scrollY <= 0 && !refreshingRef.current && !document.querySelector("dialog[open]")) {
         refreshingRef.current = true;
+        wheelLocked = true;
         buzz(20);
         setFlightMs(predictFlightMs());
         setRefreshing(true);
@@ -208,6 +206,14 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
       end();
     };
     const wheel = (event: WheelEvent) => {
+      const now = performance.now();
+      // Inertial trackpad events belong to the same pull, not another refresh.
+      if (refreshingRef.current || (wheelLocked && now - lastWheelAt < 240)) {
+        lastWheelAt = now;
+        return;
+      }
+      wheelLocked = false;
+      lastWheelAt = now;
       if (mouseDown || origin || !canStart(event) || event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
       if (event.deltaY >= 0) {
         window.clearTimeout(wheelTimer);
@@ -264,14 +270,16 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
     <>
       <div className="pointer-events-none fixed inset-x-0 top-0 flex justify-center overflow-hidden"
         style={{ height: distance, opacity: Math.min(1, distance / 36), transition: pulling ? "none" : `height ${SETTLE}, opacity ${SETTLE}` }}>
-        {/* A plane on the phone-width column, crossing left to right while the strip is open. On
-            release it starts again from the left and crosses once in the time the refresh should take. */}
+        {/* Pulling positions the plane; releasing starts exactly one accelerating flight. */}
         <div role="status" className="absolute inset-x-0 mx-auto h-9 max-w-[520px] overflow-hidden text-ink"
           style={{ top: 0, transform: `translateY(${Math.max(0, (distance - 36) / 2)}px)`, transition: pulling ? "none" : `transform ${SETTLE}` }}>
           <div aria-hidden="true" key={refreshing ? "refresh" : "pull"}
-            className={`absolute inset-0 ${distance > 0 || refreshing ? "ck-ptr-fly" : ""}`}
-            style={{ transform: "translateX(50%)", animationDuration: `${flightMs}ms` }}>
-            <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-dashed border-current opacity-40"
+            className={`absolute inset-0 ${refreshing ? "ck-ptr-fly" : ""}`}
+            onAnimationEnd={(event) => {
+              if (refreshing && event.target === event.currentTarget && event.animationName === "ck-ptr-cross") setReadyToSettle(true);
+            }}
+            style={{ transform: `translateX(${15 + Math.min(distance / THRESHOLD, 1) * 30}%)`, animationDuration: `${flightMs}ms` }}>
+            <span className="absolute right-full top-1/2 mr-4 w-2/5 border-t-2 border-current opacity-40"
               style={{ maskImage: "linear-gradient(to right, transparent, #000)", WebkitMaskImage: "linear-gradient(to right, transparent, #000)" }} />
             <svg viewBox="0 0 24 24" width="24" height="24" fill="var(--signal)" stroke="currentColor"
               strokeWidth="1.25" strokeLinejoin="round" className="absolute left-0 top-1/2 -ml-3 -mt-3"

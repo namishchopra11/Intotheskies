@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useTripStore } from "@/lib/store";
+import { useStoreReady, useTripStore } from "@/lib/store";
 import { useTour } from "@/lib/tour";
 import { Button } from "./Button";
 import { BrandMark } from "./Brand";
@@ -21,6 +21,7 @@ type Box = { x: number; y: number; width: number; height: number; viewportWidth:
 
 /** Six real controls, highlighted without changing the traveler's trip. */
 export function AccountTour() {
+  const storeReady = useStoreReady();
   const { active, step, go, finish } = useTour();
   const profile = useTripStore((s) => s.profile);
   const pathname = usePathname();
@@ -31,6 +32,13 @@ export function AccountTour() {
   const [box, setBox] = useState<Box | null>(null);
   const current = STEPS[step];
   const showing = active && Boolean(profile) && pathname === current.route;
+
+  useEffect(() => {
+    // The account check survives a full reload or a missed login-screen signal.
+    if (storeReady && profile && !profile.guest && pathname === "/" && !active) {
+      useTour.getState().start(profile);
+    }
+  }, [storeReady, profile, pathname, active]);
 
   useEffect(() => {
     if (active && profile && pathname !== current.route) router.push(current.route);

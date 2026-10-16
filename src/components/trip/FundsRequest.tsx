@@ -1,7 +1,7 @@
 "use client";
 
 import { QRCodeSVG } from "qrcode.react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { copyText } from "@/app/share/[id]/copyText";
 import { Button, buttonClasses, Card, Icon, SignArrow } from "@/components/ui";
 import { isDemoCluster, SOLANA_CLUSTER, type SolanaCluster } from "@/lib/solana/config";
@@ -15,6 +15,13 @@ export type FundsRequestProps = {
   cluster?: SolanaCluster; // the cluster the link was made for; defaults to SOLANA_CLUSTER
   className?: string;
 };
+
+// How long to wait for a wallet to take over before assuming none is installed.
+const WALLET_WAIT_MS = 1500;
+const WALLETS = [
+  { name: "Phantom", url: "https://phantom.app/download" },
+  { name: "Solflare", url: "https://solflare.com/download" },
+];
 
 /**
  * A Solana Pay request for USDC: the amount, a button that opens the reader's wallet,
@@ -37,8 +44,35 @@ export function FundsRequest({
   className = "",
 }: FundsRequestProps) {
   const [copied, setCopied] = useState<boolean | null>(null);
+  const [noWallet, setNoWallet] = useState(false);
+  const cancelCheck = useRef<(() => void) | null>(null);
+  useEffect(() => () => cancelCheck.current?.(), []);
+
   const url = buildTransferRequestUrl({ recipient, amountUsdc, tripName, travelerName, cluster });
   if (!url) return null;
+
+  // A `solana:` link does nothing at all when no wallet app on this device handles it
+  // (most computers, and phones with no wallet). The browser gives no error, so watch
+  // whether the page lost focus to a wallet; if it did not, say what to do instead.
+  function watchForWallet() {
+    cancelCheck.current?.();
+    setNoWallet(false);
+    const left = () => cancelCheck.current?.();
+    const timer = window.setTimeout(() => {
+      cancelCheck.current?.();
+      if (document.visibilityState === "visible") setNoWallet(true);
+    }, WALLET_WAIT_MS);
+    cancelCheck.current = () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("blur", left);
+      window.removeEventListener("pagehide", left);
+      document.removeEventListener("visibilitychange", left);
+      cancelCheck.current = null;
+    };
+    window.addEventListener("blur", left);
+    window.addEventListener("pagehide", left);
+    document.addEventListener("visibilitychange", left);
+  }
 
   const demo = isDemoCluster(cluster);
   const first = travelerName.trim().split(/\s+/)[0] || "The traveler";
@@ -55,13 +89,34 @@ export function FundsRequest({
         </p>
       )}
 
-      <a href={url} className={buttonClasses({ variant: "primary", size: "lg", block: true, chip: true, className: "mt-4" })}>
+      <a
+        href={url}
+        onClick={watchForWallet}
+        className={buttonClasses({ variant: "primary", size: "lg", block: true, chip: true, className: "mt-4" })}
+      >
         Send help
         <span aria-hidden="true" className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[3px] bg-on-sign text-sign">
           <SignArrow size={24} className="ck-key-arrow" />
         </span>
       </a>
       <p className="mt-2 text-[14px] font-medium text-ink-2">Opens your wallet{demo ? " (on devnet)" : ""}. You approve it there.</p>
+      {noWallet && (
+        <div role="status" className="ck-rise mt-3 rounded-control bg-warn-bg px-3 py-2.5 text-[15px] text-warn-fg">
+          <p className="font-bold">Nothing opened?</p>
+          <p className="mt-1">
+            This button needs a Solana wallet app on this device. On a computer, scan the code below with a
+            wallet on your phone. On a phone, install a wallet
+            {demo ? ", switch it to devnet," : ""} and tap Send help again.
+          </p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {WALLETS.map((w) => (
+              <a key={w.name} href={w.url} target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-4">
+                Get {w.name}
+              </a>
+            ))}
+          </p>
+        </div>
+      )}
 
       <div className="mt-5 flex flex-col items-center gap-2 pt-1">
         <p className="self-start text-[15px] font-bold">Or scan with your wallet</p>
