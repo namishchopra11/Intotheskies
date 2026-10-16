@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, type PointerEvent, type ReactNode } from "react";
 import { Icon } from "./Icon";
 
 type SheetProps = {
@@ -18,7 +18,7 @@ type SheetProps = {
  * back down to close.
  */
 // Matches the ck-sheet-down animation in globals.css.
-const CLOSE_MS = 200;
+const CLOSE_MS = 220;
 
 export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -90,6 +90,47 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
     }, CLOSE_MS);
   };
 
+  // Drag the handle or title row down to dismiss: follows the finger 1:1, rubber-bands upward,
+  // and a quick flick closes it even when it hasn't travelled far.
+  const panel = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ y: number; t: number; dy: number; v: number } | null>(null);
+  const onPointerDown = (e: PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    drag.current = { y: e.clientY, t: performance.now(), dy: 0, v: 0 };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    if (panel.current) panel.current.style.transition = "none";
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    const d = drag.current;
+    if (!d || !panel.current) return;
+    const raw = e.clientY - d.y;
+    const now = performance.now();
+    d.v = (raw - d.dy) / Math.max(1, now - d.t);
+    d.t = now;
+    d.dy = raw;
+    const y = raw < 0 ? -Math.sqrt(-raw) * 2 : raw;
+    panel.current.style.transform = `translateY(${y}px)`;
+  };
+  const onPointerUp = () => {
+    const d = drag.current;
+    drag.current = null;
+    const p = panel.current;
+    if (!d || !p) return;
+    p.style.transition = "transform 320ms cubic-bezier(0.32, 0.72, 0, 1)";
+    if (d.dy > 120 || (d.dy > 16 && d.v > 0.5)) {
+      p.style.transform = "translateY(100%)";
+      // The panel is already on its way down: skip the CSS slide and just close.
+      leaving.current = true;
+      setTimeout(() => {
+        onClose();
+        p.style.transform = "";
+        p.style.transition = "";
+      }, 260);
+    } else {
+      p.style.transform = "";
+    }
+  };
+
   return (
     <dialog
       ref={ref}
@@ -111,26 +152,39 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
         if (e.target === ref.current) requestClose();
       }}
     >
-      <div className="ck-sheet-panel flex max-h-[90dvh] flex-col rounded-t-sheet border border-b-0 border-line bg-surface">
-        <div className="flex justify-center pt-2.5" aria-hidden="true">
-          <span className="h-1.5 w-10 rounded-full bg-line-strong" />
-        </div>
-        <div className="flex items-center gap-2 py-1 pr-2 pl-5">
-          <h2 id={titleId} className="flex-1 text-lg font-semibold">
-            {title}
-          </h2>
-          <button
-            type="button"
-            onClick={requestClose}
-            aria-label="Close"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-2 hover:bg-sunk"
-          >
-            <Icon name="x" size={22} />
-          </button>
+      <div
+        ref={panel}
+        className="ck-sheet-panel flex max-h-[92dvh] flex-col rounded-t-sheet bg-bg shadow-float"
+      >
+        <div
+          className="touch-none cursor-grab select-none active:cursor-grabbing"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
+          <div className="flex justify-center pt-2.5" aria-hidden="true">
+            <span className="h-[5px] w-10 rounded-[2px] bg-line-strong" />
+          </div>
+          <div className="flex items-center gap-2 pt-2 pr-3 pb-2 pl-5">
+            <h2 id={titleId} className="flex-1 font-display text-[30px] leading-none font-bold">
+              {title}
+            </h2>
+            <button
+              type="button"
+              onClick={requestClose}
+              aria-label="Close"
+              className="ck-press inline-flex h-11 w-11 items-center justify-center rounded-control text-ink"
+            >
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-control bg-sunk">
+                <Icon name="x" size={16} strokeWidth={2.5} />
+              </span>
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5">{children}</div>
         {footer && (
-          <div className="border-t border-line px-5 pt-3 pb-[max(env(safe-area-inset-bottom),16px)]">
+          <div className="bg-bg px-5 pt-3 pb-[max(env(safe-area-inset-bottom),16px)]">
             {footer}
           </div>
         )}

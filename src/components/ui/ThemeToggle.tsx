@@ -68,8 +68,8 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
             onClick={() => window.__ckApplyTheme?.(o.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cx(
-              "inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-[9px] px-2.5 text-[14px] font-medium transition-colors",
-              active ? "bg-surface text-ink shadow-sm" : "text-ink-3 hover:text-ink",
+              "inline-flex min-h-10 min-w-11 items-center justify-center gap-1.5 rounded-[3px] px-3 text-[15px] font-semibold transition-[background-color,color] duration-200",
+              active ? "bg-key text-on-key" : "text-ink-2 [@media(hover:hover)]:hover:text-ink",
             )}
           >
             <Icon name={o.icon} size={18} />

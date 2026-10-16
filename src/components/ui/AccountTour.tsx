@@ -6,7 +6,7 @@ import { useTripStore } from "@/lib/store";
 import { useTour } from "@/lib/tour";
 import { Button } from "./Button";
 import { BrandMark } from "./Brand";
-import { Icon } from "./Icon";
+import { SignArrow } from "./SignArrow";
 
 const STEPS = [
   { route: "/", target: "home", title: "Your home base", body: "Tap the Layover logo anytime to return to your trip overview." },
@@ -94,28 +94,25 @@ export function AccountTour() {
     <dialog ref={dialog} aria-labelledby="account-tour-title" aria-describedby="account-tour-copy"
       onCancel={(e) => { e.preventDefault(); close(); }}
       className="ck-account-tour fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-transparent p-0 text-ink">
-      {box ? <div aria-hidden="true" className="ck-tour-spotlight pointer-events-none fixed top-0 left-0 rounded-[14px] border-2 border-signal"
-        style={{ transform: `translate(${box.x - 5}px, ${box.y - 5}px)`, width: box.width + 10, height: box.height + 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.52), 0 0 0 4px color-mix(in srgb, var(--signal) 18%, transparent)" }} />
+      {box ? <div aria-hidden="true" className="ck-tour-spotlight pointer-events-none fixed top-0 left-0 rounded-[6px] border-[3px] border-[#ffcc00]"
+        style={{ transform: `translate(${box.x - 5}px, ${box.y - 5}px)`, width: box.width + 10, height: box.height + 10, boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)" }} />
         : <div className="fixed inset-0 bg-black/55" />}
-      <section ref={card} className="ck-tour-card fixed rounded-card border border-line bg-surface p-5 shadow-[0_16px_48px_rgba(0,0,0,0.2)]" style={{ left, top, width }}>
-        {box && <span aria-hidden="true" className="absolute h-3 w-3 rotate-45 border-line bg-surface transition-[left] duration-300" style={{ left: arrowLeft, ...(below ? { top: -7, borderTopWidth: 1, borderLeftWidth: 1 } : { bottom: -7, borderBottomWidth: 1, borderRightWidth: 1 }) }} />}
-        <div className="relative mb-4 flex items-center justify-between border-b border-dashed border-line pb-3">
-          <span className="flex items-center gap-2 text-[13px] font-semibold"><BrandMark size={24} className="rounded-[5px]" />Layover guide</span>
-          <button type="button" onClick={close} className="min-h-9 rounded-control px-2 text-[13px] text-ink-2 transition-colors hover:bg-sunk hover:text-ink">Skip</button>
+      <section ref={card} className="ck-tour-card fixed rounded-card bg-surface p-5 shadow-float" style={{ left, top, width }}>
+        {box && <span aria-hidden="true" className="absolute h-3 w-3 rotate-45 bg-surface transition-[left] duration-300" style={{ left: arrowLeft, ...(below ? { top: -7, borderTopWidth: 1, borderLeftWidth: 1 } : { bottom: -7, borderBottomWidth: 1, borderRightWidth: 1 }) }} />}
+        <div className="relative mb-4 flex items-center justify-between">
+          <span className="flex items-center gap-2 text-[15px] font-bold"><BrandMark size={24} />Layover guide</span>
+          <button type="button" onClick={close} className="min-h-11 rounded-control px-2 text-[15px] font-bold text-ink-2 underline underline-offset-4 transition-colors hover:text-ink">Skip</button>
         </div>
         <div key={step} className="ck-tour-copy">
-          <span className="mb-3 inline-flex items-center gap-2 rounded-[5px] bg-signal px-2.5 py-1 text-[11px] font-semibold tracking-[0.08em] text-on-signal">
-            <Icon name="plane" size={13} /><span className="font-num">STEP {String(step + 1).padStart(2, "0")} / 06</span>
-          </span>
-          <h2 id="account-tour-title" className="text-[20px] leading-tight font-semibold tracking-[-0.02em]">{current.title}</h2>
-          <p id="account-tour-copy" className="mt-2 text-[14px] leading-[1.5] text-ink-2">{current.body}</p>
+          <h2 id="account-tour-title" className="font-display text-[30px] leading-none font-bold">{current.title}</h2>
+          <p id="account-tour-copy" className="mt-2 text-[16px] leading-[1.45] text-ink-2">{current.body}</p>
         </div>
-        <div className="mt-5 flex gap-1.5" aria-hidden="true">
-          {STEPS.map((_, i) => <span key={i} className="h-[3px] flex-1 overflow-hidden rounded-full bg-line"><span className="block h-full origin-left rounded-full bg-signal transition-transform duration-300 ease-out motion-reduce:transition-none" style={{ transform: `scaleX(${i <= step ? 1 : 0})` }} /></span>)}
+        <div className="mt-5 flex gap-[3px]" aria-hidden="true">
+          {STEPS.map((_, i) => <span key={i} className="h-1.5 flex-1 overflow-hidden bg-sunk"><span className="block h-full origin-left bg-meter transition-transform duration-300 ease-out motion-reduce:transition-none" style={{ transform: `scaleX(${i <= step ? 1 : 0})` }} /></span>)}
         </div>
         <div className="mt-4 flex items-center justify-between gap-3">
-          <button type="button" disabled={step === 0} onClick={() => go(step - 1)} className="inline-flex min-h-11 items-center gap-1 rounded-control px-2 text-[14px] font-semibold transition-colors hover:bg-sunk disabled:invisible"><Icon name="chevron-left" size={16} />Back</button>
-          <Button variant="primary" size="sm" chip={step === 5 ? "check" : "arrow-right"} onClick={() => step === 5 ? close() : go(step + 1)}>
+          <button type="button" disabled={step === 0} onClick={() => go(step - 1)} className="inline-flex min-h-11 items-center gap-1.5 rounded-control px-2 text-[15px] font-bold transition-colors hover:bg-sunk disabled:invisible"><SignArrow direction="left" size={16} />Back</button>
+          <Button variant="primary" size="md" chip={step === 5 ? "check" : "arrow-right"} onClick={() => step === 5 ? close() : go(step + 1)}>
             <span ref={(node) => { nextButton.current = node?.closest("button") ?? null; }}>{step === 5 ? "Let's go" : "Next"}</span>
           </Button>
         </div>

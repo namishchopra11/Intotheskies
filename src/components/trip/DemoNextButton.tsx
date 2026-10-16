@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Icon, NAV_BACK, NAV_FORWARD } from "@/components/ui";
+import { NAV_BACK, NAV_FORWARD, SignArrow } from "@/components/ui";
 import { encodeShare } from "@/lib/domain/shareLink";
 import { DEFAULT_SUMMARY_OPTIONS } from "@/lib/domain/summary";
 import { leaveStartTrip } from "@/app/trip/leaveStartTrip";
@@ -10,7 +10,7 @@ import { nextDemoStep } from "./demoSteps";
 import { triggerFlightChange } from "./simulateChange";
 
 /**
- * For presenting the app: a yellow "Next" circle beside the column (bottom right on a phone) that walks through every screen
+ * For presenting the app: a yellow "Next" key beside the column (bottom right on a phone) that walks through every screen
  * in order (see demoSteps.ts), setting up whatever the next screen needs. Switch it off in
  * Settings → Demo. Mounted once, in the root layout.
  */
@@ -69,9 +69,9 @@ export function DemoNextButton() {
       data-demo-next
       title={step.label}
       aria-label={`Demo: next, ${step.label}`}
-      className="fixed right-[max(16px,calc(50%-324px))] bottom-[max(env(safe-area-inset-bottom),16px)] z-50 inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-signal text-on-signal shadow-[0_8px_24px_rgb(0_0_0/0.25)]"
+      className="ck-press fixed right-[max(16px,calc(50%-324px))] bottom-[max(env(safe-area-inset-bottom),16px)] z-50 inline-flex h-13 w-13 cursor-pointer items-center justify-center rounded-[4px] border-[3px] border-[#111] bg-[#ffcc00] text-[#111] shadow-[0_12px_30px_-8px_rgb(0_0_0/0.5)]"
     >
-      <Icon name="arrow-right" size={20} strokeWidth={2.5} />
+      <SignArrow size={24} className="ck-key-arrow" />
     </button>
   );
 }

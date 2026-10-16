@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { Autocomplete, Button, Card, Field, Icon, PageHeader, PageTransition, SelectField, Sheet, cx, type IconName } from "@/components/ui";
+import { Autocomplete, Button, Field, Icon, PageHeader, PageTransition, SelectField, Sheet, SignArrow, cx, type IconName } from "@/components/ui";
 import { newId } from "@/lib/id";
 import { useRequireProfile } from "@/components/trip/useRequireProfile";
 import { useTripStore } from "@/lib/store";
@@ -26,16 +26,15 @@ function ImportCard() {
         type="button"
         onClick={() => setOpen(true)}
         data-tour="import"
-        className="mx-4 flex cursor-pointer items-center gap-3.5 rounded-card bg-signal px-4 py-3.5 text-left text-on-signal"
+        className="ck-press relative isolate mx-4 flex w-[calc(100%-2rem)] cursor-pointer items-center gap-4 overflow-hidden rounded-card bg-sign px-5 py-5 text-left text-on-sign"
       >
-        <span aria-hidden="true" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px] bg-ink/10">
-          <Icon name="copy" size={20} strokeWidth={2.25} />
-        </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold">Import from a confirmation</span>
-          <span className="block text-[14px] leading-snug opacity-80">Screenshot, PDF or email. We fill in the details.</span>
+          <span className="block font-display text-[30px] leading-[0.95] font-bold">Import a confirmation</span>
+          <span className="mt-1.5 block text-[15px] leading-snug font-semibold opacity-75">Screenshot, PDF or email</span>
         </span>
-        <Icon name="chevron-right" size={18} />
+        <span aria-hidden="true" className="inline-flex h-13 w-13 shrink-0 items-center justify-center rounded-[3px] bg-on-sign text-sign">
+          <SignArrow size={26} className="ck-key-arrow" />
+        </span>
       </button>
       {open && <ImportSheet onClose={() => setOpen(false)} />}
     </>
@@ -66,7 +65,7 @@ function StartTrip() {
   return (
     <div id={START_TRIP_ID} className="flex flex-1 flex-col">
       <ImportCard />
-      <p className="ck-label px-5 pt-7 pb-1">Or type it in</p>
+      <p className="ck-h2 px-5 pt-9 pb-1">Or type it in</p>
       <form
         className="flex flex-1 flex-col gap-4 px-5 pt-2"
         onSubmit={(e) => {
@@ -117,13 +116,15 @@ function Bookings({ trip }: { trip: Trip }) {
         type="button"
         onClick={() => setEditing({ kind: "details" })}
         style={rise(70)}
-        className="ck-rise mx-4 mt-3 flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left hover:bg-sunk"
+        className="ck-rise ck-press mx-4 mt-[3px] flex w-[calc(100%-2rem)] cursor-pointer items-center gap-3 rounded-card bg-plate px-5 py-4 text-left text-on-plate"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-[17px] font-semibold">{trip.name || "Untitled trip"}</span>
-          <span className="block text-[14px] text-ink-2">{trip.travelerName}</span>
+          <span className="block truncate font-display text-[28px] leading-none font-bold">{trip.name || "Untitled trip"}</span>
+          <span className="mt-1 block text-[15px] font-medium text-on-plate-2">{trip.travelerName || "Trip details"}</span>
         </span>
-        <Icon name="pencil" size={18} className="text-ink-2" />
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-[3px] bg-white/12">
+          <Icon name="pencil" size={18} strokeWidth={2.25} />
+        </span>
       </button>
 
       <Section
@@ -157,17 +158,19 @@ function Bookings({ trip }: { trip: Trip }) {
         delay={390}
         icon="user"
         title="Who's waiting"
-        hint="Add the people expecting you. Each one gets a message ready to send when a flight changes."
+        hint="Each gets a message ready when a flight changes."
         items={people}
         kind={PERSON}
         onAdd={() => setEditing({ kind: "person" })}
         onEdit={(id) => setEditing({ kind: "person", id })}
       />
 
-      <div className="ck-rise mt-auto px-4 pt-8 pb-[max(env(safe-area-inset-bottom),24px)]" style={rise(470)}>
-        <Button variant="primary" size="lg" block chip="arrow-right" disabled={empty} onClick={() => router.push("/")}>
-          Done
-        </Button>
+      <div className="ck-dock ck-rise sticky bottom-0 z-20 mt-auto pt-10" style={rise(470)}>
+        <div className="ck-dock-inner bg-plate px-4 pt-3 pb-[max(env(safe-area-inset-bottom),14px)]">
+          <Button variant="primary" size="lg" block chip="arrow-right" disabled={empty} onClick={() => router.push("/")}>
+            Done
+          </Button>
+        </div>
       </div>
 
       {editing?.kind === "details" && <DetailsSheet trip={trip} onClose={close} />}
@@ -209,35 +212,48 @@ function Section<T extends { id: string }>({
 }) {
   const displayTime = useTimeFormat();
   return (
-    <section className="ck-rise flex flex-col gap-2.5 px-4 pt-7" style={rise(delay)}>
-      <h2 className="ck-label px-1">{title}</h2>
-      {hint && <p className="-mt-1 px-1 text-[14px] leading-snug text-ink-2">{hint}</p>}
-      {items.length > 0 && (
-        <Card as="div" padding="none" className="divide-y divide-line-soft overflow-hidden">
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onEdit(item.id)}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-sunk"
-            >
-              <span aria-hidden="true" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] bg-sunk text-ink">
-                <Icon name={icon} size={18} />
+    <section className="ck-rise flex flex-col gap-3 px-4 pt-10" style={rise(delay)}>
+      <div className="flex items-center gap-3">
+        <h2 className="ck-h2">{title}</h2>
+        {items.length > 0 && (
+          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-[3px] bg-key px-1.5 font-num text-[14px] leading-none font-bold text-on-key">
+            {items.length}
+          </span>
+        )}
+      </div>
+      {hint && <p className="-mt-1 text-[15px] leading-snug font-medium text-ink-2">{hint}</p>}
+      <div className="flex flex-col gap-[3px]">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onEdit(item.id)}
+            className="ck-press flex w-full cursor-pointer items-center gap-3.5 rounded-card bg-surface py-3.5 pr-4 pl-3 text-left"
+          >
+            <span aria-hidden="true" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[3px] bg-sunk text-ink">
+              <Icon name={icon} size={20} strokeWidth={2.25} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className={cx("block truncate", kind.mono ? "font-display text-[26px] leading-none font-bold" : "text-[17px] font-bold")}>{kind.title(item)}</span>
+              <span className={cx("mt-1 block text-[14px] text-ink-2", kind.wrapSubtitle ? "break-words" : "truncate")}>
+                {displayTime(kind.subtitle(item))}
               </span>
-              <span className="min-w-0 flex-1">
-                <span className={cx("block truncate font-semibold", kind.mono && "font-num")}>{kind.title(item)}</span>
-                <span className={cx("block text-[14px] text-ink-2", kind.wrapSubtitle ? "break-words" : "truncate")}>
-                  {displayTime(kind.subtitle(item))}
-                </span>
-              </span>
-              <Icon name="chevron-right" size={18} className="text-ink-3" />
-            </button>
-          ))}
-        </Card>
-      )}
-      <Button data-tour={kind.noun === "flight" ? "bookings" : undefined} variant="secondary" size="sm" block icon="plus" onClick={onAdd}>
-        Add {items.length > 0 ? "another" : "a"} {kind.noun}
-      </Button>
+            </span>
+            <SignArrow size={18} className="ck-key-arrow text-ink-2" />
+          </button>
+        ))}
+        <button
+          type="button"
+          data-tour={kind.noun === "flight" ? "bookings" : undefined}
+          onClick={onAdd}
+          className="ck-press flex min-h-14 w-full cursor-pointer items-center gap-3.5 rounded-card bg-sunk pr-4 pl-3 text-left text-[16px] font-bold"
+        >
+          <span aria-hidden="true" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[3px] bg-key text-on-key">
+            <Icon name="plus" size={20} strokeWidth={2.5} />
+          </span>
+          Add {items.length > 0 ? "another" : "a"} {kind.noun}
+        </button>
+      </div>
     </section>
   );
 }

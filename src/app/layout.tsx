@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Barlow, Barlow_Condensed } from "next/font/google";
 import { Suspense } from "react";
 import { DemoNextButton } from "@/components/trip/DemoNextButton";
 import { FlightWatcher } from "@/components/trip/FlightWatcher";
@@ -10,17 +10,17 @@ import { NavHistory } from "@/components/ui/BackButton";
 import { THEME_COLORS, themeScript } from "@/components/ui/theme";
 import "./globals.css";
 
-// The only two fonts: Plex Sans for words, Plex Mono for times, codes and small labels. Both themes.
-// Neither has "→" in the latin subset (it would fall back to a system font): write "–" instead.
-const plexSans = IBM_Plex_Sans({
-  variable: "--font-plex-sans",
+// Barlow, drawn from California highway signs: words in Barlow, times, codes and big headings
+// in Barlow Condensed (the font-display utility). Arrows are drawn as icons, never typed.
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-cond",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

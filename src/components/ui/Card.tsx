@@ -23,7 +23,7 @@ export function Card({
     <Tag
       className={cx(
         "rounded-card",
-        variant === "raised" ? "border border-line bg-surface" : "bg-sunk",
+        variant === "raised" ? "bg-surface" : "bg-sunk",
         padding === "md" && "p-4",
         className,
       )}

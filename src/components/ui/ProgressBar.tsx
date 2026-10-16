@@ -25,11 +25,11 @@ export function ProgressBar({ value, max, label, hideCount, className }: Progres
     <div className={className}>
       {(label || !hideCount) && (
         <div className="mb-2.5 flex items-baseline justify-between gap-3">
-          {label && <span className="text-base font-semibold text-ink">{label}</span>}
+          {label && <span className="font-display text-[26px] font-bold text-ink">{label}</span>}
           {!hideCount && (
             <span
               className={cx(
-                "ml-auto inline-flex items-center gap-1 font-num text-[13px] tabular-nums",
+                "ml-auto inline-flex items-center gap-1 font-num text-[14px] font-medium tabular-nums",
                 complete ? "font-semibold text-ok-fg" : "text-ink-2",
               )}
             >
@@ -46,12 +46,12 @@ export function ProgressBar({ value, max, label, hideCount, className }: Progres
         aria-valuemax={safeMax}
         aria-valuenow={clamped}
         aria-valuetext={`${clamped} of ${safeMax} done`}
-        className={segmented ? "grid gap-1" : "h-2 w-full overflow-hidden rounded-[2px] bg-meter-track"}
+        className={segmented ? "grid gap-[3px]" : "h-2 w-full overflow-hidden bg-meter-track"}
         style={segmented ? { gridTemplateColumns: `repeat(${safeMax}, minmax(0, 1fr))` } : undefined}
       >
         {segmented ? (
           Array.from({ length: safeMax }, (_, i) => (
-            <span key={i} className="flex h-2 overflow-hidden rounded-[2px] bg-meter-track">
+            <span key={i} className="flex h-2 overflow-hidden bg-meter-track">
               {i < clamped && (
                 <i
                   className={cx("ck-fill flex-1", complete ? "bg-ok" : "bg-meter")}
@@ -63,7 +63,7 @@ export function ProgressBar({ value, max, label, hideCount, className }: Progres
         ) : (
           <div
             className={cx(
-              "h-full rounded-[2px] transition-[width] duration-300",
+              "h-full transition-[width] duration-500 ease-out",
               complete ? "bg-ok" : "bg-meter",
             )}
             style={{ width: `${pct}%` }}

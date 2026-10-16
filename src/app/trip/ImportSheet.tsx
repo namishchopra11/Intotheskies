@@ -129,11 +129,11 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
       >
         <div className="flex flex-col gap-4 pt-1">
           {phase.items.length > 0 && (
-            <ul className="flex flex-col divide-y divide-line-soft overflow-hidden rounded-card border border-line">
+            <ul className="flex flex-col gap-[3px] overflow-hidden rounded-card">
               {phase.items.map((entry, i) => (
                 <li key={i}>
-                  <label className={cx("flex items-start gap-3 px-4 py-3.5", entry.kind !== "skipped" && "cursor-pointer")}>
-                    <span aria-hidden="true" className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] bg-sunk">
+                  <label className={cx("flex items-start gap-3 bg-surface px-4 py-3.5", entry.kind !== "skipped" && "cursor-pointer")}>
+                    <span aria-hidden="true" className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[3px] bg-sunk">
                       <Icon name={ICON[entry.kind]} size={18} />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -145,7 +145,7 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
                     {entry.kind !== "skipped" && (
                       <input
                         type="checkbox"
-                        className="mt-2 size-5 accent-[var(--accent)]"
+                        className="mt-2 size-5 accent-[#111]"
                         checked={picked.has(i)}
                         onChange={(e) =>
                           setPicked((p) => {
@@ -230,12 +230,12 @@ export function ImportSheet({ onClose }: { onClose: () => void }) {
             setDraggingFiles(false);
             if (!reading) chooseFiles(Array.from(e.dataTransfer.files));
           }}
-          className={cx("rounded-card border-2 border-dashed p-5 text-center transition-colors", draggingFiles ? "border-ink bg-sunk" : "border-line bg-surface")}
+          className={cx("rounded-card border-2 border-dashed p-5 text-center transition-colors", draggingFiles ? "border-ink bg-accent-soft" : "border-line-strong bg-surface")}
         >
-          <span aria-hidden="true" className="mx-auto mb-3 inline-flex h-10 w-10 items-center justify-center rounded-control bg-sunk">
+          <span aria-hidden="true" className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-[3px] bg-sign text-on-sign">
             <Icon name="plus" size={22} />
           </span>
-          <p className="mb-1 font-semibold">{draggingFiles ? "Drop your confirmations here" : "Drag and drop your confirmations"}</p>
+          <p className="mb-1 font-display text-[22px] font-bold">{draggingFiles ? "Drop your confirmations here" : "Drag and drop your confirmations"}</p>
           <p className="mb-4 text-[13px] text-ink-2">Screenshots, photos, PDFs or email files · Up to 6 files</p>
           <Button variant="secondary" block disabled={reading} onClick={() => input.current?.click()}>
             Choose files

@@ -32,8 +32,8 @@ export function Badge({ tone = "neutral", children, icon, size = "sm", className
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-badge font-semibold",
-        size === "sm" ? "h-[26px] pr-2.5 pl-2 text-[13px]" : "h-8 pr-3 pl-2.5 text-[15px]",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-badge font-semibold leading-none",
+        size === "sm" ? "h-6 pr-2 pl-1.5 text-[13px]" : "h-8 pr-3 pl-2.5 text-[15px]",
         t.className,
         className,
       )}

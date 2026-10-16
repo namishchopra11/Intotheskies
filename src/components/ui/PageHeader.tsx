@@ -6,56 +6,44 @@ type PageHeaderProps = {
   title: string;
   /** Small line above the title, e.g. "Alex Morgan · San Francisco – Rome · Sat 17 Oct". */
   eyebrow?: string;
-  /** Something on the right of the title row, e.g. a ThemeToggle or small Button. */
+  /** Something on the right of the top bar, e.g. a small Button. */
   action?: ReactNode;
   /**
-   * "bar" (default): the logo row, then a 22px title, for a step inside a flow, like Share.
-   * "title": a large headline that says what happened, with an optional eyebrow and body.
+   * "bar" (default): the screen's name set like a sign, under the top bar.
+   * "title": a longer headline that says what happened, with optional lines under it.
    */
   variant?: "title" | "bar";
   /** One or two sentences under the title. */
   children?: ReactNode;
 };
 
-const TOP = "pt-[max(env(safe-area-inset-top),12px)]";
-
 /**
- * The top of every screen, so they all start the same way: a Back chevron and the Layover
- * logo top left (the logo always goes home), then the screen's title.
+ * The top of every inner screen, so they all start the same way: a solid bar with Back and
+ * the Layover logo (the logo always goes home), then the screen's name in big condensed type.
  */
 export function PageHeader({ title, eyebrow, action, variant = "bar", children }: PageHeaderProps) {
-  const logoRow = (
-    <div className={`flex min-h-[68px] items-center justify-between pr-3 pb-1 pl-5 ${TOP}`}>
-      <div className="flex items-center gap-1">
-        <BackButton />
-        <HomeLogo />
-      </div>
-      {variant === "bar" && action && <div className="shrink-0">{action}</div>}
-    </div>
-  );
-
-  if (variant === "bar") {
-    return (
-      <header>
-        {logoRow}
-        <h1 className="truncate px-5 pb-3 text-[22px] leading-tight font-semibold tracking-[-0.01em]">{title}</h1>
-      </header>
-    );
-  }
-
   return (
-    <header className="pb-4">
-      {logoRow}
-      <div className="flex items-start gap-3 px-5">
-        <div className="min-w-0 flex-1">
-          {eyebrow && <p className="mb-2 text-[14px] text-ink-2">{eyebrow}</p>}
-          <h1 className="text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-balance">
-            {title}
-          </h1>
+    <>
+      <div className="sticky top-0 z-30 flex min-h-[60px] items-center justify-between bg-bg pt-[env(safe-area-inset-top)] pr-2 pl-4">
+        <div className="flex items-center gap-1">
+          <BackButton />
+          <HomeLogo compact />
         </div>
-        {action && <div className="shrink-0 pt-0.5">{action}</div>}
+        {action && <div className="shrink-0">{action}</div>}
       </div>
-      {children && <div className="mt-2 px-5 text-ink-2">{children}</div>}
-    </header>
+      <header className="ck-rise px-5 pt-3 pb-6">
+        {eyebrow && <p className="mb-2 text-[15px] font-medium text-ink-2">{eyebrow}</p>}
+        <h1
+          className={
+            variant === "title"
+              ? "font-display text-[40px] leading-[0.98] font-bold text-balance"
+              : "font-display text-[52px] leading-[0.9] font-bold"
+          }
+        >
+          {title}
+        </h1>
+        {children && <div className="mt-3 text-[16px] text-ink-2">{children}</div>}
+      </header>
+    </>
   );
 }

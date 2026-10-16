@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Icon, cx } from "@/components/ui";
+import { Icon, SignArrow, cx } from "@/components/ui";
 import { useTimeFormat } from "@/lib/useTimeFormat";
 import type { Trip } from "@/lib/types";
 import { buildDayPlan, type PlanMarker, type PlanRow, type PlanTone } from "./planRows";
@@ -17,70 +17,73 @@ const MARKER_WORD: Record<PlanMarker, string> = {
   open: "Not known yet",
 };
 
-/** The traveler's day as one list down a rail, as booked (null) or after a change (see planRows.ts). */
+/** The edge stripe on each plate, by marker. */
+const STRIPE: Record<PlanMarker, string> = {
+  dot: "bg-line-strong",
+  ring: "bg-warn",
+  x: "bg-bad",
+  check: "bg-on-sign",
+  open: "bg-ink-faint",
+};
+
+/**
+ * The traveler's day as a stack of sign plates, one per moment, as booked (null) or after a
+ * change (see planRows.ts). The booking that no longer flies is struck through; the new flight
+ * is the yellow plate with the arrow.
+ */
 export function DayPlan({ trip, disruptionId, baseDelay = 0 }: { trip: Trip; disruptionId: string | null; baseDelay?: number }) {
   const rows = buildDayPlan(trip, disruptionId);
   if (rows.length === 0) return null;
   return (
-    <ol aria-label={disruptionId ? "Your day, re-planned" : "Your day"} className="flex flex-col px-3 pt-1 pb-2">
+    <ol aria-label={disruptionId ? "Your day, re-planned" : "Your day"} className="flex flex-col gap-[3px]">
       {rows.map((r, i) => (
-        <Row key={r.id} r={r} first={i === 0} last={i === rows.length - 1} style={{ animationDelay: `${baseDelay + i * 90}ms` }} />
+        <Row key={r.id} r={r} style={{ animationDelay: `${baseDelay + i * 55}ms` }} />
       ))}
     </ol>
   );
 }
 
-function Row({ r, first, last, style }: { r: PlanRow; first: boolean; last: boolean; style: CSSProperties }) {
+function Row({ r, style }: { r: PlanRow; style: CSSProperties }) {
   const displayTime = useTimeFormat();
+  const time = r.time === "–:–" ? r.time : displayTime(r.time);
+  const [clock, meridiem] = splitClock(time);
   return (
     <li
       className={cx(
-        "flex gap-3 px-2",
-        r.highlight
-          ? "ck-pop relative z-[1] mb-4 rounded-card border border-line bg-surface py-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)]"
-          : "ck-rise",
+        "relative flex min-h-[68px] items-stretch overflow-hidden rounded-card",
+        r.highlight ? "ck-wipe bg-sign text-on-sign" : "ck-rise bg-surface",
       )}
       style={style}
     >
+      <span aria-hidden="true" className={cx("w-[5px] shrink-0", STRIPE[r.marker])} />
       <span
         className={cx(
-          "w-[76px] shrink-0 pt-[2px] font-num tracking-[-0.02em] whitespace-nowrap tabular-nums",
-          r.highlight ? "text-[15px] font-semibold" : "text-[14px] font-medium",
-          r.struck ? "text-ink-faint line-through" : "text-ink",
+          "flex w-[84px] shrink-0 flex-col justify-center pl-3 font-display leading-none font-bold whitespace-nowrap",
+          r.highlight ? "text-[30px]" : "text-[26px]",
+          r.struck && "text-ink-faint line-through decoration-[3px]",
         )}
       >
         {r.struck && <span className="sr-only">Was </span>}
-        {r.time === "–:–" ? r.time : displayTime(r.time)}
+        <span>{clock}</span>
+        {meridiem && <span className="mt-0.5 text-[13px] font-semibold no-underline">{meridiem}</span>}
       </span>
 
-      {/* The rail: a line through every marker, cut at the top of the first and bottom of the last. */}
-      <span className="relative flex w-5 shrink-0 justify-center" aria-hidden="true">
-        <span
-          className={cx(
-            "absolute left-1/2 w-[2px] -translate-x-1/2 bg-ink",
-            first ? "top-3" : r.highlight ? "-top-3" : "top-0",
-            last ? "h-3" : r.highlight ? "-bottom-7" : "bottom-0",
-          )}
-        />
-        <span className="relative mt-[3px]">
-          <Marker kind={r.marker} />
-        </span>
-      </span>
-
-      <div className={cx("flex min-w-0 flex-1 flex-col gap-0.5", !r.highlight && !last && "pb-5")}>
-        <p
-          className={cx(
-            "leading-snug",
-            r.highlight ? "text-[17px] font-semibold" : "text-[16px] font-semibold",
-            r.struck && "text-ink-faint line-through",
-          )}
-        >
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-3 pr-3">
+        <p className={cx("leading-snug font-semibold", r.highlight ? "text-[18px] font-bold" : "text-[16px]", r.struck && "text-ink-faint line-through")}>
           {r.title}
           <span className="sr-only"> — {MARKER_WORD[r.marker]}</span>
         </p>
-        {r.detail && <p className="text-[14px] leading-snug text-ink-2">{displayTime(r.detail)}</p>}
-        {r.status && <p className={cx("text-[14px] leading-snug font-semibold", TONE[r.status.tone])}>{displayTime(r.status.text)}</p>}
+        {r.detail && <p className={cx("text-[14px] leading-snug", r.highlight ? "font-medium" : "text-ink-2")}>{displayTime(r.detail)}</p>}
+        {r.status && (
+          <p className={cx("text-[14px] leading-snug font-bold", r.highlight ? "" : TONE[r.status.tone])}>
+            {displayTime(r.status.text)}
+          </p>
+        )}
       </div>
+
+      <span aria-hidden="true" className="flex w-11 shrink-0 items-center justify-center">
+        <Marker kind={r.marker} />
+      </span>
     </li>
   );
 }
@@ -88,22 +91,20 @@ function Row({ r, first, last, style }: { r: PlanRow; first: boolean; last: bool
 function Marker({ kind }: { kind: PlanMarker }) {
   switch (kind) {
     case "check":
-      return (
-        <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[4px] bg-signal text-on-signal">
-          <Icon name="check" size={13} strokeWidth={3.5} />
-        </span>
-      );
+      return <SignArrow size={26} />;
     case "x":
-      return (
-        <span className="inline-flex h-[18px] w-[18px] items-center justify-center bg-bg text-bad">
-          <Icon name="x" size={15} strokeWidth={3} />
-        </span>
-      );
+      return <Icon name="x" size={20} strokeWidth={3} className="text-bad-fg" />;
     case "ring":
-      return <span className="block h-[16px] w-[16px] rounded-full border-[3px] border-warn bg-bg" />;
+      return <Icon name="clock" size={20} strokeWidth={2.5} className="text-warn-fg" />;
     case "open":
-      return <span className="block h-[16px] w-[16px] rounded-full border-2 border-dashed border-ink-2 bg-bg" />;
+      return <Icon name="circle-dashed" size={20} strokeWidth={2.5} className="text-ink-3" />;
     default:
-      return <span className="block h-[14px] w-[14px] translate-y-[1px] rounded-full bg-ink" />;
+      return null;
   }
+}
+
+/** "6:40 PM" -> ["6:40", "PM"]; "18:40" -> ["18:40", ""]. */
+function splitClock(text: string): [string, string] {
+  const m = text.match(/^(.*?)\s?(AM|PM)$/);
+  return m ? [m[1], m[2]] : [text, ""];
 }

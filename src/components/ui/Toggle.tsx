@@ -31,11 +31,11 @@ export function Toggle({ checked, onChange, label, description, disabled, classN
       )}
     >
       <span className="min-w-0 flex-1">
-        <span id={`${id}-l`} className="block font-medium text-ink">
+        <span id={`${id}-l`} className="block text-[17px] font-semibold text-ink">
           {label}
         </span>
         {description && (
-          <span id={`${id}-d`} className="mt-0.5 block text-[13px] leading-snug text-ink-2">
+          <span id={`${id}-d`} className="mt-0.5 block text-[14px] leading-snug text-ink-2">
             {description}
           </span>
         )}
@@ -43,9 +43,9 @@ export function Toggle({ checked, onChange, label, description, disabled, classN
       <span
         aria-hidden="true"
         data-on={checked}
-        className="ck-switch inline-flex h-8 w-[52px] shrink-0 items-center rounded-full p-[3px]"
+        className="ck-switch inline-flex h-[30px] w-[52px] shrink-0 items-center rounded-[3px] p-[3px]"
       >
-        <span className="h-[26px] w-[26px] rounded-full" />
+        <span className="h-6 w-6 rounded-[2px]" />
       </span>
     </button>
   );
